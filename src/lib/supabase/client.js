@@ -5,9 +5,12 @@ export const supabase = createClient(
     import.meta.env.VITE_SUPABASE_ANON_KEY,
     {
         auth: {
-            flowType: "implicit",
+            persistSession: true,
+            storageKey: "sb-stjoiaqeuxfgvgkfkhhi-auth-token",
+            storage: window.localStorage,
             detectSessionInUrl: true,
             autoRefreshToken: true,
+            flowType: "implicit",
         },
     }
 );

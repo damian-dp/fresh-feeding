@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeaturePills } from "@/components/landing-page/feature-pills";
 import { AppDemoScreen } from "@/components/landing-page/app-demo-screen";
 import { TestimonialsGrid } from "@/components/landing-page/testimonials-grid";
 import { useLoading } from "@/hooks/use-loading";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export function LandingPage() {
     const isLoading = useLoading();
-    const { user } = useAuthStore();
+    const { isAuthenticated, loading: authLoading } = useAuth();
     const [activeFeature, setActiveFeature] = useState("Recipes");
 
+    // Only wait for page load
     if (isLoading) return null;
 
     return (
@@ -29,7 +30,12 @@ export function LandingPage() {
                         Fresh Feeding
                     </Link>
                     <div className="flex items-center gap-4">
-                        {user ? (
+                        {authLoading ? (
+                            <Button disabled variant="ghost">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Loading
+                            </Button>
+                        ) : isAuthenticated ? (
                             <Button asChild>
                                 <Link to="/dashboard">Dashboard</Link>
                             </Button>

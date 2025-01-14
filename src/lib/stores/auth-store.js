@@ -1,7 +1,6 @@
-import { create } from "zustand";
 import { supabase } from "@/lib/supabase/client";
 
-export const useAuthStore = create((set) => ({
+export const authService = {
     signIn: async (email, password) => {
         try {
             console.log("Attempting sign in...", { email });
@@ -96,4 +95,4 @@ export const useAuthStore = create((set) => ({
             throw error;
         }
     },
-}));
+};

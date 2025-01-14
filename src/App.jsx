@@ -33,8 +33,6 @@ function App() {
                         path="/auth/update-password"
                         element={<UpdatePasswordPage />}
                     />
-
-                    {/* Handle old reset password route */}
                     <Route path="/reset-password" element={<AuthRedirect />} />
 
                     {/* Protected routes */}

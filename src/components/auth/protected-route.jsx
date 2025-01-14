@@ -1,21 +1,35 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { useAuth } from "@/components/providers/auth-provider";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children }) {
-    const { user, isLoading } = useAuthStore();
+    const { isAuthenticated, loading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            toast.error("Please sign in to continue");
-            navigate("/auth", { replace: true });
-        }
-    }, [user, isLoading, navigate]);
+        const timeoutId = setTimeout(() => {
+            if (!loading && !isAuthenticated) {
+                console.log("Protected route: Redirecting to auth", {
+                    loading,
+                    isAuthenticated,
+                });
+                toast.error("Please sign in to continue");
+                navigate("/auth", { replace: true });
+            }
+        }, 1000); // Give a short delay to prevent flash redirects
 
-    // Don't render anything while checking auth
-    if (isLoading) return null;
+        return () => clearTimeout(timeoutId);
+    }, [isAuthenticated, loading, navigate]);
 
-    return user ? children : null;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
+
+    return isAuthenticated ? children : null;
 }

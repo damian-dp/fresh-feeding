@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { authService } from "@/lib/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ export function AuthForm() {
     const [name, setName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [loadingProvider, setLoadingProvider] = useState(null);
-    const { signIn, signUp } = useAuthStore();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -66,8 +65,8 @@ export function AuthForm() {
                 }, 2000);
             } else {
                 const result = isSignUp
-                    ? await signUp(email, password, name)
-                    : await signIn(email, password);
+                    ? await authService.signUp(email, password, name)
+                    : await authService.signIn(email, password);
 
                 console.log("Auth result:", result);
 
@@ -79,7 +78,9 @@ export function AuthForm() {
                         setTimeout(() => setIsSignUp(false), 2000);
                     } else {
                         console.log("Navigating to dashboard...");
-                        navigate("/dashboard", { replace: true });
+                        setTimeout(() => {
+                            navigate("/dashboard", { replace: true });
+                        }, 100);
                     }
                 }
             }
@@ -106,9 +107,7 @@ export function AuthForm() {
                             `;
 
                             try {
-                                await useAuthStore
-                                    .getState()
-                                    .resendVerification(email);
+                                await authService.resendVerification(email);
 
                                 toast.success("Verification email sent!");
                             } catch (err) {
@@ -130,14 +129,42 @@ export function AuthForm() {
     const handleSocialAuth = async (provider) => {
         setLoadingProvider(provider);
         try {
-            await supabase.auth.signInWithOAuth({
+            // Configure provider-specific options
+            const providerOptions = {
+                google: {
+                    scopes: "email profile",
+                    queryParams: {
+                        prompt: "select_account",
+                        access_type: "offline",
+                    },
+                },
+                facebook: {
+                    scopes: "email public_profile",
+                    queryParams: {
+                        display: "popup",
+                    },
+                },
+                // Add other providers here if needed
+            };
+
+            const { data, error } = await supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo:
-                        window.location.origin + window.location.pathname,
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    ...(providerOptions[provider] || {}),
                 },
             });
+
+            if (error) throw error;
+
+            if (!data?.url) {
+                throw new Error("Failed to get authorization URL");
+            }
+
+            // Redirect to the provider's auth page
+            window.location.href = data.url;
         } catch (error) {
+            console.error("Social auth error:", error);
             toast.error(error.message);
             setLoadingProvider(null);
         }

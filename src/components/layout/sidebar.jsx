@@ -16,7 +16,8 @@ import {
     Dog as DogIcon,
     Apple as AppleIcon,
 } from "lucide-react";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { authService } from "@/lib/stores/auth-store";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const navigation = [
     {
@@ -42,7 +43,7 @@ const navigation = [
 ];
 
 export function Sidebar({ preview }) {
-    const { user } = useAuthStore();
+    const { session } = useAuth();
 
     // Don't fetch real data in preview mode
     if (preview) {
