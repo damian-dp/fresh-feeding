@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
@@ -44,6 +44,8 @@ export function AuthForm() {
         setIsLoading(true);
 
         try {
+            console.log("Attempting auth...", { isSignUp, isForgotPassword });
+
             if (isForgotPassword) {
                 const { error } = await supabase.auth.resetPasswordForEmail(
                     email,
@@ -64,8 +66,10 @@ export function AuthForm() {
                 }, 2000);
             } else {
                 const result = isSignUp
-                    ? await signUp(email, password)
+                    ? await signUp(email, password, name)
                     : await signIn(email, password);
+
+                console.log("Auth result:", result);
 
                 if (result) {
                     if (isSignUp) {
@@ -74,12 +78,50 @@ export function AuthForm() {
                         );
                         setTimeout(() => setIsSignUp(false), 2000);
                     } else {
-                        navigate("/dashboard");
+                        console.log("Navigating to dashboard...");
+                        navigate("/dashboard", { replace: true });
                     }
                 }
             }
         } catch (error) {
-            toast.error(error.message);
+            console.error("Auth error:", error);
+            if (error.message === "Invalid login credentials") {
+                toast.error("Invalid email or password");
+            } else if (error.message === "Email not confirmed") {
+                toast.message("Email address not verified.", {
+                    action: {
+                        label: "Send new email",
+                        onClick: async (e) => {
+                            e.preventDefault();
+
+                            const button = e.currentTarget;
+                            const originalText = button.textContent;
+
+                            button.disabled = true;
+                            button.innerHTML = `
+                                <div class="flex items-center gap-1">
+                                    <div class="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                                    Sending...
+                                </div>
+                            `;
+
+                            try {
+                                await useAuthStore
+                                    .getState()
+                                    .resendVerification(email);
+
+                                toast.success("Verification email sent!");
+                            } catch (err) {
+                                toast.error(
+                                    "Failed to resend verification email"
+                                );
+                            }
+                        },
+                    },
+                });
+            } else {
+                toast.error(error.message);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -272,6 +314,7 @@ export function AuthForm() {
                         {!isSignUp && !isForgotPassword && (
                             <div className="flex justify-center">
                                 <Button
+                                    type="button"
                                     variant="link"
                                     className="text-sm text-muted-foreground hover:text-primary"
                                     onClick={handleForgotPassword}

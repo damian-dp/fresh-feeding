@@ -1,44 +1,34 @@
-import { useEffect } from "react";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
+const AuthContext = createContext({});
+
 export function AuthProvider({ children }) {
-    const { checkUser } = useAuthStore();
+    const [session, setSession] = useState(null);
 
     useEffect(() => {
-        // Check for initial session
-        const initializeAuth = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-            if (session) {
-                await checkUser();
-            }
-        };
-
-        initializeAuth();
-
-        // Set up auth state listener
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth state change:", event, session); // Debug log
-            if (
-                event === "SIGNED_IN" ||
-                event === "TOKEN_REFRESHED" ||
-                event === "USER_UPDATED"
-            ) {
-                await checkUser();
-            }
-            if (event === "SIGNED_OUT") {
-                await checkUser();
-            }
+        // Get session from Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
         });
 
-        return () => {
-            subscription?.unsubscribe();
-        };
-    }, [checkUser]);
+        // Listen for auth changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
 
-    return children;
+        return () => subscription.unsubscribe();
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{ session }}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
+
+export const useAuth = () => {
+    return useContext(AuthContext);
+};

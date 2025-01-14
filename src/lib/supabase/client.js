@@ -1,19 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
-import { supabaseConfig } from "./config";
 
 export const supabase = createClient(
-    supabaseConfig.url,
-    supabaseConfig.anonKey,
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
     {
         auth: {
-            autoRefreshToken: true,
-            persistSession: true,
+            flowType: "implicit",
             detectSessionInUrl: true,
-        },
-        global: {
-            headers: {
-                apikey: supabaseConfig.anonKey,
-            },
+            autoRefreshToken: true,
         },
     }
 );
