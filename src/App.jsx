@@ -22,6 +22,7 @@ import { DogProfilePage } from "@/pages/app/dog-profile";
 import { UserRecipesPage } from "@/pages/app/user-recipes";
 import { IngredientDatabasePage } from "./pages/app/ingredient-database";
 import { IngredientsProvider } from "@/components/providers/ingredients-provider";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
     return (
@@ -91,6 +92,7 @@ function App() {
                     </RecipesProvider>
                 </DogsProvider>
             </UserProvider>
+            <Analytics />
         </AuthProvider>
     );
 }
