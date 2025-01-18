@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { features } from "./feature-pills";
-import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -56,7 +55,7 @@ export function AppDemoScreen({ activeFeature }) {
         <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-background shadow-2xl">
             <div className="absolute inset-0 flex">
                 <div className="w-64 border-r bg-background">
-                    <Sidebar preview />
+                    {/* <Sidebar preview /> */}
                 </div>
 
                 <div className="flex-1 relative">
