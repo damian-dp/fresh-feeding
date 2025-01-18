@@ -7,8 +7,7 @@ export function SocialButton({ provider, icon, onClick, isLoading, disabled }) {
             onClick={onClick}
             disabled={isLoading || disabled}
             className={cn(
-                "h-12 w-full bg-background hover:bg-secondary border rounded-lg transition-all duration-200 relative",
-                isLoading && "w-12"
+                "h-12 w-full bg-background hover:bg-secondary border rounded-sm transition-all duration-200 relative"
             )}
         >
             <AnimatePresence mode="wait">

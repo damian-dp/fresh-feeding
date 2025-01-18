@@ -209,8 +209,8 @@ export function AuthForm() {
 
     return (
         <div className="w-full max-w-[426px] mx-auto space-y-6">
-            <Card className="w-full border bg-card p-10">
-                <CardHeader className="space-y-1 p-0 mb-8">
+            <Card className="flex flex-col items-center w-full border bg-card p-10">
+                <CardHeader className="w-full space-y-1 p-0 mb-8">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={
@@ -239,10 +239,10 @@ export function AuthForm() {
                         </motion.div>
                     </AnimatePresence>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 w-full flex flex-col items-center">
                     {!isForgotPassword && (
                         <>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 gap-3 w-full">
                                 <SocialButton
                                     provider="facebook"
                                     icon={<Facebook width="24" height="24" />}
@@ -265,7 +265,7 @@ export function AuthForm() {
                                     disabled={loadingProvider !== null}
                                 />
                             </div>
-                            <div className="relative my-8">
+                            <div className="relative my-8 w-full">
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t" />
                                 </div>
@@ -278,7 +278,10 @@ export function AuthForm() {
                         </>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-4 w-full flex flex-col items-center"
+                    >
                         <AnimatePresence>
                             {isSignUp && !isForgotPassword && (
                                 <motion.div
@@ -286,8 +289,9 @@ export function AuthForm() {
                                     animate={{ height: "auto", opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
                                     transition={{ duration: 0.2 }}
+                                    className="w-full"
                                 >
-                                    <div className="space-y-2 mb-4">
+                                    <div className="space-y-2 w-full">
                                         <Input
                                             id="name"
                                             value={name}
@@ -303,7 +307,7 @@ export function AuthForm() {
                             )}
                         </AnimatePresence>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 w-full">
                             <Input
                                 id="email"
                                 type="email"
@@ -331,7 +335,7 @@ export function AuthForm() {
                                             }
                                             required={!isForgotPassword}
                                             placeholder="Password"
-                                            className="h-12 px-4 text-base"
+                                            className="h-12 px-4 text-base w-full"
                                         />
                                     </motion.div>
                                 )}
@@ -339,7 +343,7 @@ export function AuthForm() {
                         </div>
 
                         {!isSignUp && !isForgotPassword && (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center w-full">
                                 <Button
                                     type="button"
                                     variant="link"
@@ -378,7 +382,7 @@ export function AuthForm() {
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="flex flex-col space-y-4 p-0 mt-6">
+                <CardFooter className="flex flex-col w-full space-y-4 p-0 mt-6">
                     <Button
                         variant="ghost"
                         className="text-sm font-normal hover:bg-transparent hover:text-primary"
@@ -395,24 +399,28 @@ export function AuthForm() {
                             </motion.span>
                         </AnimatePresence>
                     </Button>
-                    <p className="text-center text-xs text-muted-foreground leading-relaxed">
-                        By continuing, you agree to Fresh Feeding's{" "}
-                        <a
-                            href="/terms"
-                            className="underline hover:text-primary transition-colors"
-                        >
-                            Terms of Service
-                        </a>{" "}
-                        and{" "}
-                        <a
-                            href="/privacy"
-                            className="underline hover:text-primary transition-colors"
-                        >
-                            Privacy Policy
-                        </a>
-                    </p>
                 </CardFooter>
             </Card>
+            <div>
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                    By continuing, you agree to Fresh Feeding's{" "}
+                    <a
+                        href="/terms"
+                        className="underline hover:text-primary transition-colors"
+                    >
+                        Terms of Service
+                    </a>
+                </p>
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                    and{" "}
+                    <a
+                        href="/privacy"
+                        className="underline hover:text-primary transition-colors"
+                    >
+                        Privacy Policy
+                    </a>
+                </p>
+            </div>
         </div>
     );
 }
