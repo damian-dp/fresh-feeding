@@ -17,10 +17,10 @@ import {
     ShoppingBasket,
 } from "lucide-react";
 
-import { NavMain } from "@/components/sidebar/nav-main";
-import { NavResources } from "@/components/sidebar/nav-resources";
-import { NavUser } from "@/components/sidebar/nav-user";
-import { TeamSwitcher } from "@/components/sidebar/team-switcher";
+import { NavMain } from "@/components/app/sidebar/nav-main";
+import { NavResources } from "@/components/app/sidebar/nav-resources";
+import { NavUser } from "@/components/app/sidebar/nav-user";
+import { TeamSwitcher } from "@/components/app/sidebar/team-switcher";
 import {
     Sidebar,
     SidebarContent,
@@ -28,7 +28,7 @@ import {
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 // This is sample data.
 const data = {

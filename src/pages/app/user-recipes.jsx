@@ -18,6 +18,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { RecipeTable } from "@/components/app/recipes/recipe-table";
 
 export function UserRecipesPage() {
     const { recipes, loading: recipesLoading, deleteRecipe } = useRecipes();
@@ -95,84 +96,7 @@ export function UserRecipesPage() {
                     </Button>
                 </div>
 
-                <div className="rounded-lg border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Recipe Name</TableHead>
-                                <TableHead>Dog</TableHead>
-                                <TableHead className="max-w-[400px]">
-                                    Ingredients
-                                </TableHead>
-                                <TableHead className="w-[70px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {recipes.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={4}
-                                        className="text-center h-24"
-                                    >
-                                        No recipes found
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                recipes.map((recipe) => (
-                                    <TableRow key={recipe.recipe_id}>
-                                        <TableCell className="font-medium">
-                                            {recipe.recipe_name}
-                                        </TableCell>
-                                        <TableCell>
-                                            {getDogName(recipe.dog_id)}
-                                        </TableCell>
-                                        <TableCell className="max-w-[400px] truncate">
-                                            {formatIngredients(
-                                                recipe.recipe_ingredients
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            console.log(
-                                                                "Edit recipe",
-                                                                recipe.recipe_id
-                                                            )
-                                                        }
-                                                    >
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        className="text-destructive"
-                                                        onClick={() =>
-                                                            handleDeleteRecipe(
-                                                                recipe.recipe_id
-                                                            )
-                                                        }
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                <RecipeTable onDelete={handleDeleteRecipe} />
             </div>
         </div>
     );

@@ -26,7 +26,13 @@ export function UserProvider({ children }) {
                 if (error) throw error;
 
                 console.log("Profile loaded:", data);
-                setProfile(data);
+                setProfile({
+                    ...data,
+                    name:
+                        data.name ||
+                        session.user.user_metadata?.full_name ||
+                        "there",
+                });
             } catch (error) {
                 console.error("Error loading profile:", error);
                 setProfile(null);

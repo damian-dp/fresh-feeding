@@ -31,7 +31,7 @@
         --secondary: 0 0% 96.1%;
         --secondary-foreground: 0 0% 9%;
         --muted: 0 0% 90.1%;
-        --muted-foreground: 0 0% 45.1%;
+        --muted-foreground: 0 0% 50%;
         --accent: 0 0% 96.1%;
         --accent-foreground: 0 0% 9%;
         --destructive: 0 84.2% 60.2%;
@@ -48,10 +48,38 @@
         --sidebar-foreground: 240 5.3% 26.1%;
         --sidebar-primary: 240 5.9% 10%;
         --sidebar-primary-foreground: 0 0% 98%;
-        --sidebar-accent: 240 4.8% 95.9%;
+        --sidebar-accent: 0 0% 95.9%;
         --sidebar-accent-foreground: 240 5.9% 10%;
         --sidebar-border: 220 13% 91%;
         --sidebar-ring: 217.2 91.2% 59.8%;
+
+        --success-foreground: 123 49% 61%;
+        --success: 137 100% 99%;
+        --success-border: 120 41% 88%;
+    
+        --warning-foreground: 30 78% 60%;
+        --warning: 49 100% 97%;
+        --warning-border: 30 100% 89%;
+    
+        --error-foreground: 0 100% 67%;
+        --error: 0 100% 96%;
+        --error-border: 0 100% 90%;
+    
+        --meat-foreground: 0 70% 66%;
+        --meat: 8 100% 95%;
+        --meat-border: 7 86% 86%;
+    
+        --plant-foreground: 103 30% 48%;
+        --plant: 103 47% 93%;
+        --plant-border: 91 43% 75%;
+    
+        --organ-foreground: 269 19% 51%;
+        --organ: 263 50% 93%;
+        --organ-border: 288 19% 80%;
+    
+        --liver-foreground: 17 29% 59%;
+        --liver: 23 30% 92%;
+        --liver-border: 29 38% 79%;
     }
     .dark {
         --background: 0 0% 3.9%;
@@ -86,6 +114,34 @@
         --sidebar-accent-foreground: 240 4.8% 95.9%;
         --sidebar-border: 240 3.7% 15.9%;
         --sidebar-ring: 217.2 91.2% 59.8%;
+
+        --success-foreground: hsl(120, 84%, 77%);
+        --success: hsl(120, 100%, 11%);
+        --success-border: hsl(120, 94%, 21%);
+    
+        --warning-foreground: hsl(48, 100%, 50%);
+        --warning: hsl(50, 100%, 12%);
+        --warning-border: hsl(43, 100%, 20%);
+    
+        --error-foreground: hsl(0, 100%, 70%);
+        --error: hsl(0, 100%, 13%);
+        --error-border: hsl(0, 73%, 26%);
+    
+        --meat-foreground: hsl(0, 85%, 71%);
+        --meat: hsl(357, 41%, 18%);
+        --meat-border: hsl(0, 42%, 32%);
+    
+        --plant-foreground: hsl(102, 29%, 59%);
+        --plant: hsl(104, 27%, 14%);
+        --plant-border: hsl(108, 28%, 29%);
+    
+        --organ-foreground: hsl(276, 29%, 66%);
+        --organ: hsl(258, 25%, 20%);
+        --organ-border: hsl(276, 17%, 32%);
+    
+        --liver-foreground: hsl(12, 56%, 75%);
+        --liver: hsl(19, 23%, 18%);
+        --liver-border: hsl(19, 27%, 33%);
     }
 }
 

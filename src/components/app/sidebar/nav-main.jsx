@@ -33,7 +33,7 @@ export function NavMain({ main }) {
                         <SidebarMenuButton
                             tooltip={item.name}
                             asChild
-                            className={pathname === item.url ? "bg-accent" : ""}
+                            className={pathname === item.url ? "bg-accent ring-1 ring-border" : ""}
                         >
                             <Link to={item.url}>
                                 <item.icon />
@@ -79,7 +79,7 @@ export function NavMain({ main }) {
                                                     className={
                                                         pathname ===
                                                         `/dogs/${dog.dog_id}`
-                                                            ? "bg-accent"
+                                                            ? "bg-accent ring-1 ring-border"
                                                             : ""
                                                     }
                                                 >

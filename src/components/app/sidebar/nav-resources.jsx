@@ -22,7 +22,7 @@ export function NavResources({ resources }) {
                         <SidebarMenuButton
                             tooltip={item.name}
                             asChild
-                            className={pathname === item.url ? "bg-accent" : ""}
+                            className={pathname === item.url ? "bg-accent ring-1 ring-border" : ""}
                         >
                             <Link to={item.url}>
                                 <item.icon />

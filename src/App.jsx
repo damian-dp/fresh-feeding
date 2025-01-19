@@ -23,6 +23,54 @@ import { UserRecipesPage } from "@/pages/app/user-recipes";
 import { IngredientDatabasePage } from "./pages/app/ingredient-database";
 import { IngredientsProvider } from "@/components/providers/ingredients-provider";
 import { Analytics } from "@vercel/analytics/react";
+import { LoadingProvider } from "@/components/providers/loading-provider";
+import { LoadingScreen } from "@/components/app/loading-screen";
+import { useLoading } from "@/components/providers/loading-provider";
+
+function AppContent() {
+    const { isReady } = useLoading();
+
+    if (!isReady) {
+        return <LoadingScreen />;
+    }
+
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route
+                    path="/auth/reset-password"
+                    element={<ResetPasswordPage />}
+                />
+                <Route
+                    path="/auth/update-password"
+                    element={<UpdatePasswordPage />}
+                />
+                <Route path="/reset-password" element={<AuthRedirect />} />
+
+                <Route
+                    element={
+                        <ProtectedRoute>
+                            <RootLayout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/recipes" element={<UserRecipesPage />} />
+                    <Route path="/dogs/:dogId" element={<DogProfilePage />} />
+                    <Route
+                        path="/ingredients"
+                        element={<IngredientDatabasePage />}
+                    />
+                    <Route path="/suppliers" element={<h1>Suppliers</h1>} />
+                </Route>
+            </Routes>
+            <Toaster position="bottom-right" richColors />
+        </Router>
+    );
+}
 
 function App() {
     return (
@@ -31,63 +79,9 @@ function App() {
                 <DogsProvider>
                     <RecipesProvider>
                         <IngredientsProvider>
-                            <Router>
-                                <Routes>
-                                    {/* Public routes */}
-                                    <Route path="/" element={<LandingPage />} />
-                                    <Route
-                                        path="/auth"
-                                        element={<AuthPage />}
-                                    />
-                                    <Route
-                                        path="/auth/callback"
-                                        element={<AuthCallback />}
-                                    />
-                                    <Route
-                                        path="/auth/reset-password"
-                                        element={<ResetPasswordPage />}
-                                    />
-                                    <Route
-                                        path="/auth/update-password"
-                                        element={<UpdatePasswordPage />}
-                                    />
-                                    <Route
-                                        path="/reset-password"
-                                        element={<AuthRedirect />}
-                                    />
-
-                                    {/* Protected routes */}
-                                    <Route
-                                        element={
-                                            <ProtectedRoute>
-                                                <RootLayout />
-                                            </ProtectedRoute>
-                                        }
-                                    >
-                                        <Route
-                                            path="/dashboard"
-                                            element={<DashboardPage />}
-                                        />
-                                        <Route
-                                            path="/recipes"
-                                            element={<UserRecipesPage />}
-                                        />
-                                        <Route
-                                            path="/dogs/:dogId"
-                                            element={<DogProfilePage />}
-                                        />
-                                        <Route
-                                            path="/ingredients"
-                                            element={<IngredientDatabasePage />}
-                                        />
-                                        <Route
-                                            path="/suppliers"
-                                            element={<h1>Suppliers</h1>}
-                                        />
-                                    </Route>
-                                </Routes>
-                                <Toaster position="bottom-right" richColors />
-                            </Router>
+                            <LoadingProvider>
+                                <AppContent />
+                            </LoadingProvider>
                         </IngredientsProvider>
                     </RecipesProvider>
                 </DogsProvider>

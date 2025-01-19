@@ -62,6 +62,42 @@ module.exports = {
                     border: "hsl(var(--sidebar-border))",
                     ring: "hsl(var(--sidebar-ring))",
                 },
+
+                success: {
+                    DEFAULT: "hsl(var(--success))",
+                    foreground: "hsl(var(--success-foreground))",
+                    border: "hsl(var(--success-border))",
+                },
+                warning: {
+                    DEFAULT: "hsl(var(--warning))",
+                    foreground: "hsl(var(--warning-foreground))",
+                    border: "hsl(var(--warning-border))",
+                },
+                error: {
+                    DEFAULT: "hsl(var(--error))",
+                    foreground: "hsl(var(--error-foreground))",
+                    border: "hsl(var(--error-border))",
+                },
+                meat: {
+                    DEFAULT: "hsl(var(--meat))",
+                    foreground: "hsl(var(--meat-foreground))",
+                    border: "hsl(var(--meat-border))",
+                },
+                plant: {
+                    DEFAULT: "hsl(var(--plant))",
+                    foreground: "hsl(var(--plant-foreground))",
+                    border: "hsl(var(--plant-border))",
+                },
+                organ: {
+                    DEFAULT: "hsl(var(--organ))",
+                    foreground: "hsl(var(--organ-foreground))",
+                    border: "hsl(var(--organ-border))",
+                },
+                liver: {
+                    DEFAULT: "hsl(var(--liver))",
+                    foreground: "hsl(var(--liver-foreground))",
+                    border: "hsl(var(--liver-border))",
+                },
             },
             keyframes: {
                 "accordion-down": {
