@@ -3,13 +3,17 @@ import { useDogs } from "@/components/providers/dogs-provider";
 import {
     Bone,
     Brain,
+    CheckCheck,
     CheckIcon,
     Dog,
     Heart,
     Loader2,
     PartyPopper,
     Pencil,
+    Percent,
+    Scale,
     Target,
+    Weight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,20 +29,115 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Apple } from "lucide-react";
-import { FileTextIcon } from "lucide-react";
-import { Users } from "lucide-react";
-import { ArrowRight } from "lucide-react";
-import { ArrowUpRight } from "lucide-react";
 import { RecipeTable } from "@/components/app/recipes/recipe-table";
-import { DogProfileCard } from "@/components/app/dashboard/dog-profile-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { calculateAge } from "@/components/app/dashboard/dog-profile-card";
 import { BadgeStack } from "@/components/ui/badge-stack";
+import { Textarea } from "@/components/ui/textarea";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { supabase } from "@/lib/supabase";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
     const { dogs, loading } = useDogs();
+    const textareaRef = useRef(null);
+    const saveTimeoutRef = useRef(null);
+
+    // Local state for notes
+    const [notes, setNotes] = useState("");
+    const [saveStatus, setSaveStatus] = useState("idle"); // "typing", "saving", "saved", "idle"
+
+    // Update notes when dog changes
+    useEffect(() => {
+        const currentDog = dogs.find((d) => d.dog_id === parseInt(dogId));
+        setNotes(currentDog?.dog_notes || "");
+    }, [dogId, dogs]);
+
+    // Clear timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Auto-resize textarea
+    const adjustTextareaHeight = () => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    };
+
+    // Adjust height on content change
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [notes]);
+
+    // Debounced save function
+    const saveNotes = useCallback(
+        async (value) => {
+            try {
+                setSaveStatus("saving");
+                const parsedId = parseInt(dogId);
+                const currentDog = dogs.find((d) => d.dog_id === parsedId);
+
+                if (!currentDog) {
+                    throw new Error("Dog not found");
+                }
+
+                const { error, data } = await supabase
+                    .from("dogs")
+                    .update({
+                        dog_notes: value,
+                    })
+                    .eq("dog_id", parsedId)
+                    .select("*")
+                    .maybeSingle();
+
+                if (error) {
+                    console.error("Update error:", error);
+                    throw error;
+                }
+
+                if (data === null) {
+                    throw new Error("No data returned from update");
+                }
+
+                // Update local state with the returned data
+                setNotes(data.dog_notes);
+                setSaveStatus("saved");
+
+                // Clear any existing timeout
+                if (saveTimeoutRef.current) {
+                    clearTimeout(saveTimeoutRef.current);
+                }
+
+                // Set new timeout to clear the saved status
+                saveTimeoutRef.current = setTimeout(() => {
+                    setSaveStatus("idle");
+                }, 4000);
+            } catch (error) {
+                console.error("Error saving notes:", error);
+                setSaveStatus("error");
+            }
+        },
+        [dogId, dogs, saveTimeoutRef]
+    );
+
+    // Debounce the save function (1 second delay)
+    const debouncedSave = useDebounce(saveNotes, 1000);
+
+    // Handle text changes
+    const handleNotesChange = (e) => {
+        const value = e.target.value;
+        setNotes(value);
+        setSaveStatus("typing");
+        debouncedSave(value);
+    };
 
     // Convert dogId to number since it comes as string from URL params
     const dog = dogs.find((dog) => dog.dog_id === parseInt(dogId));
@@ -70,7 +169,6 @@ export function DogProfilePage() {
     const plantGrams = Math.round(intakeGrams * dog.ratios_plant_matter);
     const organGrams = Math.round(intakeGrams * dog.ratios_secreting_organ);
     const liverGrams = Math.round(intakeGrams * dog.ratios_liver);
-
 
     return (
         <>
@@ -204,17 +302,9 @@ export function DogProfilePage() {
                                 flipped={true}
                             />
                             <BadgeStack
-                                icon={<Target />}
-                                label={
-                                    dog.goal === "maintain"
-                                        ? "Maintain weight"
-                                        : dog.goal === "gain"
-                                        ? "Gain weight"
-                                        : dog.goal === "lose"
-                                        ? "Lose weight"
-                                        : "Custom"
-                                }
-                                sublabel="Goal"
+                                icon={<Weight />}
+                                label={`${dog.weight_metric}kg`}
+                                sublabel="Current weight"
                                 flipped={true}
                             />
                             <div className="flex flex-col col-span-2 justify-between h-full row-span-2 text-xl font-normal text-muted-foreground/60 lg:pr-20 leading-relaxed align-top">
@@ -277,31 +367,15 @@ export function DogProfilePage() {
                                 </p>
                             </div>
                             <BadgeStack
-                                icon={<Target />}
-                                label={
-                                    dog.goal === "maintain"
-                                        ? "Maintain weight"
-                                        : dog.goal === "gain"
-                                        ? "Gain weight"
-                                        : dog.goal === "lose"
-                                        ? "Lose weight"
-                                        : "Custom"
-                                }
-                                sublabel="Goal"
+                                icon={<Scale />}
+                                label={`${intakeGrams}g`}
+                                sublabel="Daily intake (g)"
                                 flipped={true}
                             />
                             <BadgeStack
-                                icon={<Target />}
-                                label={
-                                    dog.goal === "maintain"
-                                        ? "Maintain weight"
-                                        : dog.goal === "gain"
-                                        ? "Gain weight"
-                                        : dog.goal === "lose"
-                                        ? "Lose weight"
-                                        : "Custom"
-                                }
-                                sublabel="Goal"
+                                icon={<Percent />}
+                                label={`${dog.ratios_intake}%`}
+                                sublabel="Daily intake (%)"
                                 flipped={true}
                             />
                         </div>
@@ -358,9 +432,30 @@ export function DogProfilePage() {
                         <RecipeTable limit={5} />
                     </CardContent>
                 </Card>
-            </div>
 
-            
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Profile notes</CardTitle>
+                        <div className="flex items-center gap-2 h-4 pr-2">
+                            {saveStatus === "saving" && (
+                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            )}
+                            {saveStatus === "saved" && (
+                                <CheckCheck className="w-6 h-6 text-success-foreground" />
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="">
+                        <Textarea
+                            placeholder="Add a note"
+                            className="rounded-sm px-4 py-3 min-h-[100px] h-auto resize-none overflow-hidden"
+                            ref={textareaRef}
+                            value={notes}
+                            onChange={handleNotesChange}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
         </>
     );
 }

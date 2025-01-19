@@ -26,6 +26,7 @@ import { useRecipes } from "@/components/providers/recipes-provider";
 import { useDogs } from "@/components/providers/dogs-provider";
 import { formatDate } from "@/lib/utils";
 import { BadgeStack } from "@/components/ui/badge-stack";
+import { useRef, useEffect, useState } from "react";
 
 export function RecipeTable({
     // Configurable columns
@@ -43,6 +44,25 @@ export function RecipeTable({
 }) {
     const { recipes } = useRecipes();
     const { dogs, loading } = useDogs();
+    const tableRef = useRef(null);
+    const [tableWidth, setTableWidth] = useState(0);
+
+    useEffect(() => {
+        if (!tableRef.current) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setTableWidth(entry.contentRect.width);
+            }
+        });
+
+        resizeObserver.observe(tableRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    // Only show ingredients if both prop is true and table is wide enough
+    const shouldShowIngredients = showIngredients && tableWidth > 980;
+    const shouldShowNutritionStatus = showNutritionStatus && tableWidth > 720;
 
     // Get dog name helper function
     const getDogName = (dogId) => {
@@ -109,7 +129,7 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-name`}
-                    className="font-medium"
+                    className="font-medium sticky left-0 border-r border-border bg-card"
                 >
                     <p className="font-medium mb-0.5 whitespace-nowrap">
                         {recipe.recipe_name}
@@ -128,7 +148,10 @@ export function RecipeTable({
                 const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
 
                 return (
-                    <TableCell className="" key={`${recipe.recipe_id}-dog`}>
+                    <TableCell
+                        className="border-r border-border"
+                        key={`${recipe.recipe_id}-dog`}
+                    >
                         <BadgeStack
                             variant="default"
                             icon={<DogIcon />}
@@ -137,9 +160,9 @@ export function RecipeTable({
                                 dog
                                     ? `Daily intake: ${Math.round(
                                           dog.weight_metric *
-                                                1000 *
-                                                (dog.ratios_intake / 100)
-                                        )}g`
+                                              1000 *
+                                              (dog.ratios_intake / 100)
+                                      )}g`
                                     : ""
                             }
                             flipped={false}
@@ -149,19 +172,19 @@ export function RecipeTable({
                 );
             },
         },
-        showIngredients && {
+        shouldShowIngredients && {
             id: "ingredients",
             header: "Ingredients",
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-ingredients`}
-                    className="text-xs text-muted-foreground leading-[1.15rem]"
+                    className="text-xs text-muted-foreground leading-[1.15rem] border-r border-border"
                 >
                     {formatIngredients(recipe.recipe_ingredients)}
                 </TableCell>
             ),
         },
-        showNutritionStatus && {
+        shouldShowNutritionStatus && {
             id: "nutrition-status",
             header: "Nutrition Status",
             cell: (recipe) => {
@@ -169,7 +192,10 @@ export function RecipeTable({
                 const nutritionStatus = recipe.isNutritionallyBalanced;
 
                 return (
-                    <TableCell className="" key={`${recipe.recipe_id}-nutrition-status`}>
+                    <TableCell
+                        className="border-r border-border"
+                        key={`${recipe.recipe_id}-nutrition-status`}
+                    >
                         {nutritionStatus ? (
                             <BadgeStack
                                 variant="success"
@@ -195,7 +221,10 @@ export function RecipeTable({
             id: "actions",
             header: "",
             cell: (recipe) => (
-                <TableCell key={`${recipe.recipe_id}-actions`}>
+                <TableCell
+                    key={`${recipe.recipe_id}-actions`}
+                    className="lg:px-4 flex justify-center"
+                >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -228,34 +257,13 @@ export function RecipeTable({
     ].filter(Boolean);
 
     return (
-        <Table>
-            {/* <TableHeader>
-                <TableRow>
-                    {columns.map(
-                        (column) =>
-                            column && (
-                                <TableHead
-                                    key={column.id}
-                                    className={
-                                        column.id === "ingredients"
-                                            ? "max-w-[400px]"
-                                            : column.id === "actions"
-                                            ? "w-[70px]"
-                                            : undefined
-                                    }
-                                >
-                                    {column.header}
-                                </TableHead>
-                            )
-                    )}
-                </TableRow>
-            </TableHeader> */}
+        <Table ref={tableRef} className="w-full max-w-full">
             <TableBody>
                 {visibleRecipes.length === 0 ? (
                     <TableRow>
                         <TableCell
                             colSpan={columns.length}
-                            className="text-center h-24"
+                            className="text-center h-24 min-w-0"
                         >
                             No recipes found
                         </TableCell>
