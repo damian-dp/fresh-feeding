@@ -82,13 +82,16 @@ const data = {
 
 export function AppSidebar({ ...props }) {
     return (
-        <Sidebar
-            variant="floating"
-            collapsible="icon"
-            {...props}
-        >
+        <Sidebar variant="floating" collapsible="icon" {...props}>
             <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+                <div className="flex flex-row items-center gap-3 p-3 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
+                    <img src="/logo-mark.svg" alt="Logo" className="size-9 group-data-[collapsible=icon]:size-7"  />
+                    <img
+                        src="/logo-stack.svg"
+                        alt="Logo"
+                        className="h-9 group-data-[collapsible=icon]:hidden"
+                    />
+                </div>
             </SidebarHeader>
             <SidebarContent>
                 <NavMain main={data.main} />

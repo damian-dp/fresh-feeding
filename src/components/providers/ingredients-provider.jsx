@@ -13,12 +13,47 @@ export function IngredientsProvider({ children }) {
     useEffect(() => {
         async function fetchIngredients() {
             try {
-                const { data, error } = await supabase
-                    .from("ingredients")
-                    .select("*");
+                const { data, error } = await supabase.from("ingredients")
+                    .select(`
+                        ingredient_id,
+                        ingredient_name,
+                        category_id,
+                        ingredient_description,
+                        bone_percent,
+                        thumbnail_url,
+                        highlights,
+                        nutrients:ingredients_nutrients(
+                            nutrient:nutrients(
+                                nutrient_id,
+                                nutrient_basic_name,
+                                nutrient_scientific_name,
+                                nutrient_group
+                            )
+                        )
+                    `);
 
                 if (error) throw error;
-                setIngredients(data || []);
+
+                // Transform the data to match the expected format
+                const transformedData =
+                    data?.map((ingredient) => ({
+                        id: ingredient.ingredient_id,
+                        name: ingredient.ingredient_name,
+                        description: ingredient.ingredient_description,
+                        category: ingredient.category_id,
+                        bone_percent: ingredient.bone_percent,
+                        thumbnail_image: ingredient.thumbnail_url,
+                        highlights: ingredient.highlights,
+                        nutrients: ingredient.nutrients.map((n) => ({
+                            id: n.nutrient.nutrient_id,
+                            name: n.nutrient.nutrient_basic_name,
+                            scientific_name:
+                                n.nutrient.nutrient_scientific_name,
+                            group: n.nutrient.nutrient_group,
+                        })),
+                    })) || [];
+
+                setIngredients(transformedData);
             } catch (error) {
                 console.error("Error fetching ingredients:", error);
             } finally {
@@ -29,7 +64,7 @@ export function IngredientsProvider({ children }) {
         fetchIngredients();
     }, []);
 
-    // Separate effect for subscription
+    // Update subscription to match the transformed data structure
     useEffect(() => {
         const channel = supabase
             .channel("ingredients_changes")
@@ -40,22 +75,52 @@ export function IngredientsProvider({ children }) {
                     schema: "public",
                     table: "ingredients",
                 },
-                (payload) => {
+                async (payload) => {
                     console.log("Ingredients changed:", payload);
-                    // Update ingredients directly based on the change
-                    if (payload.eventType === "INSERT") {
-                        setIngredients((prev) => [...prev, payload.new]);
-                    } else if (payload.eventType === "DELETE") {
-                        setIngredients((prev) =>
-                            prev.filter((item) => item.id !== payload.old.id)
-                        );
-                    } else if (payload.eventType === "UPDATE") {
-                        setIngredients((prev) =>
-                            prev.map((item) =>
-                                item.id === payload.new.id ? payload.new : item
+                    // Refetch all data when there's a change since we need the relations
+                    const { data, error } = await supabase.from("ingredients")
+                        .select(`
+                            ingredient_id,
+                            ingredient_name,
+                            category_id,
+                            ingredient_description,
+                            bone_percent,
+                            thumbnail_url,
+                            highlights,
+                            nutrients:ingredients_nutrients(
+                                nutrient:nutrients(
+                                    nutrient_id,
+                                    nutrient_basic_name,
+                                    nutrient_scientific_name,
+                                    nutrient_group
+                                )
                             )
-                        );
+                        `);
+
+                    if (error) {
+                        console.error("Error refetching ingredients:", error);
+                        return;
                     }
+
+                    const transformedData =
+                        data?.map((ingredient) => ({
+                            id: ingredient.ingredient_id,
+                            name: ingredient.ingredient_name,
+                            description: ingredient.ingredient_description,
+                            category: ingredient.category_id,
+                            bone_percent: ingredient.bone_percent,
+                            thumbnail_image: ingredient.thumbnail_url,
+                            highlights: ingredient.highlights,
+                            nutrients: ingredient.nutrients.map((n) => ({
+                                id: n.nutrient.nutrient_id,
+                                name: n.nutrient.nutrient_basic_name,
+                                scientific_name:
+                                    n.nutrient.nutrient_scientific_name,
+                                group: n.nutrient.nutrient_group,
+                            })),
+                        })) || [];
+
+                    setIngredients(transformedData);
                 }
             )
             .subscribe();

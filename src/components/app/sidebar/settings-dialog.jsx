@@ -15,6 +15,8 @@ import {
     DrawerDescription,
     DrawerHeader,
     DrawerTitle,
+    DrawerFooter,
+    DrawerClose,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
@@ -254,6 +256,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            autoFocus={false}
+                            tabIndex={-1}
                         />
                     </div>
                     <div className="space-y-2 w-full">
@@ -293,14 +297,20 @@ export function SettingsDialog({ open, onOpenChange }) {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            autoFocus={false}
+                            tabIndex={-1}
                         />
                     </div>
                 </div>
                 <div className="flex flex-row gap-6">
                     <div className="space-y-2 w-full">
                         <Label htmlFor="country">Country</Label>
-                        <Select value={country} onValueChange={setCountry}>
-                            <SelectTrigger className="w-full">
+                        <Select
+                            value={country}
+                            onValueChange={setCountry}
+                            tabIndex={-1}
+                        >
+                            <SelectTrigger className="w-full" tabIndex={-1}>
                                 <SelectValue placeholder="Select a country" />
                             </SelectTrigger>
                             <SelectContent
@@ -331,6 +341,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                             value={postcode}
                             placeholder="Your postcode"
                             onChange={(e) => setPostcode(e.target.value)}
+                            autoFocus={false}
+                            tabIndex={-1}
                         />
                     </div>
                 </div>
@@ -346,8 +358,9 @@ export function SettingsDialog({ open, onOpenChange }) {
                             onValueChange={(value) =>
                                 setUnitMetric(value === "metric")
                             }
+                            tabIndex={-1}
                         >
-                            <SelectTrigger className="">
+                            <SelectTrigger className="" tabIndex={-1}>
                                 <SelectValue placeholder="Select measurement system" />
                             </SelectTrigger>
                             <SelectContent>
@@ -370,8 +383,12 @@ export function SettingsDialog({ open, onOpenChange }) {
                     </div>
                     <div className="space-y-2 w-full">
                         <Label htmlFor="theme">Theme</Label>
-                        <Select value={theme} onValueChange={setTheme}>
-                            <SelectTrigger className="">
+                        <Select
+                            value={theme}
+                            onValueChange={setTheme}
+                            tabIndex={-1}
+                        >
+                            <SelectTrigger className="" tabIndex={-1}>
                                 <SelectValue placeholder="Select theme" />
                             </SelectTrigger>
                             <SelectContent>
@@ -393,8 +410,16 @@ export function SettingsDialog({ open, onOpenChange }) {
     if (isDesktop) {
         return (
             <>
-                <Dialog open={open} onOpenChange={handleOpenChange}>
-                    <DialogContent>
+                <Dialog
+                    open={open}
+                    onOpenChange={handleOpenChange}
+                    initialFocus={false}
+                    preventScroll
+                >
+                    <DialogContent
+                        autoFocus={false}
+                        className="focus:outline-none"
+                    >
                         <DialogHeader className="flex flex-row items-center justify-between">
                             <DialogTitle>Account Settings</DialogTitle>
                             <DialogDescription className="hidden">
@@ -411,13 +436,16 @@ export function SettingsDialog({ open, onOpenChange }) {
                         <DialogFooter>
                             <div className="flex flex-row items-center gap-2">
                                 <DialogClose asChild>
-                                    <Button variant="link">Cancel</Button>
+                                    <Button variant="link" tabIndex={-1}>
+                                        Cancel
+                                    </Button>
                                 </DialogClose>
                                 <Button
                                     variant="outline"
                                     form="settings-form"
                                     type="submit"
                                     disabled={saving || !hasUnsavedChanges}
+                                    tabIndex={-1}
                                 >
                                     {saving ? (
                                         <>
@@ -467,8 +495,12 @@ export function SettingsDialog({ open, onOpenChange }) {
 
     return (
         <>
-            <Drawer open={open} onOpenChange={handleOpenChange}>
-                <DrawerContent>
+            <Drawer
+                open={open}
+                onOpenChange={handleOpenChange}
+                initialFocus={false}
+            >
+                <DrawerContent autoFocus={false} className="focus:outline-none">
                     <DrawerHeader>
                         <DrawerTitle>Account Settings</DrawerTitle>
                         <DrawerDescription>
@@ -476,6 +508,34 @@ export function SettingsDialog({ open, onOpenChange }) {
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4">{Content}</div>
+                    <DrawerFooter>
+                        <div className="flex flex-row items-center gap-2">
+                            <DrawerClose asChild>
+                                <Button variant="link" tabIndex={-1}>
+                                    Cancel
+                                </Button>
+                            </DrawerClose>
+                            <Button
+                                variant="outline"
+                                form="settings-form"
+                                type="submit"
+                                disabled={saving || !hasUnsavedChanges}
+                                tabIndex={-1}
+                            >
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCheck className="mr-2 h-4 w-4" />
+                                        Save
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </DrawerFooter>
                 </DrawerContent>
             </Drawer>
 
