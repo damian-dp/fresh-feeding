@@ -66,7 +66,6 @@ export function UpdatePasswordPage() {
         <div className="container max-w-screen-xl mx-auto px-4 py-12">
             <div className="max-w-md mx-auto">
                 <ResetPasswordForm />
-                <Toaster position="bottom-right" richColors/>
             </div>
         </div>
     );

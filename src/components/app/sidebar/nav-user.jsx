@@ -8,11 +8,15 @@ import {
     LogOut,
     Loader2,
     Sparkles,
+    Settings2,
+    HelpCircle,
 } from "lucide-react";
 import { useUser } from "@/components/providers/user-provider";
 import { useAuth } from "@/components/providers/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useState } from "react";
+import { SettingsDialog } from "./settings-dialog";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -35,6 +39,7 @@ export function NavUser() {
     const { isMobile } = useSidebar();
     const { profile, loading } = useUser();
     const { session } = useAuth();
+    const [showSettings, setShowSettings] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -123,25 +128,18 @@ export function NavUser() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Upgrade to Pro
+                            <DropdownMenuItem
+                                onClick={() => setShowSettings(true)}
+                            >
+                                <Settings2 className="mr-2 h-4 w-4" />
+                                Account Settings
                             </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
+
                             <DropdownMenuItem>
-                                <BadgeCheck className="mr-2 h-4 w-4" />
-                                Account
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Billing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bell className="mr-2 h-4 w-4" />
-                                Notifications
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                Get help
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
@@ -151,6 +149,10 @@ export function NavUser() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <SettingsDialog
+                    open={showSettings}
+                    onOpenChange={setShowSettings}
+                />
             </SidebarMenuItem>
         </SidebarMenu>
     );

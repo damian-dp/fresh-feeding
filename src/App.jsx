@@ -23,17 +23,15 @@ import { UserRecipesPage } from "@/pages/app/user-recipes";
 import { IngredientDatabasePage } from "./pages/app/ingredient-database";
 import { IngredientsProvider } from "@/components/providers/ingredients-provider";
 import { Analytics } from "@vercel/analytics/react";
-import { LoadingProvider } from "@/components/providers/loading-provider";
+import {
+    LoadingProvider,
+    useLoading,
+} from "@/components/providers/loading-provider";
 import { LoadingScreen } from "@/components/app/loading-screen";
-import { useLoading } from "@/components/providers/loading-provider";
+import { useEffect } from "react";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 function AppContent() {
-    const { isReady } = useLoading();
-
-    if (!isReady) {
-        return <LoadingScreen />;
-    }
-
     return (
         <Router>
             <Routes>
@@ -75,18 +73,20 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <UserProvider>
-                <DogsProvider>
-                    <RecipesProvider>
-                        <IngredientsProvider>
-                            <LoadingProvider>
-                                <AppContent />
-                            </LoadingProvider>
-                        </IngredientsProvider>
-                    </RecipesProvider>
-                </DogsProvider>
-            </UserProvider>
-            <Analytics />
+            <ThemeProvider defaultTheme="system" storageKey="fresh-food-theme">
+                <UserProvider>
+                    <DogsProvider>
+                        <RecipesProvider>
+                            <IngredientsProvider>
+                                <LoadingProvider>
+                                    <AppContent />
+                                </LoadingProvider>
+                            </IngredientsProvider>
+                        </RecipesProvider>
+                    </DogsProvider>
+                </UserProvider>
+                <Analytics />
+            </ThemeProvider>
         </AuthProvider>
     );
 }
