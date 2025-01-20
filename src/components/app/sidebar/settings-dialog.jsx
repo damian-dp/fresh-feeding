@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import {
     Dialog,
@@ -9,19 +9,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import {
     Drawer,
     DrawerContent,
@@ -56,38 +43,114 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { countries } from "countries-list";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const countries = [
-    { value: "AU", label: "Australia" },
-    { value: "NZ", label: "New Zealand" },
-    { value: "US", label: "United States" },
-    { value: "CA", label: "Canada" },
-    { value: "GB", label: "United Kingdom" },
-    // Add more countries as needed
-];
+// Convert countries object to array format we need
+const countryOptions = Object.entries(countries)
+    .map(([code, country]) => ({
+        value: code,
+        label: country.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
 export function SettingsDialog({ open, onOpenChange }) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const { profile, loading: profileLoading } = useUser();
     const { theme, setTheme } = useTheme();
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
+    // Initialize state with profile data or empty strings
+    const [name, setName] = useState(profile?.name || "");
+    const [email, setEmail] = useState(profile?.email || "");
     const [sendingVerification, setSendingVerification] = useState(false);
-    const [country, setCountry] = useState("");
-    const [postcode, setPostcode] = useState("");
-    const [unitMetric, setUnitMetric] = useState(true);
+    const [country, setCountry] = useState(profile?.country || "");
+    const [postcode, setPostcode] = useState(profile?.postcode || "");
+    const [unitMetric, setUnitMetric] = useState(profile?.unit_metric ?? true);
     const [openCountry, setOpenCountry] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+    // Track initial values to detect changes
+    const initialValues = useRef({
+        name: profile?.name || "",
+        email: profile?.email || "",
+        country: profile?.country || "",
+        postcode: profile?.postcode || "",
+        unitMetric: profile?.unit_metric ?? true,
+    });
+
+    // Reset form when dialog opens/closes
     useEffect(() => {
-        if (profile) {
-            setName(profile.name || "");
-            setEmail(profile?.email || "");
-            setCountry(profile.country || "");
-            setPostcode(profile.postcode || "");
-            setUnitMetric(profile.unit_metric);
+        if (!profile) return;
+
+        if (open) {
+            const values = {
+                name: profile.name || "",
+                email: profile.email || "",
+                country: profile.country || "",
+                postcode: profile.postcode || "",
+                unitMetric: profile.unit_metric,
+            };
+
+            setName(values.name);
+            setEmail(values.email);
+            setCountry(values.country);
+            setPostcode(values.postcode);
+            setUnitMetric(values.unitMetric);
+            initialValues.current = { ...values };
+            setHasUnsavedChanges(false);
         }
-    }, [profile]);
+    }, [open, profile]);
+
+    // Check for changes during editing
+    useEffect(() => {
+        if (!open || !profile) return;
+
+        const currentValues = {
+            name,
+            email,
+            country,
+            postcode,
+            unitMetric,
+        };
+
+        const hasChanges = Object.keys(currentValues).some(
+            (key) => currentValues[key] !== initialValues.current[key]
+        );
+
+        setHasUnsavedChanges(hasChanges);
+    }, [name, email, country, postcode, unitMetric, open, profile]);
+
+    // Handle dialog close
+    const handleOpenChange = (isOpen) => {
+        if (!isOpen && hasUnsavedChanges) {
+            setShowDiscardDialog(true);
+            return;
+        }
+        onOpenChange(isOpen);
+    };
+
+    // Handle confirming discard
+    const handleConfirmDiscard = () => {
+        setShowDiscardDialog(false);
+        // Reset form to initial values
+        setName(initialValues.current.name);
+        setEmail(initialValues.current.email);
+        setCountry(initialValues.current.country);
+        setPostcode(initialValues.current.postcode);
+        setUnitMetric(initialValues.current.unitMetric);
+        // Close the dialog
+        onOpenChange(false);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -116,7 +179,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                 .update({
                     name,
                     country,
-                    postcode,
+                    postcode:
+                        postcode.trim() === "" ? profile.postcode : postcode,
                     unit_metric: unitMetric,
                 })
                 .eq("profile_id", profile.profile_id);
@@ -235,71 +299,37 @@ export function SettingsDialog({ open, onOpenChange }) {
                 <div className="flex flex-row gap-6">
                     <div className="space-y-2 w-full">
                         <Label htmlFor="country">Country</Label>
-                        <Popover
-                            open={openCountry}
-                            onOpenChange={setOpenCountry}
-                        >
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={openCountry}
-                                    className="w-full justify-between"
-                                >
-                                    {country
-                                        ? countries.find(
-                                              (c) => c.value === country
-                                          )?.label
-                                        : "Select country..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search country..." />
-                                    <CommandList>
-                                        <CommandEmpty>
-                                            No country found.
-                                        </CommandEmpty>
-                                        <CommandGroup>
-                                            {countries.map((c) => (
-                                                <CommandItem
-                                                    key={c.value}
-                                                    value={c.value}
-                                                    onSelect={(
-                                                        currentValue
-                                                    ) => {
-                                                        setCountry(
-                                                            currentValue ===
-                                                                country
-                                                                ? ""
-                                                                : currentValue
-                                                        );
-                                                        setOpenCountry(false);
-                                                    }}
-                                                >
-                                                    {c.label}
-                                                    <Check
-                                                        className={cn(
-                                                            "ml-auto",
-                                                            country === c.value
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                        )}
-                                                    />
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
+                        <Select value={country} onValueChange={setCountry}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a country" />
+                            </SelectTrigger>
+                            <SelectContent
+                                className="max-h-[200px] w-[var(--radix-select-trigger-width)]"
+                                side="bottom"
+                                position="popper"
+                                align="start"
+                            >
+                                <SelectGroup>
+                                    {countryOptions.map((c) => (
+                                        <SelectItem
+                                            key={c.value}
+                                            value={c.value}
+                                            className="break-words hyphens-auto py-2 pr-2 [word-wrap:break-word]"
+                                            style={{ maxWidth: "100%" }}
+                                        >
+                                            {c.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2 w-full">
                         <Label htmlFor="postcode">Postcode</Label>
                         <Input
                             id="postcode"
                             value={postcode}
+                            placeholder="Your postcode"
                             onChange={(e) => setPostcode(e.target.value)}
                         />
                     </div>
@@ -362,62 +392,116 @@ export function SettingsDialog({ open, onOpenChange }) {
 
     if (isDesktop) {
         return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent>
-                    <DialogHeader className="flex flex-row items-center justify-between">
-                        <DialogTitle>Account Settings</DialogTitle>
-                        <DialogDescription className="hidden">
-                            Update your account preferences.
-                        </DialogDescription>
-                        <Avatar className="size-12 mt-0">
-                            <AvatarImage src={profile?.avatar_url} />
-                            <AvatarFallback className="text-lg">
-                                {profile?.name?.charAt(0) || "?"}
-                            </AvatarFallback>
-                        </Avatar>
-                    </DialogHeader>
-                    <div className="py-6">{Content}</div>
-                    <DialogFooter>
-                        <div className="flex flex-row items-center gap-2">
-                            <DialogClose asChild>
-                                <Button variant="link">Cancel</Button>
-                            </DialogClose>
-                            <Button
-                                variant="outline"
-                                form="settings-form"
-                                type="submit"
-                                disabled={saving}
+            <>
+                <Dialog open={open} onOpenChange={handleOpenChange}>
+                    <DialogContent>
+                        <DialogHeader className="flex flex-row items-center justify-between">
+                            <DialogTitle>Account Settings</DialogTitle>
+                            <DialogDescription className="hidden">
+                                Update your account preferences.
+                            </DialogDescription>
+                            <Avatar className="size-12 mt-0">
+                                <AvatarImage src={profile?.avatar_url} />
+                                <AvatarFallback className="text-lg">
+                                    {profile?.name?.charAt(0) || "?"}
+                                </AvatarFallback>
+                            </Avatar>
+                        </DialogHeader>
+                        <div className="py-6">{Content}</div>
+                        <DialogFooter>
+                            <div className="flex flex-row items-center gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="link">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                    variant="outline"
+                                    form="settings-form"
+                                    type="submit"
+                                    disabled={saving || !hasUnsavedChanges}
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saving
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCheck className="mr-2 h-4 w-4" />
+                                            Save
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <AlertDialog
+                    open={showDiscardDialog}
+                    onOpenChange={setShowDiscardDialog}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                Discard changes?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                You have unsaved changes. Are you sure you want
+                                to discard them?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                variant="destructive"
+                                onClick={handleConfirmDiscard}
                             >
-                                {saving ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCheck className="mr-2 h-4 w-4" />
-                                        Save
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                                Discard changes
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </>
         );
     }
 
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent>
-                <DrawerHeader>
-                    <DrawerTitle>Account Settings</DrawerTitle>
-                    <DrawerDescription>
-                        Update your account preferences.
-                    </DrawerDescription>
-                </DrawerHeader>
-                <div className="p-4">{Content}</div>
-            </DrawerContent>
-        </Drawer>
+        <>
+            <Drawer open={open} onOpenChange={handleOpenChange}>
+                <DrawerContent>
+                    <DrawerHeader>
+                        <DrawerTitle>Account Settings</DrawerTitle>
+                        <DrawerDescription>
+                            Update your account preferences.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="p-4">{Content}</div>
+                </DrawerContent>
+            </Drawer>
+
+            <AlertDialog
+                open={showDiscardDialog}
+                onOpenChange={setShowDiscardDialog}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have unsaved changes. Are you sure you want to
+                            discard them?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={handleConfirmDiscard}
+                        >
+                            Discard changes
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
