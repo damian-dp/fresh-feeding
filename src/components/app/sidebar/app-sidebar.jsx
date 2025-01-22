@@ -85,7 +85,11 @@ export function AppSidebar({ ...props }) {
         <Sidebar variant="floating" collapsible="icon" {...props}>
             <SidebarHeader>
                 <div className="flex flex-row items-center gap-3 p-3 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-                    <img src="/logo-mark.svg" alt="Logo" className="size-9 group-data-[collapsible=icon]:size-7"  />
+                    <img
+                        src="/logo-mark.svg"
+                        alt="Logo"
+                        className="size-9 group-data-[collapsible=icon]:size-7"
+                    />
                     <img
                         src="/logo-stack.svg"
                         alt="Logo"

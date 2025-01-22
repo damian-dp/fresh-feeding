@@ -27,9 +27,13 @@ import { Link } from "react-router-dom";
 import { DogProfileCard } from "@/components/app/dashboard/dog-profile-card";
 import { RecipeTable } from "@/components/app/recipes/recipe-table";
 import { Badge } from "@/components/ui/badge";
+import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
+import { useState } from "react";
 
 export function DashboardPage() {
     const { profile, loading } = useUser();
+    const [showAddDog, setShowAddDog] = useState(false);
+
 
     // Get first name for greeting
     const firstName = profile?.name?.split(" ")[0] || "there";
@@ -74,11 +78,9 @@ export function DashboardPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Your dogs</CardTitle>
-                            <Button variant="outline" asChild>
-                                <Link to="/dogs/new">
+                            <Button variant="outline" onClick={() => setShowAddDog(true)}>
                                     <PlusIcon className="w-4 h-4" />
                                     Add dog
-                                </Link>
                             </Button>
                         </CardHeader>
                         <CardContent>
@@ -169,6 +171,7 @@ export function DashboardPage() {
                         </CardContent>
                     </Card>
                 </div>
+                <AddDogDialog open={showAddDog} onOpenChange={setShowAddDog} />
             </div>
         </>
     );
