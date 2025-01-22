@@ -439,11 +439,12 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <Input
                                                                     {...field}
                                                                     className={cn(
+                                                                        "capitalize transition-colors duration-300",
                                                                         form
                                                                             .formState
                                                                             .errors
                                                                             .dog_name &&
-                                                                            "border-destructive"
+                                                                            "border-destructive bg-destructive/10 text-destructive"
                                                                     )}
                                                                     onChange={(
                                                                         e
@@ -479,6 +480,30 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                             <FormControl>
                                                                 <Input
                                                                     {...field}
+                                                                    className={cn(
+                                                                        "capitalize transition-colors duration-300",
+                                                                        form
+                                                                            .formState
+                                                                            .errors
+                                                                            .breed &&
+                                                                            "border-destructive bg-destructive/10 text-destructive"
+                                                                    )}
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        field.onChange(
+                                                                            e
+                                                                        );
+                                                                        if (
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        ) {
+                                                                            clearFieldError(
+                                                                                "breed"
+                                                                            );
+                                                                        }
+                                                                    }}
                                                                 />
                                                             </FormControl>
                                                             <FormMessage />
@@ -507,14 +532,14 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                                 "outline"
                                                                             }
                                                                             className={cn(
-                                                                                "w-full justify-start text-left font-normal",
+                                                                                "w-full justify-start text-left font-normal transition-colors duration-300",
                                                                                 !field.value &&
                                                                                     "text-muted-foreground",
                                                                                 form
                                                                                     .formState
                                                                                     .errors
                                                                                     .dob &&
-                                                                                    "border-destructive"
+                                                                                    "border-destructive hover:bg-destructive/10 hover:text-destructive bg-destructive/10 text-destructive"
                                                                             )}
                                                                         >
                                                                             <CalendarDays className="mr-2 size-4" />
@@ -582,16 +607,38 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <FormControl>
                                                                     <Input
                                                                         {...field}
+                                                                        className={cn(
+                                                                            "transition-colors duration-300",
+                                                                            form
+                                                                                .formState
+                                                                                .errors
+                                                                                .weight_metric &&
+                                                                                "border-destructive hover:bg-destructive/10 hover:text-destructive bg-destructive/10 text-destructive"
+                                                                        )}
                                                                         onChange={(
                                                                             e
-                                                                        ) =>
+                                                                        ) => {
+                                                                            // Handle weight conversion
                                                                             handleWeightChange(
                                                                                 e
                                                                                     .target
                                                                                     .value,
                                                                                 "metric"
-                                                                            )
-                                                                        }
+                                                                            );
+                                                                            // Handle field validation
+                                                                            field.onChange(
+                                                                                e
+                                                                            );
+                                                                            if (
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            ) {
+                                                                                clearFieldError(
+                                                                                    "weight_metric"
+                                                                                );
+                                                                            }
+                                                                        }}
                                                                         onBlur={(
                                                                             e
                                                                         ) => {
