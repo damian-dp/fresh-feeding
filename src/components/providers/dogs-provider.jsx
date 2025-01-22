@@ -4,40 +4,70 @@ import { useAuth } from "./auth-provider";
 
 const DogsContext = createContext({});
 
+// Helper function to get signed URL
+const getSignedUrl = async (path) => {
+    if (!path) return null;
+    try {
+        const { data, error } = await supabase.storage
+            .from("dog_avatars")
+            .createSignedUrl(path.split("dog_avatars/")[1], 31536000);
+
+        if (error) throw error;
+        return data.signedUrl;
+    } catch (error) {
+        console.error("Error getting signed URL:", error);
+        return path; // Fallback to original path
+    }
+};
+
 export function DogsProvider({ children }) {
     const { session, isAuthenticated } = useAuth();
     const [dogs, setDogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchDogs = async () => {
-            try {
-                if (!isAuthenticated || !session?.user?.id) {
-                    setDogs([]);
-                    return;
-                }
-
-                const { data, error } = await supabase
-                    .from("dogs")
-                    .select("*")
-                    .eq("profile_id", session.user.id)
-                    .order("created_at", { ascending: false });
-
-                if (error) throw error;
-
-                console.log("Dogs loaded:", data);
-                setDogs(data);
-            } catch (error) {
-                console.error("Error loading dogs:", error);
+    // Modify fetchDogs to include signed URLs
+    const fetchDogs = async () => {
+        try {
+            if (!isAuthenticated || !session?.user?.id) {
                 setDogs([]);
-            } finally {
-                setLoading(false);
+                return;
             }
-        };
 
+            const { data, error } = await supabase
+                .from("dogs")
+                .select("*")
+                .eq("profile_id", session.user.id)
+                .order("created_at", { ascending: false });
+
+            if (error) throw error;
+
+            // Get signed URLs for all dogs
+            const dogsWithSignedUrls = await Promise.all(
+                data.map(async (dog) => ({
+                    ...dog,
+                    dog_avatar: dog.dog_avatar
+                        ? await getSignedUrl(dog.dog_avatar)
+                        : null,
+                    dog_cover: dog.dog_cover
+                        ? await getSignedUrl(dog.dog_cover)
+                        : null,
+                }))
+            );
+
+            console.log("Dogs loaded:", dogsWithSignedUrls);
+            setDogs(dogsWithSignedUrls);
+        } catch (error) {
+            console.error("Error loading dogs:", error);
+            setDogs([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchDogs();
 
-        // Subscribe to dogs changes
+        // Modify the subscription handler to include signed URLs
         const channel = supabase
             .channel(`dogs:${session?.user?.id}`)
             .on(
@@ -48,7 +78,7 @@ export function DogsProvider({ children }) {
                     table: "dogs",
                     filter: `profile_id=eq.${session?.user?.id}`,
                 },
-                (payload) => {
+                async (payload) => {
                     console.log("Dogs changed:", payload);
                     if (payload.eventType === "DELETE") {
                         setDogs((prev) =>
@@ -57,12 +87,30 @@ export function DogsProvider({ children }) {
                             )
                         );
                     } else if (payload.eventType === "INSERT") {
-                        setDogs((prev) => [...prev, payload.new]);
+                        const newDog = {
+                            ...payload.new,
+                            dog_avatar: payload.new.dog_avatar
+                                ? await getSignedUrl(payload.new.dog_avatar)
+                                : null,
+                            dog_cover: payload.new.dog_cover
+                                ? await getSignedUrl(payload.new.dog_cover)
+                                : null,
+                        };
+                        setDogs((prev) => [...prev, newDog]);
                     } else if (payload.eventType === "UPDATE") {
+                        const updatedDog = {
+                            ...payload.new,
+                            dog_avatar: payload.new.dog_avatar
+                                ? await getSignedUrl(payload.new.dog_avatar)
+                                : null,
+                            dog_cover: payload.new.dog_cover
+                                ? await getSignedUrl(payload.new.dog_cover)
+                                : null,
+                        };
                         setDogs((prev) =>
                             prev.map((dog) =>
-                                dog.dog_id === payload.new.dog_id
-                                    ? payload.new
+                                dog.dog_id === updatedDog.dog_id
+                                    ? updatedDog
                                     : dog
                             )
                         );
