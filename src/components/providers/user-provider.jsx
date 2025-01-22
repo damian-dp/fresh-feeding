@@ -32,6 +32,7 @@ export function UserProvider({ children }) {
                         data.name ||
                         session.user.user_metadata?.full_name ||
                         "there",
+                    new_user: data.new_user ?? true,
                 });
             } catch (error) {
                 console.error("Error loading profile:", error);
@@ -56,7 +57,13 @@ export function UserProvider({ children }) {
                 },
                 (payload) => {
                     console.log("Profile changed:", payload);
-                    setProfile(payload.new);
+                    setProfile({
+                        ...payload.new,
+                        name:
+                            payload.new.name ||
+                            session.user.user_metadata?.full_name ||
+                            "there",
+                    });
                 }
             )
             .subscribe();
@@ -76,7 +83,13 @@ export function UserProvider({ children }) {
                 .single();
 
             if (error) throw error;
-            setProfile(data);
+            setProfile({
+                ...data,
+                name:
+                    data.name ||
+                    session.user.user_metadata?.full_name ||
+                    "there",
+            });
             return data;
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -84,10 +97,15 @@ export function UserProvider({ children }) {
         }
     };
 
+    const completeOnboarding = async () => {
+        return await updateProfile({ new_user: false });
+    };
+
     const value = {
         profile,
         loading,
         updateProfile,
+        completeOnboarding,
     };
 
     return (

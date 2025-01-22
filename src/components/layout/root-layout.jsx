@@ -6,6 +6,7 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
+import { OnboardingDialog } from "../app/dashboard/onboarding-dialog";
 
 export function RootLayout() {
     return (
@@ -42,6 +43,7 @@ export function RootLayout() {
                             </div>
                         </footer>
                     </div>
+                    <OnboardingDialog />
                 </SidebarInset>
             </SidebarProvider>
         </div>

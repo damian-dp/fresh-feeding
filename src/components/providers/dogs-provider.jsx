@@ -7,15 +7,37 @@ const DogsContext = createContext({});
 // Helper function to get signed URL
 const getSignedUrl = async (path) => {
     if (!path) return null;
+
+    // If the path is already a signed URL (contains 'token=' or '/sign/'), return it as is
+    if (path.includes("token=") || path.includes("/sign/")) {
+        return path;
+    }
+
     try {
+        // Check if path is properly formatted
+        if (!path.includes("dog_avatars/")) {
+            console.warn("Invalid path format:", path);
+            return path;
+        }
+
+        const filePath = path.split("dog_avatars/")[1];
+        if (!filePath) {
+            console.warn("Could not extract file path:", path);
+            return path;
+        }
+
         const { data, error } = await supabase.storage
             .from("dog_avatars")
-            .createSignedUrl(path.split("dog_avatars/")[1], 31536000);
+            .createSignedUrl(filePath, 31536000);
 
-        if (error) throw error;
+        if (error) {
+            console.warn("Error creating signed URL:", error.message);
+            return path; // Fallback to original path
+        }
+
         return data.signedUrl;
     } catch (error) {
-        console.error("Error getting signed URL:", error);
+        console.warn("Error getting signed URL:", error);
         return path; // Fallback to original path
     }
 };
@@ -45,12 +67,16 @@ export function DogsProvider({ children }) {
             const dogsWithSignedUrls = await Promise.all(
                 data.map(async (dog) => ({
                     ...dog,
-                    dog_avatar: dog.dog_avatar
-                        ? await getSignedUrl(dog.dog_avatar)
-                        : null,
-                    dog_cover: dog.dog_cover
-                        ? await getSignedUrl(dog.dog_cover)
-                        : null,
+                    dog_avatar:
+                        dog.dog_avatar && typeof dog.dog_avatar === "string"
+                            ? await getSignedUrl(dog.dog_avatar)
+                            : null,
+                    dog_cover:
+                        dog.dog_cover &&
+                        typeof dog.dog_cover === "string" &&
+                        dog.dog_cover !== "NULL"
+                            ? await getSignedUrl(dog.dog_cover)
+                            : null,
                 }))
             );
 

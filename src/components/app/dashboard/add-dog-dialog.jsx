@@ -124,8 +124,7 @@ export function AddDogDialog({ open, onOpenChange }) {
             dog_name: "",
             breed: "",
             dog_avatar: "",
-            weight_metric: 0,
-            weight_imperial: 0,
+            weight_metric: "",
             goal: "maintain",
             ratios_intake: 2.5, // Default percentage
         },
@@ -607,6 +606,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <FormControl>
                                                                     <Input
                                                                         {...field}
+                                                                        inputMode="decimal"
                                                                         className={cn(
                                                                             "transition-colors duration-300",
                                                                             form
@@ -615,6 +615,49 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                                 .weight_metric &&
                                                                                 "border-destructive hover:bg-destructive/10 hover:text-destructive bg-destructive/10 text-destructive"
                                                                         )}
+                                                                        onKeyDown={(
+                                                                            e
+                                                                        ) => {
+                                                                            // Allow: backspace, delete, tab, escape, enter, decimal point
+                                                                            if (
+                                                                                [
+                                                                                    "Backspace",
+                                                                                    "Delete",
+                                                                                    "Tab",
+                                                                                    "Escape",
+                                                                                    "Enter",
+                                                                                    ".",
+                                                                                    "ArrowLeft",
+                                                                                    "ArrowRight",
+                                                                                    "ArrowUp",
+                                                                                    "ArrowDown",
+                                                                                ].includes(
+                                                                                    e.key
+                                                                                ) ||
+                                                                                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                                                                                ([
+                                                                                    "a",
+                                                                                    "c",
+                                                                                    "v",
+                                                                                    "x",
+                                                                                ].includes(
+                                                                                    e.key.toLowerCase()
+                                                                                ) &&
+                                                                                    (e.ctrlKey ||
+                                                                                        e.metaKey))
+                                                                            ) {
+                                                                                // let it happen
+                                                                                return;
+                                                                            }
+                                                                            // Block any non-number
+                                                                            if (
+                                                                                !/[0-9]/.test(
+                                                                                    e.key
+                                                                                )
+                                                                            ) {
+                                                                                e.preventDefault();
+                                                                            }
+                                                                        }}
                                                                         onChange={(
                                                                             e
                                                                         ) => {
