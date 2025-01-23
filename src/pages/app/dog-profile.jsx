@@ -37,12 +37,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/lib/supabase";
+import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profile-dialog";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
     const { dogs, loading } = useDogs();
     const textareaRef = useRef(null);
     const saveTimeoutRef = useRef(null);
+    const [showEditDialog, setShowEditDialog] = useState(false);
 
     // Local state for notes
     const [notes, setNotes] = useState("");
@@ -266,7 +268,11 @@ export function DogProfilePage() {
                                         </p>
                                     </div>
                                 </div>
-                                <Button variant="outline" className="mb-auto">
+                                <Button
+                                    variant="outline"
+                                    className="mb-auto"
+                                    onClick={() => setShowEditDialog(true)}
+                                >
                                     <Pencil className="w-4 h-4" />
                                     Edit profile
                                 </Button>
@@ -456,6 +462,11 @@ export function DogProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+            <EditDogProfileDialog
+                open={showEditDialog}
+                onOpenChange={setShowEditDialog}
+                dog={dog}
+            />
         </>
     );
 }

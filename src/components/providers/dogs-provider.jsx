@@ -6,39 +6,24 @@ const DogsContext = createContext({});
 
 // Helper function to get signed URL
 const getSignedUrl = async (path) => {
-    if (!path) return null;
-
-    // If the path is already a signed URL (contains 'token=' or '/sign/'), return it as is
-    if (path.includes("token=") || path.includes("/sign/")) {
-        return path;
-    }
-
     try {
-        // Check if path is properly formatted
-        if (!path.includes("dog_avatars/")) {
+        // Extract bucket and filename from path
+        const matches = path.match(/public\/([^/]+)\/(.+)$/);
+        if (!matches) {
             console.warn("Invalid path format:", path);
             return path;
         }
 
-        const filePath = path.split("dog_avatars/")[1];
-        if (!filePath) {
-            console.warn("Could not extract file path:", path);
-            return path;
-        }
-
+        const [, bucket, filename] = matches;
         const { data, error } = await supabase.storage
-            .from("dog_avatars")
-            .createSignedUrl(filePath, 31536000);
+            .from(bucket)
+            .createSignedUrl(filename, 60 * 60); // 1 hour expiry
 
-        if (error) {
-            console.warn("Error creating signed URL:", error.message);
-            return path; // Fallback to original path
-        }
-
+        if (error) throw error;
         return data.signedUrl;
     } catch (error) {
-        console.warn("Error getting signed URL:", error);
-        return path; // Fallback to original path
+        console.error("Error getting signed URL:", error);
+        return path;
     }
 };
 
@@ -46,8 +31,9 @@ export function DogsProvider({ children }) {
     const { session, isAuthenticated } = useAuth();
     const [dogs, setDogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Modify fetchDogs to include signed URLs
+    // Modify fetchDogs to include signed URLs for both avatar and cover
     const fetchDogs = async () => {
         try {
             if (!isAuthenticated || !session?.user?.id) {
@@ -63,7 +49,7 @@ export function DogsProvider({ children }) {
 
             if (error) throw error;
 
-            // Get signed URLs for all dogs
+            // Get signed URLs for all dogs' avatars and covers
             const dogsWithSignedUrls = await Promise.all(
                 data.map(async (dog) => ({
                     ...dog,
@@ -166,43 +152,38 @@ export function DogsProvider({ children }) {
         }
     };
 
-    const updateDog = async (dogId, updates) => {
-        try {
-            const { data, error } = await supabase
-                .from("dogs")
-                .update(updates)
-                .eq("dog_id", dogId)
-                .eq("profile_id", session.user.id)
-                .select()
-                .single();
+    const updateDog = async (dogData) => {
+        const { data, error } = await supabase
+            .from("dogs")
+            .update(dogData)
+            .eq("dog_id", dogData.dog_id)
+            .select()
+            .single();
 
-            if (error) throw error;
-            return data;
-        } catch (error) {
-            console.error("Error updating dog:", error);
-            throw error;
-        }
+        if (error) throw error;
+
+        // Update local state
+        setDogs(dogs.map((dog) => (dog.dog_id === data.dog_id ? data : dog)));
+
+        return data;
     };
 
     const deleteDog = async (dogId) => {
-        try {
-            const { error } = await supabase
-                .from("dogs")
-                .delete()
-                .eq("dog_id", dogId)
-                .eq("profile_id", session.user.id);
+        const { error } = await supabase
+            .from("dogs")
+            .delete()
+            .eq("dog_id", dogId);
 
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error("Error deleting dog:", error);
-            throw error;
-        }
+        if (error) throw error;
+
+        // Update local state
+        setDogs(dogs.filter((dog) => dog.dog_id !== dogId));
     };
 
     const value = {
         dogs,
         loading,
+        error,
         addDog,
         updateDog,
         deleteDog,

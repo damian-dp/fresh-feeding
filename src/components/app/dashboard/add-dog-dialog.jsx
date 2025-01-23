@@ -70,6 +70,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ImageEditorDialog } from "@/components/app/dashboard/image-editor";
 
 // Form validation schema
 const formSchema = z.object({
@@ -117,6 +118,7 @@ export function AddDogDialog({ open, onOpenChange }) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -180,8 +182,14 @@ export function AddDogDialog({ open, onOpenChange }) {
             return;
         }
 
-        setAvatarFile(file);
-        setAvatarPreview(URL.createObjectURL(file));
+        setSelectedFile(file);
+    };
+
+    // Add handler for cropped image
+    const handleCroppedImage = (blob) => {
+        setAvatarFile(blob);
+        setAvatarPreview(URL.createObjectURL(blob));
+        setSelectedFile(null);
     };
 
     const [date, setDate] = useState(null);
@@ -973,11 +981,17 @@ export function AddDogDialog({ open, onOpenChange }) {
             <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setStep(step - 1)}
-                disabled={step === 0}
-                className={`${step === 2 || step === 0 ? "hidden" : ""}`}
+                onClick={() => {
+                    if (step === 0) {
+                        // If on first page, trigger the close dialog flow
+                        handleOpenChange(false);
+                    } else {
+                        setStep(step - 1);
+                    }
+                }}
+                className={`${step === 2 ? "hidden" : ""}`}
             >
-                Back
+                {step === 0 ? "Cancel" : "Back"}
             </Button>
 
             {step < steps.length - 1 ? (
@@ -1052,6 +1066,19 @@ export function AddDogDialog({ open, onOpenChange }) {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+                <ImageEditorDialog
+                    file={selectedFile}
+                    onSave={handleCroppedImage}
+                    onCancel={() => setSelectedFile(null)}
+                    title="Edit Profile Picture"
+                    aspectRatio={1}
+                    shape="circle"
+                    minZoom={1}
+                    maxZoom={3}
+                    initialZoom={1.2}
+                    allowRotate={true}
+                    className="sm:max-w-[325px]"
+                />
             </>
         );
     }
@@ -1098,6 +1125,18 @@ export function AddDogDialog({ open, onOpenChange }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <ImageEditorDialog
+                file={selectedFile}
+                onSave={handleCroppedImage}
+                onCancel={() => setSelectedFile(null)}
+                title="Edit Profile Picture"
+                width={300}
+                height={300}
+                shape="circle"
+                minZoom={1}
+                maxZoom={3}
+                allowRotate={true}
+            />
         </>
     );
 }
