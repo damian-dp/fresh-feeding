@@ -1,12 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import {
-    CalendarDays,
-    Check,
-    ChevronsUpDown,
-    Dog,
-    ImagePlus,
-    Pencil,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarDays, CheckCheck, Dog, ImagePlus, Pencil, Trash } from "lucide-react";
 import {
     Dialog,
     DialogClose,
@@ -23,19 +16,14 @@ import {
     DrawerHeader,
     DrawerTitle,
     DrawerFooter,
-    DrawerClose,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useUser } from "@/components/providers/user-provider";
 import { useTheme } from "@/components/providers/theme-provider";
-import { AlertCircle, CheckCheck, Loader2, Trash, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 import { countries } from "countries-list";
@@ -578,7 +566,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                 variant="destructive"
                                 onClick={() => setShowDeleteDialog(true)}
                             >
-                                <Trash className="mr-2 h-4 w-4" />
+                                <Trash className="h-4 w-4" />
                                 Delete
                             </Button>
                             <div className="flex flex-row items-center gap-2">
@@ -740,7 +728,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                 variant="destructive"
                                 onClick={() => setShowDeleteDialog(true)}
                             >
-                                <Trash className="mr-2 h-4 w-4" />
+                                <Trash className="h-4 w-4" />
                                 Delete
                             </Button>
                             <Button
