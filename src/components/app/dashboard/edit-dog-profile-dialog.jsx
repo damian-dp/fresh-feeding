@@ -410,6 +410,35 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                             );
                                             field.onChange(e);
                                         }}
+                                        onKeyDown={(e) => {
+                                            // Allow: backspace, delete, tab, escape, enter, decimal point
+                                            if (
+                                                [
+                                                    "Backspace",
+                                                    "Delete",
+                                                    "Tab",
+                                                    "Escape",
+                                                    "Enter",
+                                                    ".",
+                                                    "ArrowLeft",
+                                                    "ArrowRight",
+                                                    "ArrowUp",
+                                                    "ArrowDown",
+                                                ].includes(e.key) ||
+                                                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                                                (["a", "c", "v", "x"].includes(
+                                                    e.key.toLowerCase()
+                                                ) &&
+                                                    (e.ctrlKey || e.metaKey))
+                                            ) {
+                                                // let it happen
+                                                return;
+                                            }
+                                            // Block any non-number
+                                            if (!/[0-9]/.test(e.key)) {
+                                                e.preventDefault();
+                                            }
+                                        }}
                                         onBlur={(e) => {
                                             const value = parseFloat(
                                                 e.target.value
@@ -425,7 +454,6 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                         }}
                                     />
                                 </FormControl>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
