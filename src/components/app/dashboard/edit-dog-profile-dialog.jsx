@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, CheckCheck, Dog, ImagePlus, Pencil, Trash } from "lucide-react";
+import {
+    CalendarDays,
+    CheckCheck,
+    Dog,
+    ImagePlus,
+    Loader2,
+    Pencil,
+    Trash,
+} from "lucide-react";
 import {
     Dialog,
     DialogClose,
@@ -72,15 +80,11 @@ const countryOptions = Object.entries(countries)
 const formSchema = z.object({
     dog_name: z.string().min(1, "Name is required"),
     breed: z.string().min(1, "Breed is required"),
-    dog_avatar: z.string().optional(),
-    dog_cover: z.string().optional(),
-    dob: z
-        .date({
-            required_error: "Date of birth is required",
-        })
-        .max(new Date(), "Date of birth must be in the past"),
-    weight_metric: z.number().min(0.1, "Weight must be greater than 0"),
-    weight_imperial: z.number().min(0.1, "Weight must be greater than 0"),
+    dob: z.date({
+        required_error: "Date of birth is required",
+    }),
+    weight_metric: z.number().min(0, "Weight must be greater than 0"),
+    weight_imperial: z.number().min(0, "Weight must be greater than 0"),
 });
 
 export function EditDogProfileDialog({ open, onOpenChange, dog }) {
@@ -99,17 +103,16 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
     const { updateDog, deleteDog } = useDogs();
     const navigate = useNavigate();
     const { session } = useAuth();
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             dog_name: dog?.dog_name || "",
             breed: dog?.breed || "",
-            dog_avatar: dog?.dog_avatar || "",
-            dog_cover: dog?.dog_cover || "",
             dob: dog?.dob ? new Date(dog.dob) : undefined,
-            weight_metric: dog?.weight_metric || "",
-            weight_imperial: dog?.weight_imperial || "",
+            weight_metric: dog?.weight_metric || 0,
+            weight_imperial: dog?.weight_imperial || 0,
         },
     });
 
@@ -143,11 +146,9 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             form.reset({
                 dog_name: dog.dog_name || "",
                 breed: dog.breed || "",
-                dog_avatar: dog.dog_avatar || "",
-                dog_cover: dog.dog_cover || "",
                 dob: dog.dob ? new Date(dog.dob) : undefined,
-                weight_metric: dog.weight_metric || "",
-                weight_imperial: dog.weight_imperial || "",
+                weight_metric: dog.weight_metric || 0,
+                weight_imperial: dog.weight_imperial || 0,
             });
             setAvatarPreview(dog.dog_avatar || null);
             setCoverPreview(dog.dog_cover || null);
@@ -226,44 +227,81 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
     const onSubmit = async (data) => {
         setIsPending(true);
         try {
-            // Merge form data with original dog data
+            // Get the form's dirty fields
+            const dirtyFields = form.formState.dirtyFields;
+
+            // Start with the original dog data
             const updatedData = {
                 dog_id: dog.dog_id,
-                dog_name: data.dog_name || dog.dog_name,
-                breed: data.breed || dog.breed,
-                dog_avatar: avatarFile
-                    ? await uploadImage(avatarFile, "dog_avatars")
-                    : dog.dog_avatar,
-                dog_cover: coverFile
-                    ? await uploadImage(coverFile, "dog_covers")
-                    : dog.dog_cover,
-                dob: data.dob || dog.dob,
-                weight_metric: data.weight_metric || dog.weight_metric,
-                weight_imperial: data.weight_imperial || dog.weight_imperial,
+                ...dog, // Include all original data
             };
 
-            await updateDog(updatedData);
-            toast.success("Profile updated successfully");
-            onOpenChange(false);
+            // Update only the fields that have changed
+            if (dirtyFields.dog_name) updatedData.dog_name = data.dog_name;
+            if (dirtyFields.breed) updatedData.breed = data.breed;
+            if (dirtyFields.dob) updatedData.dob = data.dob;
+            if (dirtyFields.weight_metric)
+                updatedData.weight_metric = data.weight_metric;
+            if (dirtyFields.weight_imperial)
+                updatedData.weight_imperial = data.weight_imperial;
+
+            // Handle avatar and cover image uploads
+            if (avatarFile) {
+                updatedData.dog_avatar = await uploadImage(
+                    avatarFile,
+                    "dog_avatars"
+                );
+            }
+            if (coverFile) {
+                updatedData.dog_cover = await uploadImage(
+                    coverFile,
+                    "dog_covers"
+                );
+            }
+
+            // Only update if there are changes
+            if (
+                Object.keys(dirtyFields).length > 0 ||
+                avatarFile ||
+                coverFile
+            ) {
+                await updateDog(updatedData);
+                toast.success("Profile updated successfully");
+                onOpenChange(false);
+            }
         } catch (error) {
             console.error("Error updating profile:", error);
-            toast.error("Error updating profile");
+            toast.error(error.message || "Error updating profile");
         } finally {
             setIsPending(false);
         }
     };
+
+    // Add useEffect to detect any changes including images
+    useEffect(() => {
+        const subscription = form.watch(() => {
+            setHasUnsavedChanges(true);
+        });
+
+        // Also watch for image changes
+        if (avatarFile || coverFile) {
+            setHasUnsavedChanges(true);
+        }
+
+        return () => subscription.unsubscribe();
+    }, [form, avatarFile, coverFile]);
 
     // Add delete handler
     const handleDelete = async () => {
         setIsPending(true);
         try {
             await deleteDog(dog.dog_id);
-            toast.success("Dog profile deleted successfully");
+            toast.success(`${dog.dog_name}'s profile has been deleted`);
             onOpenChange(false);
             navigate("/dashboard");
         } catch (error) {
             console.error("Error deleting dog:", error);
-            toast.error("Error deleting dog profile");
+            toast.error(error.message || "Failed to delete dog profile");
         } finally {
             setIsPending(false);
             setShowDeleteDialog(false);
@@ -276,12 +314,17 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             throw new Error("No authenticated session");
         }
 
-        const fileName = `${dog.dog_id}-${Date.now()}`;
+        // Ensure we get the correct file extension
+        const fileExt = file.type.split("/")[1] || "jpg"; // Fallback to jpg if no extension found
+        const fileName = `${session.user.id}/${
+            dog.dog_id
+        }-${Date.now()}.${fileExt}`;
 
-        // Remove the manual headers - let Supabase client handle auth
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from(bucket)
             .upload(fileName, file, {
+                contentType: file.type,
+                cacheControl: "3600",
                 upsert: false,
             });
 
@@ -290,11 +333,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             throw error;
         }
 
-        const {
-            data: { publicUrl },
-        } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
-        return publicUrl;
+        return `${bucket}/${fileName}`;
     };
 
     if (profileLoading) {
@@ -352,9 +391,9 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                                 variant="outline"
                                                 className="w-full justify-start text-left font-normal"
                                             >
-                                                <CalendarDays className="mr-2 size-4" />
+                                                <CalendarDays className="size-4" />
                                                 {field.value ? (
-                                                    format(field.value, "PPP")
+                                                    format(field.value, "PP")
                                                 ) : (
                                                     <span>Pick a date</span>
                                                 )}

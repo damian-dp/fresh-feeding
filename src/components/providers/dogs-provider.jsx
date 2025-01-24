@@ -24,16 +24,14 @@ const getSignedUrl = async (path) => {
                 [, bucket, filename] = matches;
             }
         } else if (path.includes("/")) {
-            // Handle direct path format (e.g., "dog_avatars/filename.jpg")
+            // Handle our standard path format: "bucket/profile_id/dog_id-timestamp.ext"
             const parts = path.split("/");
             bucket = parts[0];
+            // Join the rest of the parts to preserve the full path including profile_id folder
             filename = parts.slice(1).join("/");
         } else {
-            // Handle simple filename
-            bucket = path.startsWith("dog_covers")
-                ? "dog_covers"
-                : "dog_avatars";
-            filename = path;
+            console.warn("Invalid path format:", path);
+            return path;
         }
 
         if (!bucket || !filename) {
@@ -61,47 +59,49 @@ const getSignedUrl = async (path) => {
     }
 };
 
-// Add this helper function to delete storage objects
+// Update the deleteStorageObject function
 const deleteStorageObject = async (path) => {
     if (!path) return;
 
     try {
-        // Extract bucket and filename using the same logic as getSignedUrl
         let bucket, filename;
 
-        if (path.includes("/storage/v1/object/public/")) {
-            const matches = path.match(/public\/([^/]+)\/(.+)$/);
-            if (matches) {
-                [, bucket, filename] = matches;
+        // Extract the actual path from the signed URL
+        if (path.includes("/storage/v1/object/sign/")) {
+            const match = path.match(/\/sign\/([^/]+)\/(.+?)(?:\?|$)/);
+            if (match) {
+                bucket = match[1];
+                filename = match[2];
             }
         } else if (path.includes("/")) {
+            // Handle our standard path format: "bucket_name/profile_id/dog_id-timestamp.ext"
             const parts = path.split("/");
-            bucket = parts[0];
-            filename = parts.slice(1).join("/");
-        } else {
-            bucket = path.startsWith("dog_covers")
-                ? "dog_covers"
-                : "dog_avatars";
-            filename = path;
+            if (parts.length >= 2) {
+                bucket = parts[0];
+                filename = parts.slice(1).join("/");
+            }
         }
 
         if (!bucket || !filename) {
-            console.warn("Could not parse path for deletion:", path);
+            console.warn("Could not parse storage path:", path);
             return;
         }
 
         // Clean up the filename
         filename = filename.split("?")[0];
 
+        console.log("Deleting from bucket:", bucket, "filename:", filename);
+
         const { error } = await supabase.storage
             .from(bucket)
             .remove([filename]);
 
         if (error) {
-            console.warn("Error deleting file:", error);
+            console.error("Error deleting file:", error);
+            throw error;
         }
     } catch (error) {
-        console.error("Error in deleteStorageObject:", error);
+        console.error("Error in deleteStorageObject:", error, "Path:", path);
     }
 };
 
@@ -312,31 +312,53 @@ export function DogsProvider({ children }) {
         }
     };
 
-    // Update the deleteDog function to clean up images
+    // Update the deleteDog function
     const deleteDog = async (dogId) => {
         try {
-            // Get the dog data before deletion
+            // Get the dog data before deletion to access image paths
             const dogToDelete = dogs.find((dog) => dog.dog_id === dogId);
 
-            const { error } = await supabase
+            if (!dogToDelete) {
+                throw new Error("Dog not found");
+            }
+
+            // Verify ownership
+            if (dogToDelete.profile_id !== session.user.id) {
+                throw new Error("Unauthorized to delete this dog");
+            }
+
+            // Delete images first - get raw paths from database
+            const { data: dogData } = await supabase
+                .from("dogs")
+                .select("dog_avatar, dog_cover")
+                .eq("dog_id", dogId)
+                .single();
+
+            if (dogData?.dog_avatar) {
+                await deleteStorageObject(dogData.dog_avatar);
+            }
+            if (dogData?.dog_cover) {
+                await deleteStorageObject(dogData.dog_cover);
+            }
+
+            // Delete the dog record
+            const { error: deleteError } = await supabase
                 .from("dogs")
                 .delete()
-                .eq("dog_id", dogId);
+                .match({
+                    dog_id: dogId,
+                    profile_id: session.user.id,
+                });
 
-            if (error) throw error;
-
-            // Clean up associated images
-            if (dogToDelete) {
-                if (dogToDelete.dog_avatar) {
-                    await deleteStorageObject(dogToDelete.dog_avatar);
-                }
-                if (dogToDelete.dog_cover) {
-                    await deleteStorageObject(dogToDelete.dog_cover);
-                }
+            if (deleteError) {
+                console.error("Delete error:", deleteError);
+                throw deleteError;
             }
 
             // Update local state
             setDogs(dogs.filter((dog) => dog.dog_id !== dogId));
+
+            return true;
         } catch (error) {
             console.error("Error deleting dog:", error);
             throw error;

@@ -242,15 +242,40 @@ export function AddDogDialog({ open, onOpenChange }) {
         try {
             let avatarUrl = null;
 
-            // Upload avatar if selected
+            // Create dog profile first to get the ID
+            const { data: newDog, error: insertError } = await supabase
+                .from("dogs")
+                .insert({
+                    profile_id: profile.profile_id,
+                    dog_name: data.dog_name,
+                    breed: data.breed,
+                    dob: data.dob.toISOString(),
+                    weight_metric: data.weight_metric,
+                    goal: data.goal,
+                    ratios_intake:
+                        data.goal === "maintain"
+                            ? 2.5
+                            : data.goal === "gain"
+                            ? 3
+                            : data.goal === "lose"
+                            ? 2
+                            : data.ratios_intake,
+                })
+                .select()
+                .single();
+
+            if (insertError) throw insertError;
+
+            // Upload avatar if selected, now using the new dog's ID
             if (avatarFile) {
-                const fileExt = avatarFile.type.split("/")[1];
-                const fileName = `${Math.random()}.${fileExt}`;
-                const filePath = `${profile.profile_id}/${fileName}`;
+                const fileExt = avatarFile.type.split("/")[1] || "jpg";
+                const fileName = `${profile.profile_id}/${
+                    newDog.dog_id
+                }-${Date.now()}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from("dog_avatars")
-                    .upload(filePath, avatarFile, {
+                    .upload(fileName, avatarFile, {
                         contentType: avatarFile.type,
                         cacheControl: "3600",
                         upsert: false,
@@ -261,30 +286,16 @@ export function AddDogDialog({ open, onOpenChange }) {
                     throw new Error("Failed to upload avatar");
                 }
 
-                // Just store the path - the provider will handle the signed URL
-                avatarUrl = `dog_avatars/${filePath}`;
+                avatarUrl = `dog_avatars/${fileName}`;
+
+                // Update the dog record with the avatar URL
+                const { error: updateError } = await supabase
+                    .from("dogs")
+                    .update({ dog_avatar: avatarUrl })
+                    .eq("dog_id", newDog.dog_id);
+
+                if (updateError) throw updateError;
             }
-
-            // Create dog profile
-            const { error } = await supabase.from("dogs").insert({
-                profile_id: profile.profile_id,
-                dog_name: data.dog_name,
-                breed: data.breed,
-                dog_avatar: avatarUrl, // This will be the path, not the signed URL
-                dob: data.dob.toISOString(),
-                weight_metric: data.weight_metric,
-                goal: data.goal,
-                ratios_intake:
-                    data.goal === "maintain"
-                        ? 2.5
-                        : data.goal === "gain"
-                        ? 3
-                        : data.goal === "lose"
-                        ? 2
-                        : data.ratios_intake,
-            });
-
-            if (error) throw error;
 
             toast.success("Dog profile created successfully!");
             resetForm();
