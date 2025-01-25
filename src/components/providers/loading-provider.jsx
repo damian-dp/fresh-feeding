@@ -92,7 +92,8 @@ export function LoadingProvider({ children }) {
             // Add a small delay to ensure all UI updates are complete
             const timer = setTimeout(() => {
                 setIsReady(true);
-            }, 100);
+                console.log("[LoadingProvider] All data loaded, setting isReady");
+            }, 300);
 
             return () => clearTimeout(timer);
         }
@@ -104,25 +105,6 @@ export function LoadingProvider({ children }) {
         recipesLoading,
         ingredientsLoading,
         imagesLoaded,
-    ]);
-
-    // Debug logging
-    useEffect(() => {
-        console.log("Loading states:", {
-            user: userLoading,
-            dogs: dogsLoading,
-            recipes: recipesLoading,
-            ingredients: ingredientsLoading,
-            images: !imagesLoaded,
-            isReady,
-        });
-    }, [
-        userLoading,
-        dogsLoading,
-        recipesLoading,
-        ingredientsLoading,
-        imagesLoaded,
-        isReady,
     ]);
 
     return (

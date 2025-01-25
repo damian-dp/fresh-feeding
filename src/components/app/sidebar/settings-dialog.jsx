@@ -1,9 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    useMemo,
+    useCallback,
+    lazy,
+    Suspense,
+} from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import {
     Dialog,
     DialogClose,
-    DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
@@ -11,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import {
     Drawer,
-    DrawerContent,
     DrawerDescription,
     DrawerHeader,
     DrawerTitle,
@@ -56,8 +62,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useDebounce } from "@/hooks/use-debounce";
 
-// Convert countries object to array format we need
+// Move countryOptions outside the component to prevent re-renders
 const countryOptions = Object.entries(countries)
     .map(([code, country]) => ({
         value: code,
@@ -65,11 +72,27 @@ const countryOptions = Object.entries(countries)
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
+// Keep the lazy imports with unique variable names
+const LazyDialogContent = lazy(() =>
+    import("@/components/ui/dialog").then((mod) => ({
+        default: mod.DialogContent,
+    }))
+);
+
+const LazyDrawerContent = lazy(() =>
+    import("@/components/ui/drawer").then((mod) => ({
+        default: mod.DrawerContent,
+    }))
+);
+
 export function SettingsDialog({ open, onOpenChange }) {
-    const isDesktop = useMediaQuery("(min-width: 768px)");
+    const isDesktop = useMediaQuery("(min-width: 768px)", {
+        initializeWithValue: true,
+        defaultState: true,
+    });
     const { profile, loading: profileLoading } = useUser();
     const { theme, setTheme } = useTheme();
-    // Initialize state with profile data or empty strings
+    const [mounted, setMounted] = useState(false);
     const [name, setName] = useState(profile?.name || "");
     const [email, setEmail] = useState(profile?.email || "");
     const [sendingVerification, setSendingVerification] = useState(false);
@@ -89,6 +112,55 @@ export function SettingsDialog({ open, onOpenChange }) {
         postcode: profile?.postcode || "",
         unitMetric: profile?.unit_metric ?? true,
     });
+
+    // Memoize country list
+    const memoizedCountryOptions = useMemo(() => countryOptions, []);
+
+    // Add mount effect to avoid SSR mismatch
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    // Replace the memoized debounce with the hook
+    const debouncedCheckChanges = useDebounce((currentValues) => {
+        const hasChanges = Object.keys(currentValues).some(
+            (key) => currentValues[key] !== initialValues.current[key]
+        );
+        setHasUnsavedChanges(hasChanges);
+    }, 300);
+
+    // Update the effect to use the debounced function
+    useEffect(() => {
+        if (!open || !profile) return;
+        const currentValues = { name, email, country, postcode, unitMetric };
+        debouncedCheckChanges(currentValues);
+    }, [
+        name,
+        email,
+        country,
+        postcode,
+        unitMetric,
+        open,
+        profile,
+        debouncedCheckChanges,
+    ]);
+
+    // Optimize country list rendering
+    const renderCountryOptions = useCallback(
+        () =>
+            memoizedCountryOptions.map((c) => (
+                <SelectItem
+                    key={c.value}
+                    value={c.value}
+                    className="break-words hyphens-auto py-2 pr-2 [word-wrap:break-word]"
+                    style={{ maxWidth: "100%" }}
+                >
+                    {c.label}
+                </SelectItem>
+            )),
+        [memoizedCountryOptions]
+    );
 
     // Reset form when dialog opens/closes
     useEffect(() => {
@@ -113,33 +185,17 @@ export function SettingsDialog({ open, onOpenChange }) {
         }
     }, [open, profile]);
 
-    // Check for changes during editing
-    useEffect(() => {
-        if (!open || !profile) return;
-
-        const currentValues = {
-            name,
-            email,
-            country,
-            postcode,
-            unitMetric,
-        };
-
-        const hasChanges = Object.keys(currentValues).some(
-            (key) => currentValues[key] !== initialValues.current[key]
-        );
-
-        setHasUnsavedChanges(hasChanges);
-    }, [name, email, country, postcode, unitMetric, open, profile]);
-
-    // Handle dialog close
-    const handleOpenChange = (isOpen) => {
-        if (!isOpen && hasUnsavedChanges) {
-            setShowDiscardDialog(true);
-            return;
-        }
-        onOpenChange(isOpen);
-    };
+    // Simplify the open/close logic
+    const handleOpenChange = useCallback(
+        (isOpen) => {
+            if (!isOpen && hasUnsavedChanges) {
+                setShowDiscardDialog(true);
+                return;
+            }
+            onOpenChange(isOpen);
+        },
+        [hasUnsavedChanges, onOpenChange]
+    );
 
     // Handle confirming discard
     const handleConfirmDiscard = () => {
@@ -245,6 +301,8 @@ export function SettingsDialog({ open, onOpenChange }) {
         );
     }
 
+    if (!mounted) return null;
+
     const Content = (
         <form id="settings-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-6 px-6">
@@ -256,8 +314,6 @@ export function SettingsDialog({ open, onOpenChange }) {
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            autoFocus={false}
-                            tabIndex={-1}
                         />
                     </div>
                     <div className="space-y-2 w-full">
@@ -297,8 +353,6 @@ export function SettingsDialog({ open, onOpenChange }) {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            autoFocus={false}
-                            tabIndex={-1}
                         />
                     </div>
                 </div>
@@ -320,16 +374,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                                 align="start"
                             >
                                 <SelectGroup>
-                                    {countryOptions.map((c) => (
-                                        <SelectItem
-                                            key={c.value}
-                                            value={c.value}
-                                            className="break-words hyphens-auto py-2 pr-2 [word-wrap:break-word]"
-                                            style={{ maxWidth: "100%" }}
-                                        >
-                                            {c.label}
-                                        </SelectItem>
-                                    ))}
+                                    {renderCountryOptions()}
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -341,8 +386,6 @@ export function SettingsDialog({ open, onOpenChange }) {
                             value={postcode}
                             placeholder="Your postcode"
                             onChange={(e) => setPostcode(e.target.value)}
-                            autoFocus={false}
-                            tabIndex={-1}
                         />
                     </div>
                 </div>
@@ -407,161 +450,178 @@ export function SettingsDialog({ open, onOpenChange }) {
         </form>
     );
 
-    if (isDesktop) {
-        return (
-            <>
-                <Dialog
-                    open={open}
-                    onOpenChange={handleOpenChange}
-                    initialFocus={false}
-                    preventScroll
-                >
-                    <DialogContent
-                        autoFocus={false}
-                        className="focus:outline-none"
-                    >
-                        <DialogHeader className="flex flex-row items-center justify-between">
-                            <DialogTitle>Account Settings</DialogTitle>
-                            <DialogDescription className="hidden">
-                                Update your account preferences.
-                            </DialogDescription>
-                            <Avatar className="size-12 mt-0">
-                                <AvatarImage src={profile?.avatar_url} />
-                                <AvatarFallback className="text-lg">
-                                    {profile?.name?.charAt(0) || "?"}
-                                </AvatarFallback>
-                            </Avatar>
-                        </DialogHeader>
-                        <div className="py-6">{Content}</div>
-                        <DialogFooter>
-                            <div className="flex flex-row items-center gap-2">
-                                <DialogClose asChild>
-                                    <Button variant="link" tabIndex={-1}>
-                                        Cancel
-                                    </Button>
-                                </DialogClose>
-                                <Button
-                                    variant="outline"
-                                    form="settings-form"
-                                    type="submit"
-                                    disabled={saving || !hasUnsavedChanges}
-                                    tabIndex={-1}
-                                >
-                                    {saving ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Saving
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CheckCheck className="mr-2 h-4 w-4" />
-                                            Save
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <AlertDialog
-                    open={showDiscardDialog}
-                    onOpenChange={setShowDiscardDialog}
-                >
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>
-                                Discard changes?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                                You have unsaved changes. Are you sure you want
-                                to discard them?
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                                variant="destructive"
-                                onClick={handleConfirmDiscard}
-                            >
-                                Discard changes
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </>
-        );
-    }
-
     return (
-        <>
-            <Drawer
-                open={open}
-                onOpenChange={handleOpenChange}
-                initialFocus={false}
-            >
-                <DrawerContent autoFocus={false} className="focus:outline-none">
-                    <DrawerHeader>
-                        <DrawerTitle>Account Settings</DrawerTitle>
-                        <DrawerDescription>
-                            Update your account preferences.
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <div className="p-4">{Content}</div>
-                    <DrawerFooter>
-                        <div className="flex flex-row items-center gap-2">
-                            <DrawerClose asChild>
-                                <Button variant="link" tabIndex={-1}>
-                                    Cancel
-                                </Button>
-                            </DrawerClose>
-                            <Button
-                                variant="outline"
-                                form="settings-form"
-                                type="submit"
-                                disabled={saving || !hasUnsavedChanges}
-                                tabIndex={-1}
-                            >
-                                {saving ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCheck className="mr-2 h-4 w-4" />
-                                        Save
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+        <div className="contents">
+            {isDesktop ? (
+                <>
+                    <Dialog
+                        open={open}
+                        onOpenChange={handleOpenChange}
+                        initialFocus={false}
+                        preventScroll
+                    >
+                        <Suspense fallback={null}>
+                            <LazyDialogContent>
+                                <DialogHeader className="flex flex-row items-center justify-between">
+                                    <DialogTitle>Account Settings</DialogTitle>
+                                    <DialogDescription className="hidden">
+                                        Update your account preferences.
+                                    </DialogDescription>
+                                    <Avatar className="size-12 mt-0">
+                                        <AvatarImage
+                                            src={profile?.avatar_url}
+                                        />
+                                        <AvatarFallback className="text-lg">
+                                            {profile?.name?.charAt(0) || "?"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </DialogHeader>
+                                <div className="py-6">{Content}</div>
+                                <DialogFooter>
+                                    <div className="flex flex-row items-center gap-2">
+                                        <DialogClose asChild>
+                                            <Button
+                                                variant="link"
+                                                tabIndex={-1}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button
+                                            variant="outline"
+                                            form="settings-form"
+                                            type="submit"
+                                            disabled={
+                                                saving || !hasUnsavedChanges
+                                            }
+                                            tabIndex={-1}
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Saving
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCheck className="mr-2 h-4 w-4" />
+                                                    Save
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </DialogFooter>
+                            </LazyDialogContent>
+                        </Suspense>
 
-            <AlertDialog
-                open={showDiscardDialog}
-                onOpenChange={setShowDiscardDialog}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            You have unsaved changes. Are you sure you want to
-                            discard them?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            onClick={handleConfirmDiscard}
+                        <AlertDialog
+                            open={showDiscardDialog}
+                            onOpenChange={setShowDiscardDialog}
                         >
-                            Discard changes
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                        Discard changes?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        You have unsaved changes. Are you sure
+                                        you want to discard them?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                        Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        variant="destructive"
+                                        onClick={handleConfirmDiscard}
+                                    >
+                                        Discard changes
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </Dialog>
+                </>
+            ) : (
+                <>
+                    <Drawer
+                        open={open}
+                        onOpenChange={handleOpenChange}
+                        initialFocus={false}
+                    >
+                        <Suspense fallback={null}>
+                            <LazyDrawerContent>
+                                <DrawerHeader>
+                                    <DrawerTitle>Account Settings</DrawerTitle>
+                                    <DrawerDescription>
+                                        Update your account preferences.
+                                    </DrawerDescription>
+                                </DrawerHeader>
+                                <div className="p-4">{Content}</div>
+                                <DrawerFooter>
+                                    <div className="flex flex-row items-center gap-2">
+                                        <DrawerClose asChild>
+                                            <Button
+                                                variant="link"
+                                                tabIndex={-1}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </DrawerClose>
+                                        <Button
+                                            variant="outline"
+                                            form="settings-form"
+                                            type="submit"
+                                            disabled={
+                                                saving || !hasUnsavedChanges
+                                            }
+                                            tabIndex={-1}
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Saving
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCheck className="mr-2 h-4 w-4" />
+                                                    Save
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </DrawerFooter>
+                            </LazyDrawerContent>
+                        </Suspense>
+                    </Drawer>
+
+                    <AlertDialog
+                        open={showDiscardDialog}
+                        onOpenChange={setShowDiscardDialog}
+                    >
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    Discard changes?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    You have unsaved changes. Are you sure you
+                                    want to discard them?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    variant="destructive"
+                                    onClick={handleConfirmDiscard}
+                                >
+                                    Discard changes
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </>
+            )}
+        </div>
     );
 }

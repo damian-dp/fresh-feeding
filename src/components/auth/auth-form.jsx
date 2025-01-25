@@ -210,7 +210,7 @@ export function AuthForm() {
     return (
         <div className="w-full max-w-[426px] mx-auto space-y-6">
             <Card className="flex flex-col items-center w-full border bg-card p-10">
-                <CardHeader className="w-full space-y-1 p-0 mb-8">
+                <CardHeader className="w-full space-y-1 p-0 mb-10 border-0 h-auto">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={
