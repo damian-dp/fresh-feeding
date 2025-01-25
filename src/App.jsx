@@ -73,7 +73,7 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <ThemeProvider defaultTheme="system" storageKey="fresh-food-theme">
+            <ThemeProvider defaultTheme="light" storageKey="fresh-food-theme">
                 <UserProvider>
                     <DogsProvider>
                         <RecipesProvider>
