@@ -554,7 +554,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                             {field.value ? (
                                                                                 format(
                                                                                     field.value,
-                                                                                    "PPP"
+                                                                                    "PP"
                                                                                 )
                                                                             ) : (
                                                                                 <span>

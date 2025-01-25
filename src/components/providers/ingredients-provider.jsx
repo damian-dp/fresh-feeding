@@ -54,6 +54,7 @@ export function IngredientsProvider({ children }) {
                     })) || [];
 
                 setIngredients(transformedData);
+                console.log("Ingredients loaded:", transformedData);
             } catch (error) {
                 console.error("Error fetching ingredients:", error);
             } finally {

@@ -41,6 +41,7 @@ export function AuthProvider({ children }) {
                 });
 
                 setSession(currentSession);
+                console.log("Session set:", currentSession);
             } catch (error) {
                 console.error("Auth initialization error:", error);
                 setSession(null);
