@@ -21,12 +21,15 @@ import {
     MoreHorizontal,
     Pencil,
     Trash2,
+    Eye,
 } from "lucide-react";
 import { useRecipes } from "@/components/providers/recipes-provider";
 import { useDogs } from "@/components/providers/dogs-provider";
 import { formatDate } from "@/lib/utils";
 import { BadgeStack } from "@/components/ui/badge-stack";
 import { useRef, useEffect, useState } from "react";
+import { RecipeSheet } from "./recipe-sheet";
+import { toast } from "sonner";
 
 export function RecipeTable({
     // Configurable columns
@@ -41,11 +44,23 @@ export function RecipeTable({
     onDelete,
     // Optional callback for edit action
     onEdit,
+    // Add this prop
+    dogId,
+    // Add this prop
+    onCreateRecipe,
+    // Add this prop
+    open,
+    // Add this prop
+    onOpenChange,
 }) {
     const { recipes } = useRecipes();
     const { dogs, loading } = useDogs();
     const tableRef = useRef(null);
     const [tableWidth, setTableWidth] = useState(0);
+    const [internalSheetOpen, setInternalSheetOpen] = useState(false);
+    const isSheetOpen = open !== undefined ? open : internalSheetOpen;
+    const [sheetMode, setSheetMode] = useState("view");
+    const [selectedRecipe, setSelectedRecipe] = useState(null);
 
     useEffect(() => {
         if (!tableRef.current) return;
@@ -105,21 +120,65 @@ export function RecipeTable({
         );
     };
 
-    // Get visible recipes based on limit
-    const visibleRecipes = limit ? recipes.slice(0, limit) : recipes;
+    // Update the visibleRecipes logic to filter by dogId if provided
+    const visibleRecipes = recipes
+        .filter((recipe) => !dogId || recipe.dog_id === dogId) // Filter by dogId if provided
+        .slice(0, limit || recipes.length);
 
-    // Handle recipe actions
-    const handleDeleteRecipe = (recipeId) => {
+    // Update the handler functions
+    const handleViewRecipe = (recipe) => {
+        setSelectedRecipe(recipe);
+        setSheetMode("view");
+        if (onOpenChange) {
+            onOpenChange(true);
+        } else {
+            setInternalSheetOpen(true);
+        }
+    };
+
+    const handleEditRecipe = (recipe) => {
+        setSelectedRecipe(recipe);
+        setSheetMode("edit");
+        if (onOpenChange) {
+            onOpenChange(true);
+        } else {
+            setInternalSheetOpen(true);
+        }
+    };
+
+    const handleDeleteRecipe = async (recipeId) => {
         if (onDelete) {
             onDelete(recipeId);
+        } else {
+            try {
+                await deleteRecipe(recipeId);
+                toast.success("Recipe deleted successfully");
+            } catch (error) {
+                console.error("Error deleting recipe:", error);
+                toast.error("Failed to delete recipe");
+            }
         }
     };
 
-    const handleEditRecipe = (recipeId) => {
-        if (onEdit) {
-            onEdit(recipeId);
+    // Update sheetOpen to use the external state if provided
+    const handleSheetOpenChange = (newOpen) => {
+        if (onOpenChange) {
+            onOpenChange(newOpen);
+        } else {
+            setInternalSheetOpen(newOpen);
+        }
+        if (!newOpen) {
+            setSelectedRecipe(null);
+            setSheetMode("view");
         }
     };
+
+    // Add effect to handle external create trigger
+    useEffect(() => {
+        if (open && !selectedRecipe) {
+            setSheetMode("create");
+        }
+    }, [open, selectedRecipe]);
 
     // Get visible columns
     const columns = [
@@ -233,9 +292,13 @@ export function RecipeTable({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                                onClick={() =>
-                                    handleEditRecipe(recipe.recipe_id)
-                                }
+                                onClick={() => handleViewRecipe(recipe)}
+                            >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleEditRecipe(recipe)}
                             >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
@@ -257,27 +320,37 @@ export function RecipeTable({
     ].filter(Boolean);
 
     return (
-        <Table ref={tableRef} className="w-full max-w-full">
-            <TableBody>
-                {visibleRecipes.length === 0 ? (
-                    <TableRow>
-                        <TableCell
-                            colSpan={columns.length}
-                            className="text-center h-24 min-w-0"
-                        >
-                            No recipes found
-                        </TableCell>
-                    </TableRow>
-                ) : (
-                    visibleRecipes.map((recipe) => (
-                        <TableRow key={recipe.recipe_id}>
-                            {columns.map(
-                                (column) => column && column.cell(recipe)
-                            )}
+        <>
+            <Table ref={tableRef} className="w-full max-w-full">
+                <TableBody>
+                    {visibleRecipes.length === 0 ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                className="text-center h-24 min-w-0"
+                            >
+                                No recipes found
+                            </TableCell>
                         </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+                    ) : (
+                        visibleRecipes.map((recipe) => (
+                            <TableRow key={recipe.recipe_id}>
+                                {columns.map(
+                                    (column) => column && column.cell(recipe)
+                                )}
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+
+            <RecipeSheet
+                mode={sheetMode}
+                recipe={selectedRecipe}
+                open={isSheetOpen}
+                onOpenChange={handleSheetOpenChange}
+                defaultDogId={dogId}
+            />
+        </>
     );
 }

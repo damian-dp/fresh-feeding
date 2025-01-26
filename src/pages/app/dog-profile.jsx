@@ -38,6 +38,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/lib/supabase";
 import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profile-dialog";
+import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
@@ -45,6 +46,7 @@ export function DogProfilePage() {
     const textareaRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [sheetOpen, setSheetOpen] = useState(false);
 
     // Local state for notes
     const [notes, setNotes] = useState("");
@@ -426,16 +428,22 @@ export function DogProfilePage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Recent recipes</CardTitle>
-                        <Button variant="outline" asChild>
-                            <Link to="/recipes/new">
-                                <PlusIcon className="w-4 h-4" />
-                                Create recipe
-                            </Link>
+                        <CardTitle>{dog.dog_name}'s recipes</CardTitle>
+                        <Button
+                            variant="outline"
+                            onClick={() => setSheetOpen(true)}
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Create recipe
                         </Button>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <RecipeTable limit={5} />
+                        <RecipeTable
+                            limit={5}
+                            dogId={parseInt(dogId)}
+                            open={sheetOpen}
+                            onOpenChange={setSheetOpen}
+                        />
                     </CardContent>
                 </Card>
 

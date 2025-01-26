@@ -33,7 +33,7 @@ import { useState } from "react";
 export function DashboardPage() {
     const { profile, loading } = useUser();
     const [showAddDog, setShowAddDog] = useState(false);
-
+    const [sheetOpen, setSheetOpen] = useState(false);
 
     // Get first name for greeting
     const firstName = profile?.name?.split(" ")[0] || "there";
@@ -78,9 +78,12 @@ export function DashboardPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Your dogs</CardTitle>
-                            <Button variant="outline" onClick={() => setShowAddDog(true)}>
-                                    <PlusIcon className="w-4 h-4" />
-                                    Add dog
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowAddDog(true)}
+                            >
+                                <PlusIcon className="w-4 h-4" />
+                                Add dog
                             </Button>
                         </CardHeader>
                         <CardContent>
@@ -90,15 +93,20 @@ export function DashboardPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Recent recipes</CardTitle>
-                            <Button variant="outline" asChild>
-                                <Link to="/recipes/new">
-                                    <PlusIcon className="w-4 h-4" />
-                                    Create recipe
-                                </Link>
+                            <Button
+                                variant="outline"
+                                onClick={() => setSheetOpen(true)}
+                            >
+                                <PlusIcon className="w-4 h-4" />
+                                Create recipe
                             </Button>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <RecipeTable limit={5} />
+                            <RecipeTable
+                                limit={5}
+                                open={sheetOpen}
+                                onOpenChange={setSheetOpen}
+                            />
                         </CardContent>
                     </Card>
                     <Card>
@@ -106,7 +114,7 @@ export function DashboardPage() {
                             <CardTitle>Helpful resources</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
+                            <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
                                 <Link to="/ingredients">
                                     <CardContent className="p-4">
                                         <div className="flex flex-row items-center gap-4 text-sm">
@@ -147,7 +155,7 @@ export function DashboardPage() {
                                     </CardContent>
                                 </Link>
                             </Card>
-                    
+
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
                                 <Link to="/ingredients">
                                     <CardContent className="p-4">
