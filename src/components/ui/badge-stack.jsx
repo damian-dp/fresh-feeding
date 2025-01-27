@@ -53,7 +53,7 @@ export function BadgeStack({
 
     return (
         <div className={cn("flex items-center gap-2", className)} {...props}>
-            <Badge variant={variant} size="icon">
+            <Badge variant={variant} size="icon" className="p-0">
                 {icon}
             </Badge>
             {labelContent}

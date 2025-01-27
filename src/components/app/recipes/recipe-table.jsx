@@ -28,7 +28,7 @@ import { useDogs } from "@/components/providers/dogs-provider";
 import { formatDate } from "@/lib/utils";
 import { BadgeStack } from "@/components/ui/badge-stack";
 import { useRef, useEffect, useState } from "react";
-import { RecipeSheet } from "./recipe-sheet";
+import { RecipeSheet } from "../recipes/recipe-sheet";
 import { toast } from "sonner";
 
 export function RecipeTable({
@@ -348,7 +348,13 @@ export function RecipeTable({
                 mode={sheetMode}
                 recipe={selectedRecipe}
                 open={isSheetOpen}
-                onOpenChange={handleSheetOpenChange}
+                onOpenChange={(newOpen, options) => {
+                    if (options?.mode) {
+                        setSheetMode(options.mode);
+                    }
+                    handleSheetOpenChange(newOpen);
+                }}
+                onModeChange={(newMode) => setSheetMode(newMode)}
                 defaultDogId={dogId}
             />
         </>
