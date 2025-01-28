@@ -182,16 +182,35 @@ export function RecipeTable({
         }
     };
 
-    // Update sheetOpen to use the external state if provided
+    // Update the handleSheetOpenChange function
     const handleSheetOpenChange = (newOpen, options) => {
+        console.log("RecipeTable handleSheetOpenChange:", {
+            newOpen,
+            options,
+            sheetMode,
+        });
+
+        // If we have options with mode and recipe, update both FIRST
+        if (options?.mode) {
+            console.log("Setting new mode and recipe:", options);
+            // Set mode first
+            setSheetMode(options.mode);
+            // Then set recipe if provided
+            if (options.recipe) {
+                console.log("Setting selected recipe:", options.recipe);
+                setSelectedRecipe(options.recipe);
+            }
+        }
+
+        // Then handle the open state
         if (!newOpen) {
-            // When closing the sheet, clear the selected recipe
+            console.log("Closing sheet, resetting state");
             setSelectedRecipe(null);
             setSheetMode("view");
         }
 
         if (onOpenChange) {
-            onOpenChange(newOpen);
+            onOpenChange(newOpen, options);
         } else {
             setInternalSheetOpen(newOpen);
         }
@@ -418,13 +437,16 @@ export function RecipeTable({
                 mode={sheetMode}
                 recipe={selectedRecipe}
                 open={isSheetOpen}
-                onOpenChange={(newOpen, options) => {
-                    if (options?.mode) {
-                        setSheetMode(options.mode);
-                    }
-                    handleSheetOpenChange(newOpen, options);
+                onOpenChange={handleSheetOpenChange}
+                onModeChange={(newMode) => {
+                    console.log(
+                        "RecipeTable mode change requested:",
+                        newMode,
+                        "current mode:",
+                        sheetMode
+                    );
+                    setSheetMode(newMode);
                 }}
-                onModeChange={(newMode) => setSheetMode(newMode)}
                 defaultDogId={dogId}
             />
         </>

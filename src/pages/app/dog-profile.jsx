@@ -451,7 +451,6 @@ export function DogProfilePage() {
                                 );
                                 return dog?.dog_name || "Unknown Dog";
                             }}
-                            limit={5}
                             open={sheetOpen}
                             onOpenChange={setSheetOpen}
                         />

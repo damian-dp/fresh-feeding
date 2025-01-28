@@ -79,6 +79,7 @@ export function RecipesProvider({ children }) {
     }, [session?.user?.id, isAuthenticated]);
 
     const fetchRecipeById = async (recipeId) => {
+        console.log("Fetching recipe by ID:", recipeId);
         try {
             const { data, error } = await supabase
                 .from("recipes")
@@ -94,8 +95,19 @@ export function RecipesProvider({ children }) {
                 .eq("recipe_id", recipeId)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Error fetching recipe:", error);
+                throw error;
+            }
 
+            if (!data) {
+                console.error("No recipe found with ID:", recipeId);
+                throw new Error("Recipe not found");
+            }
+
+            console.log("Fetched recipe:", data);
+
+            // Update recipes state with the fetched recipe
             setRecipes((prev) => {
                 const index = prev.findIndex((r) => r.recipe_id === recipeId);
                 if (index >= 0) {
@@ -105,8 +117,11 @@ export function RecipesProvider({ children }) {
                 }
                 return [...prev, data];
             });
+
+            return data;
         } catch (error) {
-            console.error("Error fetching recipe:", error);
+            console.error("Error in fetchRecipeById:", error);
+            throw error;
         }
     };
 

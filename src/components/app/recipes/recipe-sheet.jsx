@@ -107,6 +107,17 @@ export function RecipeSheet({
             setSecretingOrgans(secretingOrgansIngredients);
             setLiver(liverIngredients);
             setMisc(miscIngredients);
+        } else if (!recipe && mode === "create") {
+            // Reset all state when entering create mode with no recipe
+            setRecipeName("");
+            setSelectedDog("");
+            setRecipeIngredients([]);
+            setMeatAndBone([]);
+            setPlantMatter([]);
+            setSecretingOrgans([]);
+            setLiver([]);
+            setMisc([]);
+            setActiveSection(null);
         }
     }, [recipe, mode]);
 
@@ -164,8 +175,11 @@ export function RecipeSheet({
     };
 
     const handleClose = (newOpen, options = {}) => {
+        console.log("RecipeSheet handleClose:", { newOpen, options, mode });
+
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
+            console.log("Changing mode to:", options.mode);
             onModeChange?.(options.mode);
             onOpenChange?.(true, options);
             return;
@@ -185,14 +199,31 @@ export function RecipeSheet({
             return;
         }
 
-        if (hasFormChanges()) {
-            setShowUnsavedChanges(true);
-        } else {
+        // If closing the sheet completely
+        if (!newOpen) {
+            // Check for unsaved changes
+            if (hasFormChanges()) {
+                setShowUnsavedChanges(true);
+                return;
+            }
+
+            // Reset all state when closing
+            setRecipeName("");
+            setSelectedDog("");
+            setRecipeIngredients([]);
+            setMeatAndBone([]);
+            setPlantMatter([]);
+            setSecretingOrgans([]);
+            setLiver([]);
+            setMisc([]);
+            setActiveSection(null);
+
             if (mode === "create") {
                 resetForm();
             }
-            onOpenChange?.(false);
         }
+
+        onOpenChange?.(newOpen);
     };
 
     // Save functionality
@@ -260,8 +291,88 @@ export function RecipeSheet({
                     await handleSaveSuccess(updatedRecipe);
                 }
                 return;
+            } else {
+                // Create mode
+                console.log("Create mode - preparing ingredients...");
+                const ingredients = [
+                    ...meatAndBone,
+                    ...plantMatter,
+                    ...secretingOrgans,
+                    ...liver,
+                    ...misc,
+                ].map((ing) => ({
+                    ingredient_id: ing.id,
+                    quantity: ing.quantity || 0,
+                }));
+
+                console.log("Calling addRecipe...");
+                try {
+                    const newRecipe = await addRecipe(recipeData, ingredients);
+
+                    if (!newRecipe) {
+                        throw new Error("Failed to create recipe");
+                    }
+
+                    console.log(
+                        "Create successful, preparing to transition to view mode..."
+                    );
+                    toast.success("Recipe created successfully");
+
+                    // Wait a moment for the database to settle
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+
+                    try {
+                        // Fetch the complete recipe with ingredients
+                        const freshRecipe = await fetchRecipeById(
+                            newRecipe.recipe_id
+                        );
+                        console.log("Got fresh recipe:", freshRecipe);
+
+                        if (!freshRecipe) {
+                            throw new Error("Failed to fetch fresh recipe");
+                        }
+
+                        // Reset create mode state
+                        setRecipeIngredients(
+                            freshRecipe.recipe_ingredients || []
+                        );
+                        setRecipeName(freshRecipe.recipe_name || "");
+                        setSelectedDog(freshRecipe.dog_id || "");
+                        setActiveSection(null);
+
+                        // Wait for a tick to ensure state is updated
+                        await new Promise((resolve) => setTimeout(resolve, 0));
+
+                        console.log("Attempting mode transition to view...");
+
+                        // Switch back to view mode with current recipe - using same pattern as edit mode
+                        onModeChange?.("view");
+                        onOpenChange?.(true, {
+                            mode: "view",
+                            recipe: freshRecipe,
+                        });
+
+                        // Add handleSaveSuccess call like in edit mode
+                        await handleSaveSuccess(freshRecipe);
+                        return;
+                    } catch (fetchError) {
+                        console.error(
+                            "Error fetching fresh recipe:",
+                            fetchError
+                        );
+                        // If we can't fetch the fresh recipe, try using the newRecipe
+                        onModeChange?.("view");
+                        onOpenChange?.(true, {
+                            mode: "view",
+                            recipe: newRecipe,
+                        });
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Error in create mode:", error);
+                    toast.error("Failed to create recipe: " + error.message);
+                }
             }
-            onOpenChange(false);
         } catch (error) {
             console.error("Error in handleSave:", error);
             toast.error(
@@ -274,8 +385,16 @@ export function RecipeSheet({
 
     // Add these functions back
     const handleAddIngredient = (ingredient, category) => {
+        console.log("RecipeSheet handling ingredient:", ingredient);
+        console.log("Category:", category);
+
         if (mode === "edit") {
-            setRecipeIngredients((prev) => [...prev, ingredient]);
+            setRecipeIngredients((prev) => {
+                console.log("Previous ingredients:", prev);
+                const updated = [...prev, ingredient];
+                console.log("Updated ingredients:", updated);
+                return updated;
+            });
             setActiveSection(null);
             return;
         }
@@ -469,10 +588,6 @@ export function RecipeSheet({
                                     : mode === "edit"
                                     ? "Edit recipe"
                                     : recipe?.recipe_name}
-                                {console.log(
-                                    "Recipe name",
-                                    recipe?.recipe_name
-                                )}
                             </SheetTitle>
                             <SheetDescription className="hidden">
                                 {mode === "create"
@@ -584,7 +699,7 @@ export function RecipeSheet({
                     if (mode === "create") {
                         resetForm();
                     }
-                    onOpenChange(false);
+                    handleClose(false);
                 }}
             />
 

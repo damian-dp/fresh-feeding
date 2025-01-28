@@ -39,23 +39,28 @@ export function RecipeSheetEdit({
         return Math.round(ratio * (recipe.batch_size * 1000));
     };
 
-    // Add this function to handle ingredient addition in edit mode
+    // Update the handleIngredientAdd function
     const handleIngredientAdd = (ingredient, category) => {
-        // Create the recipe_ingredients structure
+        console.log("Adding ingredient:", ingredient);
+        console.log("Category:", category);
+
+        // Create the recipe_ingredients structure with proper category_id
         const newIngredient = {
-            ingredient_id: ingredient.id,
+            ingredient_id: ingredient.id, // Changed from ingredient.ingredient_id
             ingredients: {
                 ingredient_id: ingredient.id,
                 ingredient_name: ingredient.name,
                 category_id: ingredient.category,
+                // Include any other properties from the original ingredient
+                ...ingredient,
             },
-            quantity: 0, // Default quantity, adjust as needed
+            quantity: 0,
         };
+
+        console.log("Structured ingredient:", newIngredient);
 
         // Call the parent handler with the properly structured ingredient
         handleAddIngredient(newIngredient, category);
-
-        // Close the ingredient selector
         setActiveSection(null);
     };
 
@@ -93,8 +98,8 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Meat and bone"
-                            items={recipe.recipe_ingredients.filter(
-                                (item) => item.ingredients.category_id === 1
+                            items={(recipe.recipe_ingredients || []).filter(
+                                (item) => item?.ingredients?.category_id === 1
                             )}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "meat_and_bone")
@@ -116,13 +121,13 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Plant matter"
-                            items={recipe.recipe_ingredients.filter(
-                                (item) => item.ingredients.category_id === 2
+                            items={(recipe.recipe_ingredients || []).filter(
+                                (item) => item?.ingredients?.category_id === 2
                             )}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "plant_matter")
                             }
-                            onAddItem={handleAddIngredient}
+                            onAddItem={handleIngredientAdd}
                             category="plant_matter"
                             emptyStateText="Add plant matter ingredients"
                             mode="edit"
@@ -135,38 +140,17 @@ export function RecipeSheetEdit({
                         />
                     </div>
 
-                    {/* Liver Section */}
-                    <div className="flex flex-col gap-6">
-                        <IngredientSection
-                            title="Liver"
-                            items={recipe.recipe_ingredients.filter(
-                                (item) => item.ingredients.category_id === 3
-                            )}
-                            onRemoveItem={(id) =>
-                                handleRemoveIngredient(id, "liver")
-                            }
-                            onAddItem={handleAddIngredient}
-                            category="liver"
-                            emptyStateText="Add liver ingredients"
-                            mode="edit"
-                            isActive={activeSection === "liver"}
-                            onToggleActive={setActiveSection}
-                            ingredients={getIngredientsByCategory("liver")}
-                            isLoading={ingredientsLoading}
-                        />
-                    </div>
-
                     {/* Secreting Organs Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Secreting organs"
-                            items={recipe.recipe_ingredients.filter(
-                                (item) => item.ingredients.category_id === 4
+                            items={(recipe.recipe_ingredients || []).filter(
+                                (item) => item?.ingredients?.category_id === 4
                             )}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "secreting_organs")
                             }
-                            onAddItem={handleAddIngredient}
+                            onAddItem={handleIngredientAdd}
                             category="secreting_organs"
                             emptyStateText="Add secreting organs ingredients"
                             mode="edit"
@@ -179,16 +163,37 @@ export function RecipeSheetEdit({
                         />
                     </div>
 
+                    {/* Liver Section */}
+                    <div className="flex flex-col gap-6">
+                        <IngredientSection
+                            title="Liver"
+                            items={(recipe.recipe_ingredients || []).filter(
+                                (item) => item?.ingredients?.category_id === 3
+                            )}
+                            onRemoveItem={(id) =>
+                                handleRemoveIngredient(id, "liver")
+                            }
+                            onAddItem={handleIngredientAdd}
+                            category="liver"
+                            emptyStateText="Add liver ingredients"
+                            mode="edit"
+                            isActive={activeSection === "liver"}
+                            onToggleActive={setActiveSection}
+                            ingredients={getIngredientsByCategory("liver")}
+                            isLoading={ingredientsLoading}
+                        />
+                    </div>
+
                     <div className="flex flex-col gap-6 col-span-2">
                         <IngredientSection
                             title="Other ingredients"
-                            items={recipe.recipe_ingredients.filter(
-                                (item) => item.ingredients.category_id === 5
+                            items={(recipe.recipe_ingredients || []).filter(
+                                (item) => item?.ingredients?.category_id === 5
                             )}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "misc")
                             }
-                            onAddItem={handleAddIngredient}
+                            onAddItem={handleIngredientAdd}
                             category="misc"
                             emptyStateText="Add miscellaneous ingredients"
                             mode="edit"
