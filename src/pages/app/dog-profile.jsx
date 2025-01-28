@@ -176,7 +176,9 @@ export function DogProfilePage() {
         dog.weight_metric * 1000 * (dog.ratios_intake / 100)
     );
 
-    const meatGrams = Math.round(intakeGrams * dog.ratios_muscle_meat);
+    const meatGrams = Math.round(
+        intakeGrams * (dog.ratios_muscle_meat + dog.ratios_bone)
+    );
     const plantGrams = Math.round(intakeGrams * dog.ratios_plant_matter);
     const organGrams = Math.round(intakeGrams * dog.ratios_secreting_organ);
     const liverGrams = Math.round(intakeGrams * dog.ratios_liver);
@@ -400,7 +402,8 @@ export function DogProfilePage() {
                                 icon={<Bone />}
                                 label="Meat and bone"
                                 sublabel={`${meatGrams}g / ${
-                                    dog.ratios_muscle_meat * 100
+                                    (dog.ratios_muscle_meat + dog.ratios_bone) *
+                                    100
                                 }%`}
                             />
                             <BadgeStack

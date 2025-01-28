@@ -11,6 +11,7 @@ import {
     Leaf,
     Plus,
     Trash,
+    Heart,
 } from "lucide-react";
 import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
@@ -106,7 +107,7 @@ export function IngredientSection({
                         ) : category === "plant_matter" ? (
                             <Leaf />
                         ) : category === "liver" ? (
-                            <Brain />
+                            <Heart />
                         ) : category === "secreting_organs" ? (
                             <Brain />
                         ) : (
