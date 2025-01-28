@@ -4,6 +4,7 @@ import { DogSwitcher } from "./dog-switcher";
 import { IngredientSection } from "./ingredient-section";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+import { IngredientSelector } from "./ingredient-selector";
 
 export function RecipeSheetCreate({
     recipeName,
@@ -19,6 +20,7 @@ export function RecipeSheetCreate({
     getIngredientsByCategory,
     ingredientsLoading,
     defaultDogId,
+    meatAndBone,
 }) {
     const hasCreateChanges = () => {
         return (
@@ -75,7 +77,26 @@ export function RecipeSheetCreate({
                         onToggleActive={setActiveSection}
                         ingredients={getIngredientsByCategory(key)}
                         isLoading={ingredientsLoading}
-                    />
+                    >
+                        {/* Debug the category being passed */}
+                        {console.log(
+                            "Rendering IngredientSelector with category:",
+                            key
+                        )}
+
+                        <IngredientSelector
+                            ingredients={getIngredientsByCategory(key)}
+                            onSelect={(ingredient) =>
+                                handleAddIngredient(ingredient, key)
+                            }
+                            category={key}
+                            existingIngredients={
+                                key === "meat_and_bone"
+                                    ? section.getItems()
+                                    : []
+                            }
+                        />
+                    </IngredientSection>
                 ))}
             </div>
         </>

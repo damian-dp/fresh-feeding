@@ -23,6 +23,8 @@ export function RecipeSheetEdit({
     setRecipeIngredients,
     recipeIngredients,
 }) {
+    const selectedDog = dogs.find((d) => d.dog_id === recipe.dog_id);
+
     const hasEditChanges = () => {
         return (
             recipeName !== recipe?.recipe_name ||
@@ -136,6 +138,7 @@ export function RecipeSheetEdit({
                                     newQuantity
                                 )
                             }
+                            dog={selectedDog}
                         />
                     </div>
 
@@ -166,6 +169,7 @@ export function RecipeSheetEdit({
                                     newQuantity
                                 )
                             }
+                            dog={selectedDog}
                         />
                     </div>
 
@@ -224,6 +228,7 @@ export function RecipeSheetEdit({
                                     newQuantity
                                 )
                             }
+                            dog={selectedDog}
                         />
                     </div>
 
@@ -251,6 +256,7 @@ export function RecipeSheetEdit({
                                     newQuantity
                                 )
                             }
+                            dog={selectedDog}
                         />
                     </div>
                 </div>

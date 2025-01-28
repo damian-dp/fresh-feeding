@@ -17,6 +17,7 @@ import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
 import { BadgeStack } from "@/components/ui/badge-stack";
 import { Input } from "@/components/ui/input";
+import React from "react";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -81,14 +82,35 @@ export function IngredientSection({
     onToggleActive,
     ingredients,
     isLoading,
-    onUpdateQuantity,
+    children,
+    optimalRatios,
+    dog,
 }) {
     // Calculate total percentage for the category
     const totalPercentage =
         items.reduce((sum, item) => sum + (item.quantity || 0), 0) * 100;
 
-    // Determine if the total is valid (100%)
-    const isValidTotal = Math.abs(totalPercentage - 100) < 0.01; // Using small epsilon for float comparison
+    // Get target ratio for the category
+    const getTargetRatio = () => {
+        switch (category) {
+            case "meat_and_bone":
+                return (dog?.ratios_muscle_meat + dog?.ratios_bone) * 100;
+            case "plant_matter":
+                return dog?.ratios_plant_matter * 100;
+            case "liver":
+                return dog?.ratios_liver * 100;
+            case "secreting_organs":
+                return dog?.ratios_secreting_organ * 100;
+            default:
+                return null;
+        }
+    };
+
+    // Determine if the total matches the target ratio
+    const isValidTotal =
+        category === "misc"
+            ? true
+            : Math.abs(totalPercentage - getTargetRatio()) < 0.01;
 
     // Only show percentage for non-misc categories
     const showPercentage = category !== "misc";
@@ -102,6 +124,14 @@ export function IngredientSection({
     const availableIngredients = ingredients?.filter(
         (ing) => !selectedIds.includes(ing.id)
     );
+
+    // Make sure we're cloning the children with the category prop
+    const childrenWithProps = React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+            return React.cloneElement(child, { category });
+        }
+        return child;
+    });
 
     return (
         <div
@@ -154,10 +184,31 @@ export function IngredientSection({
                                     className={
                                         mode === "edit" && !isValidTotal
                                             ? "text-destructive"
-                                            : ""
+                                            : "text-success-foreground"
                                     }
                                 >
-                                    {`${Math.round(totalPercentage)}% / 100%`}
+                                    {`${Math.round(totalPercentage)}% / ${
+                                        category === "meat_and_bone"
+                                            ? `${Math.round(
+                                                  (dog?.ratios_muscle_meat +
+                                                      dog?.ratios_bone) *
+                                                      100
+                                              )}%`
+                                            : category === "plant_matter"
+                                            ? `${Math.round(
+                                                  dog?.ratios_plant_matter * 100
+                                              )}%`
+                                            : category === "liver"
+                                            ? `${Math.round(
+                                                  dog?.ratios_liver * 100
+                                              )}%`
+                                            : category === "secreting_organs"
+                                            ? `${Math.round(
+                                                  dog?.ratios_secreting_organ *
+                                                      100
+                                              )}%`
+                                            : "Other ingredients"
+                                    }`}
                                 </span>
                             )
                         ) : (
@@ -187,7 +238,8 @@ export function IngredientSection({
                         onRemoveItem={onRemoveItem}
                         category={category}
                         mode={mode}
-                        onUpdateQuantity={onUpdateQuantity}
+                        onUpdateQuantity={onAddItem}
+                        isValidTotal={isValidTotal}
                     />
                 )}
 
@@ -201,11 +253,30 @@ export function IngredientSection({
                                 onSelect={(ingredient) =>
                                     onAddItem(ingredient, category)
                                 }
+                                category={category}
+                                existingIngredients={items}
                             />
                         )}
                     </div>
                 )}
             </div>
+
+            {optimalRatios && category === "meat_and_bone" && (
+                <div className="p-4 bg-muted rounded-md my-2">
+                    <p className="text-sm text-muted-foreground">
+                        Suggested ratios to meet {optimalRatios.targetBone}%
+                        bone / {optimalRatios.targetMeat}% meat:
+                        <br />
+                        {optimalRatios.boneIngredient.name}:{" "}
+                        {optimalRatios.boneIngredient.percentage}%
+                        <br />
+                        Meat ingredients:{" "}
+                        {optimalRatios.meatIngredients.percentage}%
+                        <br />
+                        Total: {optimalRatios.total}%
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
@@ -224,6 +295,7 @@ function IngredientList({
     category,
     mode,
     onUpdateQuantity,
+    isValidTotal,
 }) {
     return (
         <div className={items.length > 0 ? "border-t" : ""}>
@@ -266,6 +338,12 @@ function IngredientList({
                                         }
                                         id={`quantity-${itemId}`}
                                         onChange={(e) => {
+                                            if (
+                                                item.isLocked ||
+                                                item.ingredients?.bone_percent >
+                                                    0
+                                            )
+                                                return; // Check both isLocked and bone_percent
                                             // Allow empty or numbers only
                                             const value = e.target.value;
                                             if (
@@ -294,10 +372,28 @@ function IngredientList({
                                                 onUpdateQuantity(itemId, 0);
                                             }
                                         }}
-                                        className="w-16 text-left"
+                                        disabled={
+                                            item.isLocked ||
+                                            item.ingredients?.bone_percent > 0
+                                        } // Add this condition
+                                        className={`w-16 text-left ${
+                                            mode === "edit" && !isValidTotal
+                                                ? "text-destructive bg-error border-error-border focus-visible:ring-error-foreground"
+                                                : item.isLocked ||
+                                                  item.ingredients
+                                                      ?.bone_percent > 0
+                                                ? "bg-muted"
+                                                : ""
+                                        }`}
                                         maxLength={3}
                                     />
-                                    <span className="absolute right-3 text-muted-foreground">
+                                    <span
+                                        className={`absolute right-3 ${
+                                            mode === "edit" && !isValidTotal
+                                                ? "text-destructive"
+                                                : "text-muted-foreground"
+                                        }`}
+                                    >
                                         %
                                     </span>
                                 </div>

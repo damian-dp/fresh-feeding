@@ -125,55 +125,69 @@ export function RecipesProvider({ children }) {
         }
     };
 
+    // Add this function to handle optimistic updates
+    const addRecipeToState = (newRecipe) => {
+        setRecipes((prev) => {
+            // Check if recipe already exists to prevent duplicates
+            const exists = prev.some(
+                (r) => r.recipe_id === newRecipe.recipe_id
+            );
+            if (exists) {
+                // If it exists, update it
+                return prev.map((r) =>
+                    r.recipe_id === newRecipe.recipe_id ? newRecipe : r
+                );
+            }
+            // If it doesn't exist, add it
+            return [...prev, newRecipe];
+        });
+    };
+
     const addRecipe = async (recipeData, ingredients) => {
         try {
-            // First insert the recipe
+            // Insert the recipe first, ensuring profile_id is included
             const { data: recipe, error: recipeError } = await supabase
                 .from("recipes")
-                .insert([{ ...recipeData, profile_id: session.user.id }])
+                .insert([
+                    {
+                        ...recipeData,
+                        profile_id: session.user.id, // Add this back
+                    },
+                ])
                 .select()
                 .single();
 
             if (recipeError) throw recipeError;
 
             // Then insert the ingredients
-            if (ingredients?.length) {
-                const { error: ingredientsError } = await supabase
+            const ingredientsToInsert = ingredients.map((ing) => ({
+                recipe_id: recipe.recipe_id,
+                ingredient_id: ing.ingredient_id,
+                quantity: ing.quantity,
+            }));
+
+            const { data: recipeIngredients, error: ingredientsError } =
+                await supabase
                     .from("recipe_ingredients")
-                    .insert(
-                        ingredients.map((ing) => ({
-                            recipe_id: recipe.recipe_id,
-                            ingredient_id: ing.ingredient_id,
-                            quantity: ing.quantity,
-                        }))
-                    );
-
-                if (ingredientsError) throw ingredientsError;
-            }
-
-            // Fetch the complete recipe with ingredients
-            const { data: completeRecipe, error: fetchError } = await supabase
-                .from("recipes")
-                .select(
-                    `
+                    .insert(ingredientsToInsert).select(`
                     *,
-                    recipe_ingredients (
-                        *,
-                        ingredients (*)
-                    )
-                `
-                )
-                .eq("recipe_id", recipe.recipe_id)
-                .single();
+                    ingredients (*)
+                `);
 
-            if (fetchError) throw fetchError;
+            if (ingredientsError) throw ingredientsError;
 
-            // Update recipes state with the new recipe
-            setRecipes((prev) => [...prev, completeRecipe]);
+            // Combine the recipe with its ingredients
+            const completeRecipe = {
+                ...recipe,
+                recipe_ingredients: recipeIngredients,
+            };
+
+            // Update local state using the optimistic update function
+            addRecipeToState(completeRecipe);
 
             return completeRecipe;
         } catch (error) {
-            console.error("Error adding recipe:", error);
+            console.error("Error in addRecipe:", error);
             throw error;
         }
     };

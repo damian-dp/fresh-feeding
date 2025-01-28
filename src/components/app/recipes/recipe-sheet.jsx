@@ -39,54 +39,114 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 
-// Update the helper function to calculate percentages instead of grams
+// First, let's simplify the calculation function
+const calculateRecipeIngredients = ({ ingredients, dog }) => {
+    const { ratios_bone, ratios_muscle_meat } = dog;
+    const categoryTotal = ratios_bone + ratios_muscle_meat; // e.g., 0.65 (65%)
+
+    // Helper functions
+    const getBonePercent = (ing) =>
+        ing.bone_percent || ing.ingredients?.bone_percent || 0;
+
+    // Find the single bone ingredient
+    const boneIngredient = ingredients.find((ing) => getBonePercent(ing) > 0);
+    const meatIngredients = ingredients.filter(
+        (ing) => getBonePercent(ing) === 0
+    );
+
+    if (!boneIngredient) {
+        throw new Error("No bone ingredient found");
+    }
+
+    if (!meatIngredients.length) {
+        throw new Error("No meat ingredients found");
+    }
+
+    // Calculate quantities within the category total
+    const bonePercent = getBonePercent(boneIngredient) / 100;
+    const boneIngredientQuantity = (ratios_bone / bonePercent) * categoryTotal;
+    const meatIngredientQuantity =
+        (categoryTotal - boneIngredientQuantity) / meatIngredients.length;
+
+    // Verify the ratios
+    const totalBone = boneIngredientQuantity * bonePercent;
+    const totalMeat =
+        boneIngredientQuantity * (1 - bonePercent) +
+        meatIngredientQuantity * meatIngredients.length;
+
+    console.log("Recipe ratios:", {
+        categoryTotal: (categoryTotal * 100).toFixed(1) + "%",
+        totalBone: (totalBone * 100).toFixed(1) + "%",
+        totalMeat: (totalMeat * 100).toFixed(1) + "%",
+        boneIngredientQuantity: (boneIngredientQuantity * 100).toFixed(1) + "%",
+        meatIngredientQuantity: (meatIngredientQuantity * 100).toFixed(1) + "%",
+    });
+
+    return [
+        {
+            ingredient_id: boneIngredient.id || boneIngredient.ingredient_id,
+            quantity: boneIngredientQuantity,
+            isLocked: true,
+        },
+        ...meatIngredients.map((ing) => ({
+            ingredient_id: ing.id || ing.ingredient_id,
+            quantity: meatIngredientQuantity,
+            isLocked: false,
+        })),
+    ];
+};
+
+// Now modify the existing calculateIngredientQuantities function
 const calculateIngredientQuantities = (ingredients, dog) => {
     if (!dog || !ingredients || ingredients.length === 0) return [];
 
     // Group ingredients by category
     const ingredientsByCategory = {};
     ingredients.forEach((ing) => {
-        const categoryId = ing.id ? ing.category : ing.ingredients.category_id;
+        const categoryId = ing.id ? ing.category : ing.ingredients?.category_id;
         if (!ingredientsByCategory[categoryId]) {
             ingredientsByCategory[categoryId] = [];
         }
         ingredientsByCategory[categoryId].push(ing);
     });
 
-    // Calculate quantities (as percentages) for each ingredient
-    return ingredients.map((ing) => {
-        const categoryId = ing.id ? ing.category : ing.ingredients.category_id;
-        const categoryIngredients = ingredientsByCategory[categoryId].length;
+    try {
+        // Handle meat and bone category (1) with new calculation
+        const meatAndBoneResults = ingredientsByCategory[1]
+            ? calculateRecipeIngredients({
+                  ingredients: ingredientsByCategory[1],
+                  dog,
+              })
+            : [];
 
-        // For each category, distribute the percentage evenly
-        let quantity = 0;
+        // Handle other categories (distribute evenly)
+        const otherResults = ingredients
+            .filter((ing) => {
+                const categoryId = ing.id
+                    ? ing.category
+                    : ing.ingredients?.category_id;
+                return categoryId !== 1;
+            })
+            .map((ing) => {
+                const categoryId = ing.id
+                    ? ing.category
+                    : ing.ingredients?.category_id;
+                return {
+                    ingredient_id: ing.id || ing.ingredient_id,
+                    quantity:
+                        1 / (ingredientsByCategory[categoryId]?.length || 1),
+                };
+            });
 
-        switch (categoryId) {
-            case 1: // Meat and Bone
-                // Distribute meat and bone ratio evenly among ingredients
-                quantity =
-                    (dog.ratios_muscle_meat + dog.ratios_bone) /
-                    categoryIngredients;
-                break;
-            case 2: // Plant Matter
-                quantity = dog.ratios_plant_matter / categoryIngredients;
-                break;
-            case 3: // Liver
-                quantity = dog.ratios_liver / categoryIngredients;
-                break;
-            case 4: // Secreting Organs
-                quantity = dog.ratios_secreting_organ / categoryIngredients;
-                break;
-            case 5: // Misc - set to small default value
-                quantity = 0;
-                break;
-        }
-
-        return {
+        return [...meatAndBoneResults, ...otherResults];
+    } catch (error) {
+        console.error("Error calculating quantities:", error);
+        toast.error(error.message);
+        return ingredients.map((ing) => ({
             ingredient_id: ing.id || ing.ingredient_id,
-            quantity: quantity, // This will be a decimal between 0 and 1
-        };
-    });
+            quantity: 0,
+        }));
+    }
 };
 
 export function RecipeSheet({
@@ -374,58 +434,19 @@ export function RecipeSheet({
                     ingredientsWithQuantities
                 );
 
-                if (!newRecipe) {
-                    throw new Error("Failed to create recipe");
-                }
-
-                console.log(
-                    "Create successful, preparing to transition to view mode..."
-                );
-                toast.success("Recipe created successfully");
-
-                // Wait a moment for the database to settle
-                await new Promise((resolve) => setTimeout(resolve, 100));
-
-                try {
-                    // Fetch the complete recipe with ingredients
-                    const freshRecipe = await fetchRecipeById(
-                        newRecipe.recipe_id
+                if (newRecipe) {
+                    console.log(
+                        "Create successful, transitioning to view mode..."
                     );
-                    console.log("Got fresh recipe:", freshRecipe);
+                    toast.success("Recipe created successfully");
 
-                    if (!freshRecipe) {
-                        throw new Error("Failed to fetch fresh recipe");
-                    }
-
-                    // Reset create mode state
-                    setRecipeIngredients(freshRecipe.recipe_ingredients || []);
-                    setRecipeName(freshRecipe.recipe_name || "");
-                    setSelectedDog(freshRecipe.dog_id || "");
-                    setActiveSection(null);
-
-                    // Wait for a tick to ensure state is updated
-                    await new Promise((resolve) => setTimeout(resolve, 0));
-
-                    console.log("Attempting mode transition to view...");
-
-                    // Switch back to view mode with current recipe - using same pattern as edit mode
-                    onModeChange?.("view");
-                    onOpenChange?.(true, {
-                        mode: "view",
-                        recipe: freshRecipe,
-                    });
-
-                    // Add handleSaveSuccess call like in edit mode
-                    await handleSaveSuccess(freshRecipe);
-                    return;
-                } catch (fetchError) {
-                    console.error("Error fetching fresh recipe:", fetchError);
-                    // If we can't fetch the fresh recipe, try using the newRecipe
+                    // Don't fetch again, just use the newRecipe
                     onModeChange?.("view");
                     onOpenChange?.(true, {
                         mode: "view",
                         recipe: newRecipe,
                     });
+
                     return;
                 }
             }
@@ -445,6 +466,13 @@ export function RecipeSheet({
         console.log("Category:", category);
 
         if (mode === "edit") {
+            // Keep the dog validation for edit mode
+            if (!selectedDog) {
+                toast.error("Please select a dog before adding ingredients");
+                setActiveSection(null);
+                return;
+            }
+
             setRecipeIngredients((prev) => {
                 // Get all ingredients in this category
                 const categoryId = ingredient.ingredients.category_id;
@@ -452,26 +480,153 @@ export function RecipeSheet({
                     (ing) => ing.ingredients?.category_id === categoryId
                 );
 
-                // Calculate total used percentage
-                const usedPercentage = categoryIngredients.reduce(
-                    (sum, ing) => sum + (ing.quantity || 0),
-                    0
-                );
+                if (category === "meat_and_bone") {
+                    const selectedDogData = dogs.find(
+                        (d) => d.dog_id === selectedDog
+                    );
 
-                // New ingredient gets remaining percentage
-                const remainingPercentage = Math.max(0, 1 - usedPercentage);
+                    // Add validation to check if a dog is selected and has the required properties
+                    if (
+                        !selectedDogData ||
+                        typeof selectedDogData.ratios_muscle_meat ===
+                            "undefined"
+                    ) {
+                        toast.error("Please select a dog first");
+                        setActiveSection(null);
+                        return;
+                    }
 
-                // Add new ingredient with remaining percentage
-                return [
-                    ...prev,
-                    { ...ingredient, quantity: remainingPercentage },
-                ];
+                    const totalCategoryPercentage =
+                        selectedDogData.ratios_muscle_meat +
+                        selectedDogData.ratios_bone;
+                    const targetBonePercentage = selectedDogData.ratios_bone;
+
+                    // Get existing bone-containing ingredients
+                    const boneIngredients = categoryIngredients.filter(
+                        (ing) => ing.ingredients?.bone_percent
+                    );
+
+                    // If this ingredient has bone content
+                    if (ingredient.ingredients?.bone_percent) {
+                        console.log(
+                            "Adding bone ingredient:",
+                            ingredient.ingredients.bone_percent
+                        );
+
+                        // Get all bone-containing ingredients (including the new one)
+                        const allBoneIngredients = [
+                            ...boneIngredients,
+                            ingredient,
+                        ];
+                        const totalBoneNeeded = selectedDogData.ratios_bone; // 0.10 or 10%
+
+                        // Calculate the total bone percentage from all bone ingredients
+                        const totalBonePercentage = allBoneIngredients.reduce(
+                            (sum, ing) =>
+                                sum + ing.ingredients.bone_percent / 100,
+                            0
+                        );
+
+                        // Calculate how much meat we can get from bone ingredients
+                        const totalMeatFromBone = allBoneIngredients.reduce(
+                            (sum, ing) => {
+                                const nonBoneRatio =
+                                    1 - ing.ingredients.bone_percent / 100;
+                                return sum + nonBoneRatio;
+                            },
+                            0
+                        );
+
+                        // Calculate quantities to minimize excess meat while meeting bone requirements
+                        const scaleFactor = Math.min(
+                            totalBoneNeeded / totalBonePercentage,
+                            (selectedDogData.ratios_muscle_meat * 0.7) /
+                                totalMeatFromBone // Allow bone ingredients to provide up to 70% of meat
+                        );
+
+                        // Calculate new quantity for each bone ingredient
+                        const boneRatio =
+                            ingredient.ingredients.bone_percent / 100;
+                        const newQuantity = scaleFactor / boneRatio;
+
+                        // Update existing bone ingredients
+                        const updatedIngredients = prev.map((ing) => {
+                            if (!ing.ingredients?.bone_percent) return ing;
+
+                            const ingBoneRatio =
+                                ing.ingredients.bone_percent / 100;
+                            const ingBoneContribution =
+                                ingBoneRatio / totalBonePercentage;
+                            return {
+                                ...ing,
+                                quantity: totalBoneNeeded * ingBoneContribution,
+                                isLocked: true,
+                            };
+                        });
+
+                        return [
+                            ...updatedIngredients,
+                            {
+                                ...ingredient,
+                                quantity: newQuantity,
+                                isLocked: true,
+                            },
+                        ];
+                    } else {
+                        // For non-bone ingredients, calculate remaining percentage after bone ingredients
+                        const totalBoneNeeded = selectedDogData.ratios_bone; // 0.10 or 10%
+                        const totalMeatNeeded =
+                            selectedDogData.ratios_muscle_meat; // 0.55 or 55%
+
+                        // Calculate how much meat is coming from bone ingredients
+                        const meatFromBoneIngredients = boneIngredients.reduce(
+                            (sum, ing) => {
+                                const boneRatio =
+                                    ing.ingredients.bone_percent / 100;
+                                const nonBoneRatio = 1 - boneRatio; // e.g., if 21% bone, then 79% is meat
+                                return sum + ing.quantity * nonBoneRatio;
+                            },
+                            0
+                        );
+
+                        // Calculate remaining meat needed
+                        const remainingMeatNeeded =
+                            totalMeatNeeded - meatFromBoneIngredients;
+
+                        // Get count of non-bone ingredients (including the new one)
+                        const nonBoneCount =
+                            categoryIngredients.filter(
+                                (ing) => !ing.ingredients?.bone_percent
+                            ).length + 1;
+
+                        // Distribute remaining meat percentage evenly
+                        return [
+                            ...prev,
+                            {
+                                ...ingredient,
+                                quantity: remainingMeatNeeded / nonBoneCount,
+                            },
+                        ];
+                    }
+                } else {
+                    // Handle other categories as before
+                    const usedPercentage = categoryIngredients.reduce(
+                        (sum, ing) => sum + (ing.quantity || 0),
+                        0
+                    );
+                    const remainingPercentage = Math.max(0, 1 - usedPercentage);
+
+                    return [
+                        ...prev,
+                        { ...ingredient, quantity: remainingPercentage },
+                    ];
+                }
             });
             setActiveSection(null);
             return;
         }
 
-        // Create mode handling
+        // Create mode handling - simplified without validation
         const getExistingIngredients = (category) => {
             switch (category) {
                 case "meat_and_bone":
@@ -512,23 +667,14 @@ export function RecipeSheet({
         // Get current ingredients for this category
         const existingIngredients = getExistingIngredients(category);
 
-        // Calculate total used percentage
-        const usedPercentage = existingIngredients.reduce(
-            (sum, ing) => sum + (ing.quantity || 0),
-            0
-        );
-
-        // New ingredient gets remaining percentage
-        const remainingPercentage = Math.max(0, 1 - usedPercentage);
-
-        // Add new ingredient with remaining percentage
+        // In create mode, just add the ingredient without calculating percentages
         const newIngredient = {
             ...ingredient,
-            quantity: remainingPercentage,
+            quantity: 0, // Default to 0, will be calculated on submit
         };
 
-        // Update the category's ingredients
         setIngredients(category, [...existingIngredients, newIngredient]);
+        setActiveSection(null);
     };
 
     const handleRemoveIngredient = (ingredientId, section) => {
@@ -596,9 +742,9 @@ export function RecipeSheet({
     // When transitioning to view mode, force a refresh
     const handleSaveSuccess = async (updatedRecipe) => {
         try {
-            const freshRecipe = await fetchRecipeById(updatedRecipe.recipe_id);
+            // Instead of fetching again, use the recipe we already have
             onModeChange?.("view");
-            onOpenChange?.(true, { mode: "view", recipe: freshRecipe });
+            onOpenChange?.(true, { mode: "view", recipe: updatedRecipe });
         } catch (error) {
             console.error("Error refreshing recipe:", error);
         }
