@@ -26,15 +26,13 @@ function BatchInputs({
     };
 
     const handleInputBlur = () => {
-        // If either input is empty, set both to 0
-        if (
-            !batchSize ||
-            batchSize === "" ||
-            !numberOfDays ||
-            numberOfDays === ""
-        ) {
-            onBatchSizeChange("0");
-            onDaysChange("0");
+        // If either input is empty, set back to original value
+        if (!batchSize || batchSize === "" || batchSize === null) {
+            onDaysChange(numberOfDays);
+        }
+
+        if (!numberOfDays || numberOfDays === "" || numberOfDays === null) {
+            onBatchSizeChange(batchSize);
         }
     };
 

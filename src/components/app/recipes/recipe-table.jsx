@@ -144,8 +144,12 @@ export function RecipeTable({
 
     // Update the handler functions
     const handleViewRecipe = (recipe) => {
-        console.log("Recipe clicked:", recipe);
-        setSelectedRecipe(recipe);
+        // Get the latest version of the recipe from the recipes array
+        const latestRecipe = recipes.find(
+            (r) => r.recipe_id === recipe.recipe_id
+        );
+        console.log("Viewing recipe:", latestRecipe);
+        setSelectedRecipe(latestRecipe);
         setSheetMode("view");
         if (onOpenChange) {
             onOpenChange(true);
@@ -155,8 +159,12 @@ export function RecipeTable({
     };
 
     const handleEditRecipe = (recipe) => {
-        console.log("Recipe clicked:", recipe);
-        setSelectedRecipe(recipe);
+        // Get the latest version of the recipe from the recipes array
+        const latestRecipe = recipes.find(
+            (r) => r.recipe_id === recipe.recipe_id
+        );
+        console.log("Editing recipe:", latestRecipe);
+        setSelectedRecipe(latestRecipe);
         setSheetMode("edit");
         if (onOpenChange) {
             onOpenChange(true);
@@ -175,15 +183,17 @@ export function RecipeTable({
     };
 
     // Update sheetOpen to use the external state if provided
-    const handleSheetOpenChange = (newOpen) => {
+    const handleSheetOpenChange = (newOpen, options) => {
+        if (!newOpen) {
+            // When closing the sheet, clear the selected recipe
+            setSelectedRecipe(null);
+            setSheetMode("view");
+        }
+
         if (onOpenChange) {
             onOpenChange(newOpen);
         } else {
             setInternalSheetOpen(newOpen);
-        }
-        if (!newOpen) {
-            setSelectedRecipe(null);
-            setSheetMode("view");
         }
     };
 
@@ -198,6 +208,26 @@ export function RecipeTable({
     useEffect(() => {
         console.log("RecipeTable recipes prop changed:", recipes);
     }, [recipes]);
+
+    // Add this near the top of the RecipeTable component, after the state declarations
+    useEffect(() => {
+        // If we have a selectedRecipe, check if it needs updating from the recipes array
+        if (selectedRecipe) {
+            const updatedRecipe = recipes.find(
+                (r) => r.recipe_id === selectedRecipe.recipe_id
+            );
+            if (
+                updatedRecipe &&
+                JSON.stringify(updatedRecipe) !== JSON.stringify(selectedRecipe)
+            ) {
+                console.log(
+                    "Updating selectedRecipe with new data:",
+                    updatedRecipe
+                );
+                setSelectedRecipe(updatedRecipe);
+            }
+        }
+    }, [recipes, selectedRecipe]);
 
     // Get visible columns
     const columns = [
@@ -392,7 +422,7 @@ export function RecipeTable({
                     if (options?.mode) {
                         setSheetMode(options.mode);
                     }
-                    handleSheetOpenChange(newOpen);
+                    handleSheetOpenChange(newOpen, options);
                 }}
                 onModeChange={(newMode) => setSheetMode(newMode)}
                 defaultDogId={dogId}

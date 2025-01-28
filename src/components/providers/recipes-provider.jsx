@@ -174,27 +174,30 @@ export function RecipesProvider({ children }) {
 
             if (recipeError) throw recipeError;
 
-            // Delete existing recipe ingredients
-            const { error: deleteError } = await supabase
-                .from("recipe_ingredients")
-                .delete()
-                .eq("recipe_id", recipeId);
-
-            if (deleteError) throw deleteError;
-
-            // Insert new recipe ingredients
-            if (ingredients?.length) {
-                const { error: ingredientsError } = await supabase
+            // Only modify ingredients if they're provided
+            if (ingredients) {
+                // Delete existing recipe ingredients
+                const { error: deleteError } = await supabase
                     .from("recipe_ingredients")
-                    .insert(
-                        ingredients.map((ing) => ({
-                            recipe_id: recipeId,
-                            ingredient_id: ing.ingredient_id,
-                            quantity: ing.quantity,
-                        }))
-                    );
+                    .delete()
+                    .eq("recipe_id", recipeId);
 
-                if (ingredientsError) throw ingredientsError;
+                if (deleteError) throw deleteError;
+
+                // Insert new recipe ingredients if array isn't empty
+                if (ingredients.length > 0) {
+                    const { error: ingredientsError } = await supabase
+                        .from("recipe_ingredients")
+                        .insert(
+                            ingredients.map((ing) => ({
+                                recipe_id: recipeId,
+                                ingredient_id: ing.ingredient_id,
+                                quantity: ing.quantity,
+                            }))
+                        );
+
+                    if (ingredientsError) throw ingredientsError;
+                }
             }
 
             // Fetch the updated recipe with all its data
@@ -214,18 +217,11 @@ export function RecipesProvider({ children }) {
 
             if (fetchError) throw fetchError;
 
-            console.log("Fetched updated recipe:", updatedRecipe);
-            console.log(
-                "Updated recipe ingredients:",
-                updatedRecipe.recipe_ingredients
-            );
-
             // Update the recipes state with the new data
             setRecipes((prev) => {
                 const index = prev.findIndex((r) => r.recipe_id === recipeId);
                 if (index >= 0) {
                     const newRecipes = [...prev];
-                    // Completely replace with updated recipe
                     newRecipes[index] = updatedRecipe;
                     return newRecipes;
                 }

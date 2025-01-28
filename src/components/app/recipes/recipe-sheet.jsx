@@ -75,22 +75,40 @@ export function RecipeSheet({
     // Update state when recipe changes
     useEffect(() => {
         if (recipe && (mode === "view" || mode === "edit")) {
+            console.log("Recipe changed in RecipeSheet:", recipe);
             setRecipeName(recipe.recipe_name || "");
             setSelectedDog(recipe.dog_id || "");
-            setMeatAndBone(recipe.meat_and_bone || []);
-            setPlantMatter(recipe.plant_matter || []);
-            setSecretingOrgans(recipe.secreting_organs || []);
-            setLiver(recipe.liver || []);
-            setMisc(recipe.misc || []);
+            setRecipeIngredients(recipe.recipe_ingredients || []);
+
+            // Update ingredient sections
+            const meatAndBoneIngredients =
+                recipe.recipe_ingredients?.filter(
+                    (ing) => ing.ingredients?.category_id === 1
+                ) || [];
+            const plantMatterIngredients =
+                recipe.recipe_ingredients?.filter(
+                    (ing) => ing.ingredients?.category_id === 2
+                ) || [];
+            const secretingOrgansIngredients =
+                recipe.recipe_ingredients?.filter(
+                    (ing) => ing.ingredients?.category_id === 4
+                ) || [];
+            const liverIngredients =
+                recipe.recipe_ingredients?.filter(
+                    (ing) => ing.ingredients?.category_id === 3
+                ) || [];
+            const miscIngredients =
+                recipe.recipe_ingredients?.filter(
+                    (ing) => ing.ingredients?.category_id === 5
+                ) || [];
+
+            setMeatAndBone(meatAndBoneIngredients);
+            setPlantMatter(plantMatterIngredients);
+            setSecretingOrgans(secretingOrgansIngredients);
+            setLiver(liverIngredients);
+            setMisc(miscIngredients);
         }
     }, [recipe, mode]);
-
-    // Update recipeIngredients when recipe changes
-    useEffect(() => {
-        if (recipe?.recipe_ingredients) {
-            setRecipeIngredients(recipe.recipe_ingredients);
-        }
-    }, [recipe]);
 
     // Helper functions
     const getDogName = useCallback(
@@ -451,6 +469,10 @@ export function RecipeSheet({
                                     : mode === "edit"
                                     ? "Edit recipe"
                                     : recipe?.recipe_name}
+                                {console.log(
+                                    "Recipe name",
+                                    recipe?.recipe_name
+                                )}
                             </SheetTitle>
                             <SheetDescription className="hidden">
                                 {mode === "create"
