@@ -9,50 +9,83 @@ function BatchInputs({
     onBatchSizeChange,
     onDaysChange,
 }) {
+    const handleBatchInput = (value) => {
+        const cleanValue = value
+            .replace(/[^0-9.]/g, "")
+            .replace(/^0+/, "")
+            .replace(/^\./, "0.")
+            .replace(/(\..*)\./g, "$1")
+            .replace(/(\.[\d])\d+/, "$1");
+
+        onBatchSizeChange(cleanValue === "" ? null : cleanValue);
+    };
+
+    const handleDaysInput = (value) => {
+        const cleanValue = value.replace(/[^0-9]/g, "").replace(/^0+/, "");
+        onDaysChange(cleanValue === "" ? null : cleanValue);
+    };
+
+    const handleInputBlur = () => {
+        // If either input is empty, set both to 0
+        if (
+            !batchSize ||
+            batchSize === "" ||
+            !numberOfDays ||
+            numberOfDays === ""
+        ) {
+            onBatchSizeChange("0");
+            onDaysChange("0");
+        }
+    };
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full justify-between">
             <div className="flex flex-row items-center gap-4">
                 <div className="flex-1 relative">
                     <Input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={batchSize}
-                        onChange={(e) => onBatchSizeChange(e.target.value)}
-                        placeholder="1"
+                        type="text"
+                        inputMode="decimal"
+                        value={
+                            batchSize === "" || batchSize === null
+                                ? ""
+                                : batchSize.toString()
+                        }
+                        onChange={(e) => handleBatchInput(e.target.value)}
+                        onBlur={handleInputBlur}
                         className="pr-8"
                     />
                     <span className="absolute right-3 top-[50%] -translate-y-[50%] text-sm text-muted-foreground pointer-events-none">
                         Kg
                     </span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Batch size
-                    </p>
                 </div>
                 <span className="text-muted-foreground">or</span>
                 <div className="flex-1 relative">
                     <Input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={numberOfDays}
-                        onChange={(e) => onDaysChange(e.target.value)}
-                        placeholder="10"
+                        type="text"
+                        inputMode="numeric"
+                        value={
+                            numberOfDays === "" || numberOfDays === null
+                                ? ""
+                                : numberOfDays.toString()
+                        }
+                        onChange={(e) => handleDaysInput(e.target.value)}
+                        onBlur={handleInputBlur}
                         className="pr-12"
                     />
                     <span className="absolute right-3 top-[50%] -translate-y-[50%] text-sm text-muted-foreground pointer-events-none">
                         Days
                     </span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Duration
-                    </p>
                 </div>
             </div>
+            <p className="text-sm font-regular text-muted-foreground">
+                Quantities below will make{" "}
+                <span className="text-foreground">{batchSize}kg.</span>
+            </p>
         </div>
     );
 }
 
-function BatchSummary({ batchSize, numberOfDays, recipe, dogs, getDogName }) {
+function BatchSummary({ batchSize, numberOfDays, recipe, dogs }) {
     const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
     const dailyIntake = dog
         ? Math.round(dog.weight_metric * 1000 * (dog.ratios_intake / 100))
@@ -60,72 +93,40 @@ function BatchSummary({ batchSize, numberOfDays, recipe, dogs, getDogName }) {
 
     return (
         <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-                This batch will last approximately {numberOfDays} days based on{" "}
-                {getDogName(recipe.dog_id)}'s daily intake of {dailyIntake}g.
+            <p className="text-xl text-muted-foreground leading-relaxed -mt-2 -mb-1">
+                Preparing <span className="text-foreground">{batchSize}kg</span>{" "}
+                of this recipe would keep {dog?.dog_name || "Unknown Dog"} fed
+                for <span className="text-foreground">{numberOfDays} days</span>
+                , when feeding{" "}
+                <span className="text-foreground">{dailyIntake}g</span> per day.
             </p>
         </div>
     );
 }
 
-export function BatchCalculator({ recipe, dogs, getDogName }) {
-    const { updateRecipe } = useRecipes();
-    const [batchSize, setBatchSize] = useState(recipe?.batch_size || 1);
-    const [numberOfDays, setNumberOfDays] = useState(1);
-
-    useEffect(() => {
-        const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
-        if (dog) {
-            const dailyIntake =
-                (dog.weight_metric * 1000 * (dog.ratios_intake / 100)) / 1000;
-            setNumberOfDays(Math.round(batchSize / dailyIntake));
-        }
-    }, [recipe, dogs, batchSize]);
-
-    const handleBatchSizeChange = (value) => {
-        const newBatchSize = Number(parseFloat(value).toFixed(1)) || 0;
-        setBatchSize(newBatchSize);
-
-        const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
-        if (dog) {
-            const dailyIntake =
-                (dog.weight_metric * 1000 * (dog.ratios_intake / 100)) / 1000;
-            const days = Math.round(newBatchSize / dailyIntake);
-            setNumberOfDays(days);
-            updateRecipe(recipe.recipe_id, { batch_size: newBatchSize });
-        }
-    };
-
-    const handleDaysChange = (value) => {
-        const newDays = parseInt(value) || 0;
-        setNumberOfDays(newDays);
-
-        const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
-        if (dog) {
-            const dailyIntake =
-                (dog.weight_metric * 1000 * (dog.ratios_intake / 100)) / 1000;
-            const newBatchSize = Number((dailyIntake * newDays).toFixed(1));
-            setBatchSize(newBatchSize);
-            updateRecipe(recipe.recipe_id, { batch_size: newBatchSize });
-        }
-    };
-
+export function BatchCalculator({
+    recipe,
+    dogs,
+    batchSize,
+    numberOfDays,
+    onBatchSizeChange,
+    onDaysChange,
+}) {
     return (
         <div className="flex flex-col gap-6 p-8 pb-10 border-b border-border">
             <p className="font-medium">Batch calculator</p>
             <div className="grid grid-cols-2 gap-8 w-full">
                 <BatchInputs
-                    batchSize={batchSize}
-                    numberOfDays={numberOfDays}
-                    onBatchSizeChange={handleBatchSizeChange}
-                    onDaysChange={handleDaysChange}
+                    batchSize={batchSize ?? ""}
+                    numberOfDays={numberOfDays ?? ""}
+                    onBatchSizeChange={onBatchSizeChange}
+                    onDaysChange={onDaysChange}
                 />
                 <BatchSummary
                     batchSize={batchSize}
                     numberOfDays={numberOfDays}
                     recipe={recipe}
                     dogs={dogs}
-                    getDogName={getDogName}
                 />
             </div>
         </div>

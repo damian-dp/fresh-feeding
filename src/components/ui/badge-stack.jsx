@@ -21,10 +21,18 @@ export function BadgeStack({
                         </span>
                     )}
                     <span
-                        className={cn("text-sm font-medium whitespace-nowrap", {
+                        className={cn("font-medium whitespace-nowrap", {
+                            "text-sm":
+                                sublabel != "" &&
+                                sublabel != null &&
+                                sublabel != undefined,
                             "text-success-foreground": variant === "success",
                             "text-warning-foreground": variant === "warning",
                             "text-error-foreground": variant === "error",
+                            "text-base":
+                                sublabel === "" ||
+                                sublabel === null ||
+                                sublabel === undefined,
                         })}
                     >
                         {label}
@@ -34,9 +42,17 @@ export function BadgeStack({
                 <>
                     <span
                         className={cn("text-sm font-medium whitespace-nowrap", {
+                            "text-sm":
+                                sublabel != "" &&
+                                sublabel != null &&
+                                sublabel != undefined,
                             "text-success-foreground": variant === "success",
                             "text-warning-foreground": variant === "warning",
                             "text-error-foreground": variant === "error",
+                            "text-base":
+                                sublabel === "" ||
+                                sublabel === null ||
+                                sublabel === undefined,
                         })}
                     >
                         {label}

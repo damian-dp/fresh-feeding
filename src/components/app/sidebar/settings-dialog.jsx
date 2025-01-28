@@ -308,7 +308,7 @@ export function SettingsDialog({ open, onOpenChange }) {
             <div className="space-y-6 px-6">
                 <p className="font-medium">Personal details</p>
                 <div className="flex flex-row gap-6">
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="name">Name</Label>
                         <Input
                             id="name"
@@ -316,7 +316,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                             onChange={(e) => setName(e.target.value)}
                         />
                     </div>
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="email">
                             Email
                             {!profile?.email_confirmed_at && (
@@ -357,7 +357,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                     </div>
                 </div>
                 <div className="flex flex-row gap-6">
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="country">Country</Label>
                         <Select
                             value={country}
@@ -379,7 +379,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="postcode">Postcode</Label>
                         <Input
                             id="postcode"
@@ -394,7 +394,7 @@ export function SettingsDialog({ open, onOpenChange }) {
             <div className="space-y-6 px-6">
                 <p className="font-medium">App preferences</p>
                 <div className="flex flex-row gap-6">
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="measurement">Measurement system</Label>
                         <Select
                             value={unitMetric ? "metric" : "imperial"}
@@ -424,7 +424,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2 w-full">
+                    <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="theme">Theme</Label>
                         <Select
                             value={theme}

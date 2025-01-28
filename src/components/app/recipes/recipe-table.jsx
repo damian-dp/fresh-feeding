@@ -30,6 +30,18 @@ import { BadgeStack } from "@/components/ui/badge-stack";
 import { useRef, useEffect, useState } from "react";
 import { RecipeSheet } from "../recipes/recipe-sheet";
 import { toast } from "sonner";
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function RecipeTable({
     // Configurable columns
@@ -52,8 +64,10 @@ export function RecipeTable({
     open,
     // Add this prop
     onOpenChange,
+    // Add getDogName prop
+    getDogName,
 }) {
-    const { recipes } = useRecipes();
+    const { recipes, deleteRecipe } = useRecipes();
     const { dogs, loading } = useDogs();
     const tableRef = useRef(null);
     const [tableWidth, setTableWidth] = useState(0);
@@ -79,11 +93,14 @@ export function RecipeTable({
     const shouldShowIngredients = showIngredients && tableWidth > 980;
     const shouldShowNutritionStatus = showNutritionStatus && tableWidth > 720;
 
-    // Get dog name helper function
-    const getDogName = (dogId) => {
+    // Create a default implementation if not provided
+    const internalGetDogName = (dogId) => {
         const dog = dogs.find((d) => d.dog_id === dogId);
         return dog ? dog.dog_name : "Unknown Dog";
     };
+
+    // Use the provided function or fallback to internal
+    const dogNameResolver = getDogName || internalGetDogName;
 
     // Format ingredients helper function
     const formatIngredients = (ingredients) => {
@@ -127,6 +144,7 @@ export function RecipeTable({
 
     // Update the handler functions
     const handleViewRecipe = (recipe) => {
+        console.log("Recipe clicked:", recipe);
         setSelectedRecipe(recipe);
         setSheetMode("view");
         if (onOpenChange) {
@@ -137,6 +155,7 @@ export function RecipeTable({
     };
 
     const handleEditRecipe = (recipe) => {
+        console.log("Recipe clicked:", recipe);
         setSelectedRecipe(recipe);
         setSheetMode("edit");
         if (onOpenChange) {
@@ -147,16 +166,11 @@ export function RecipeTable({
     };
 
     const handleDeleteRecipe = async (recipeId) => {
-        if (onDelete) {
-            onDelete(recipeId);
+        const success = await deleteRecipe(recipeId);
+        if (success) {
+            toast.success("Recipe deleted successfully");
         } else {
-            try {
-                await deleteRecipe(recipeId);
-                toast.success("Recipe deleted successfully");
-            } catch (error) {
-                console.error("Error deleting recipe:", error);
-                toast.error("Failed to delete recipe");
-            }
+            toast.error("Failed to delete recipe");
         }
     };
 
@@ -179,6 +193,11 @@ export function RecipeTable({
             setSheetMode("create");
         }
     }, [open, selectedRecipe]);
+
+    // Add effect to log when recipes prop changes
+    useEffect(() => {
+        console.log("RecipeTable recipes prop changed:", recipes);
+    }, [recipes]);
 
     // Get visible columns
     const columns = [
@@ -203,9 +222,6 @@ export function RecipeTable({
             id: "dog",
             header: "Dog",
             cell: (recipe) => {
-                // Find the dog for this recipe
-                const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
-
                 return (
                     <TableCell
                         className="border-r border-border"
@@ -214,18 +230,9 @@ export function RecipeTable({
                         <BadgeStack
                             variant="default"
                             icon={<DogIcon />}
-                            label={getDogName(recipe.dog_id)}
-                            sublabel={
-                                dog
-                                    ? `Daily intake: ${Math.round(
-                                          dog.weight_metric *
-                                              1000 *
-                                              (dog.ratios_intake / 100)
-                                      )}g`
-                                    : ""
-                            }
-                            flipped={false}
-                            showSublabel={!!dog}
+                            label={dogNameResolver(recipe.dog_id)}
+                            sublabel="Created for"
+                            flipped={true}
                         />
                     </TableCell>
                 );
@@ -278,15 +285,19 @@ export function RecipeTable({
         },
         showActions && {
             id: "actions",
-            header: "",
+            header: "Actions",
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-actions`}
-                    className="lg:px-4 flex justify-center"
+                    className="lg:px-4 flex justify-center items-center"
                 >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                            >
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -303,15 +314,44 @@ export function RecipeTable({
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() =>
-                                    handleDeleteRecipe(recipe.recipe_id)
-                                }
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-destructive"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            Are you sure?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete this
+                                            recipe and remove all associated
+                                            data.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                            Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() =>
+                                                handleDeleteRecipe(
+                                                    recipe.recipe_id
+                                                )
+                                            }
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            Confirm Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </TableCell>

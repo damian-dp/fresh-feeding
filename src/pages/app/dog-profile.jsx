@@ -39,10 +39,12 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/lib/supabase";
 import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profile-dialog";
 import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
+import { useRecipes } from "@/components/providers/recipes-provider";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
     const { dogs, loading } = useDogs();
+    const { recipes } = useRecipes();
     const textareaRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -145,6 +147,11 @@ export function DogProfilePage() {
 
     // Convert dogId to number since it comes as string from URL params
     const dog = dogs.find((dog) => dog.dog_id === parseInt(dogId));
+
+    // Add effect to log when recipes changes
+    useEffect(() => {
+        console.log("DogProfilePage recipes changed:", recipes);
+    }, [recipes]);
 
     if (loading) {
         return (
@@ -286,11 +293,9 @@ export function DogProfilePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Nutritional ratios</CardTitle>
-                        <Button variant="outline" asChild>
-                            <Link to="/recipes/new">
-                                <Pencil className="w-4 h-4" />
-                                Edit ratios
-                            </Link>
+                        <Button variant="outline">
+                            <Pencil className="w-4 h-4" />
+                            Edit ratios
                         </Button>
                     </CardHeader>
                     <CardContent className="border-b py-8">
@@ -439,8 +444,14 @@ export function DogProfilePage() {
                     </CardHeader>
                     <CardContent className="p-0">
                         <RecipeTable
-                            limit={5}
                             dogId={parseInt(dogId)}
+                            getDogName={(dogId) => {
+                                const dog = dogs.find(
+                                    (d) => d.dog_id === dogId
+                                );
+                                return dog?.dog_name || "Unknown Dog";
+                            }}
+                            limit={5}
                             open={sheetOpen}
                             onOpenChange={setSheetOpen}
                         />

@@ -136,54 +136,106 @@ export function RecipesProvider({ children }) {
                 if (ingredientsError) throw ingredientsError;
             }
 
-            return recipe;
+            // Fetch the complete recipe with ingredients
+            const { data: completeRecipe, error: fetchError } = await supabase
+                .from("recipes")
+                .select(
+                    `
+                    *,
+                    recipe_ingredients (
+                        *,
+                        ingredients (*)
+                    )
+                `
+                )
+                .eq("recipe_id", recipe.recipe_id)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            // Update recipes state with the new recipe
+            setRecipes((prev) => [...prev, completeRecipe]);
+
+            return completeRecipe;
         } catch (error) {
             console.error("Error adding recipe:", error);
             throw error;
         }
     };
 
-    const updateRecipe = async (recipeId, updates, ingredients) => {
+    const updateRecipe = async (recipeId, recipeData, ingredients) => {
+        console.log("RecipesProvider: Starting updateRecipe...");
         try {
             // Update recipe details
-            const { data: recipe, error: recipeError } = await supabase
+            const { error: recipeError } = await supabase
                 .from("recipes")
-                .update(updates)
-                .eq("recipe_id", recipeId)
-                .eq("profile_id", session.user.id)
-                .select()
-                .single();
+                .update(recipeData)
+                .eq("recipe_id", recipeId);
 
             if (recipeError) throw recipeError;
 
-            // Update ingredients if provided
-            if (ingredients) {
-                // Delete existing ingredients
-                await supabase
+            // Delete existing recipe ingredients
+            const { error: deleteError } = await supabase
+                .from("recipe_ingredients")
+                .delete()
+                .eq("recipe_id", recipeId);
+
+            if (deleteError) throw deleteError;
+
+            // Insert new recipe ingredients
+            if (ingredients?.length) {
+                const { error: ingredientsError } = await supabase
                     .from("recipe_ingredients")
-                    .delete()
-                    .eq("recipe_id", recipeId);
+                    .insert(
+                        ingredients.map((ing) => ({
+                            recipe_id: recipeId,
+                            ingredient_id: ing.ingredient_id,
+                            quantity: ing.quantity,
+                        }))
+                    );
 
-                // Insert new ingredients
-                if (ingredients.length) {
-                    const { error: ingredientsError } = await supabase
-                        .from("recipe_ingredients")
-                        .insert(
-                            ingredients.map((ing) => ({
-                                recipe_id: recipeId,
-                                ingredient_id: ing.ingredient_id,
-                                quantity: ing.quantity,
-                            }))
-                        );
-
-                    if (ingredientsError) throw ingredientsError;
-                }
+                if (ingredientsError) throw ingredientsError;
             }
 
-            return recipe;
+            // Fetch the updated recipe with all its data
+            const { data: updatedRecipe, error: fetchError } = await supabase
+                .from("recipes")
+                .select(
+                    `
+                    *,
+                    recipe_ingredients (
+                        *,
+                        ingredients (*)
+                    )
+                `
+                )
+                .eq("recipe_id", recipeId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            console.log("Fetched updated recipe:", updatedRecipe);
+            console.log(
+                "Updated recipe ingredients:",
+                updatedRecipe.recipe_ingredients
+            );
+
+            // Update the recipes state with the new data
+            setRecipes((prev) => {
+                const index = prev.findIndex((r) => r.recipe_id === recipeId);
+                if (index >= 0) {
+                    const newRecipes = [...prev];
+                    // Completely replace with updated recipe
+                    newRecipes[index] = updatedRecipe;
+                    return newRecipes;
+                }
+                return [...prev, updatedRecipe];
+            });
+
+            return updatedRecipe;
         } catch (error) {
-            console.error("Error updating recipe:", error);
-            throw error;
+            console.error("Error in updateRecipe:", error);
+            return false;
         }
     };
 
@@ -192,14 +244,15 @@ export function RecipesProvider({ children }) {
             const { error } = await supabase
                 .from("recipes")
                 .delete()
-                .eq("recipe_id", recipeId)
-                .eq("profile_id", session.user.id);
+                .eq("recipe_id", recipeId);
 
             if (error) throw error;
+
+            setRecipes((prev) => prev.filter((r) => r.recipe_id !== recipeId));
             return true;
         } catch (error) {
             console.error("Error deleting recipe:", error);
-            throw error;
+            return false;
         }
     };
 
@@ -209,7 +262,13 @@ export function RecipesProvider({ children }) {
         addRecipe,
         updateRecipe,
         deleteRecipe,
+        fetchRecipeById,
     };
+
+    // Also add a useEffect to log recipes state changes
+    useEffect(() => {
+        console.log("Recipes state updated:", recipes);
+    }, [recipes]);
 
     return (
         <RecipesContext.Provider value={value}>

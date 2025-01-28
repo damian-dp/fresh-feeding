@@ -11,8 +11,44 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function DogSwitcher({ dogs = [], onSelect, onAddDog }) {
-    const [activeDog, setActiveDog] = React.useState(dogs[0] || null);
+export function DogSwitcher({
+    dogs = [],
+    onSelect,
+    onAddDog,
+    defaultSelectedDog = null,
+}) {
+    const [activeDog, setActiveDog] = React.useState(() => {
+        // Initialize with default selected dog if provided
+        return defaultSelectedDog
+            ? dogs.find((d) => d.dog_id === defaultSelectedDog)
+            : null;
+    });
+
+    // Update active dog when dogs list or default changes
+    React.useEffect(() => {
+        if (defaultSelectedDog) {
+            // Convert to number if needed
+            const targetId = Number(defaultSelectedDog);
+            const findDog = () => dogs.find((d) => d.dog_id === targetId);
+
+            // Immediate check
+            const immediateMatch = findDog();
+            if (immediateMatch) {
+                setActiveDog(immediateMatch);
+                return;
+            }
+
+            // Async check for loading data
+            const timeoutId = setTimeout(() => {
+                const newActive = findDog();
+                if (newActive) {
+                    setActiveDog(newActive);
+                }
+            }, 50);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [dogs, defaultSelectedDog]);
 
     const handleDogSelect = (dog) => {
         setActiveDog(dog);
@@ -25,7 +61,7 @@ export function DogSwitcher({ dogs = [], onSelect, onAddDog }) {
                 <Button
                     variant="outline"
                     role="combobox"
-                    className="w-full h-[52px] justify-between"
+                    className="w-full h-14 flex items-center justify-between"
                 >
                     {activeDog ? (
                         <div className="flex items-center gap-2">
@@ -38,10 +74,10 @@ export function DogSwitcher({ dogs = [], onSelect, onAddDog }) {
                                 </AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="font-semibold">
+                                <span className="font-medium">
                                     {activeDog.dog_name}
                                 </span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs font-normal text-muted-foreground">
                                     {activeDog.breed}
                                 </span>
                             </div>
@@ -63,9 +99,6 @@ export function DogSwitcher({ dogs = [], onSelect, onAddDog }) {
                 className="w-[var(--radix-dropdown-menu-trigger-width)]"
                 align="start"
             >
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    Your Dogs
-                </DropdownMenuLabel>
                 {dogs.map((dog) => (
                     <DropdownMenuItem
                         key={dog.dog_id}
@@ -79,9 +112,7 @@ export function DogSwitcher({ dogs = [], onSelect, onAddDog }) {
                             </AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-sm leading-tight">
-                            <span className="font-semibold">
-                                {dog.dog_name}
-                            </span>
+                            <span className="font-medium">{dog.dog_name}</span>
                             <span className="text-xs text-muted-foreground">
                                 {dog.breed}
                             </span>

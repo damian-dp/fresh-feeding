@@ -153,3 +153,7 @@
         @apply bg-background text-foreground;
     }
 }
+
+input[type="number"]::-webkit-inner-spin-button {
+    display: none;
+}

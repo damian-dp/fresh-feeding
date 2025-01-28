@@ -1,8 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, X, Loader2 } from "lucide-react";
+import {
+    PlusCircle,
+    X,
+    Loader2,
+    Percent,
+    Bone,
+    Pill,
+    Brain,
+    Leaf,
+    Plus,
+    Trash,
+} from "lucide-react";
 import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
+import { BadgeStack } from "@/components/ui/badge-stack";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -69,25 +81,70 @@ export function IngredientSection({
     isLoading,
 }) {
     return (
-        <div className={`space-y-4 ${category === "misc" ? "col-span-2" : ""}`}>
+        <div
+            className={`flex flex-col gap-6 ${
+                category === "misc" ? "col-span-2" : ""
+            }`}
+        >
             <div className="flex items-center justify-between">
-                <Label>{title}</Label>
+                <BadgeStack
+                    className="text-base"
+                    variant={
+                        category === "meat_and_bone"
+                            ? "meat"
+                            : category === "plant_matter"
+                            ? "plant"
+                            : category === "liver"
+                            ? "liver"
+                            : category === "secreting_organs"
+                            ? "organ"
+                            : "default"
+                    }
+                    icon={
+                        category === "meat_and_bone" ? (
+                            <Bone />
+                        ) : category === "plant_matter" ? (
+                            <Leaf />
+                        ) : category === "liver" ? (
+                            <Brain />
+                        ) : category === "secreting_organs" ? (
+                            <Brain />
+                        ) : (
+                            <Pill />
+                        )
+                    }
+                    label={
+                        category === "meat_and_bone"
+                            ? "Meat and bone"
+                            : category === "plant_matter"
+                            ? "Plant matter"
+                            : category === "liver"
+                            ? "Liver"
+                            : category === "secreting_organs"
+                            ? "Secreting organs"
+                            : "Other ingredients"
+                    }
+                    sublabel={
+                        category === "misc"
+                            ? "Toppers, dairy, herbs, etc"
+                            : null
+                    }
+                />
                 <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
+                    variant="outline"
+                    size="icon"
                     onClick={() => onToggleActive(category)}
                     disabled={mode === "view"}
                 >
-                    <PlusCircle className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                 </Button>
             </div>
             <div
-                className={`flex flex-col gap-4 ${
-                    items.length > 0 ? "h-auto" : "h-52"
+                className={`flex flex-col ${
+                    items.length > 0 ? "h-auto gap-4" : "h-52"
                 }`}
             >
-                {items.length === 0 ? (
+                {items.length === 0 && !isActive ? (
                     <EmptyState text={emptyStateText} />
                 ) : (
                     <IngredientList
@@ -127,25 +184,34 @@ function EmptyState({ text }) {
 
 function IngredientList({ items, onRemoveItem, category, mode }) {
     return (
-        <div className="space-y-4">
-            {items.map((item) => (
-                <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-md border p-2"
-                >
-                    <span>{item.name}</span>
-                    {mode !== "view" && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => onRemoveItem(item.id, category)}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-            ))}
+        <div className={items.length > 0 ? "border-t" : ""}>
+            {items.map((item) => {
+                // Handle both create and edit mode item structures
+                const itemId = mode === "edit" ? item.ingredient_id : item.id;
+
+                const itemName =
+                    mode === "edit"
+                        ? item.ingredients.ingredient_name
+                        : item.name;
+
+                return (
+                    <div
+                        key={itemId}
+                        className="flex items-center justify-between border-b py-2"
+                    >
+                        <span>{itemName}</span>
+                        {mode !== "view" && (
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => onRemoveItem(itemId, category)}
+                            >
+                                <Trash className="" />
+                            </Button>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

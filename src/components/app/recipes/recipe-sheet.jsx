@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetDescription,
     SheetFooter,
@@ -8,7 +9,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { CheckCheck, Loader2, Pencil, Plus, Trash } from "lucide-react";
 import { useUser } from "@/components/providers/user-provider";
 import { useDogs } from "@/components/providers/dogs-provider";
 import { useIngredients } from "@/components/providers/ingredients-provider";
@@ -24,6 +25,19 @@ import {
     INGREDIENT_SECTIONS,
     getIngredientsByCategory,
 } from "./ingredient-section";
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/lib/supabase";
 
 export function RecipeSheet({
     mode = "create",
@@ -35,7 +49,8 @@ export function RecipeSheet({
     const { profile } = useUser();
     const { dogs } = useDogs();
     const { ingredients, loading: ingredientsLoading } = useIngredients();
-    const { addRecipe, updateRecipe } = useRecipes();
+    const { addRecipe, updateRecipe, deleteRecipe, recipes, fetchRecipeById } =
+        useRecipes();
 
     // State management
     const [showAddDog, setShowAddDog] = useState(false);
@@ -44,6 +59,9 @@ export function RecipeSheet({
     const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState(null);
+    const [recipeIngredients, setRecipeIngredients] = useState(
+        recipe?.recipe_ingredients || []
+    );
 
     // Ingredient sections state
     const [meatAndBone, setMeatAndBone] = useState(recipe?.meat_and_bone || []);
@@ -66,6 +84,13 @@ export function RecipeSheet({
             setMisc(recipe.misc || []);
         }
     }, [recipe, mode]);
+
+    // Update recipeIngredients when recipe changes
+    useEffect(() => {
+        if (recipe?.recipe_ingredients) {
+            setRecipeIngredients(recipe.recipe_ingredients);
+        }
+    }, [recipe]);
 
     // Helper functions
     const getDogName = useCallback(
@@ -128,6 +153,20 @@ export function RecipeSheet({
             return;
         }
 
+        // In edit mode, switch back to view mode instead of closing
+        if (mode === "edit") {
+            // Reset edit mode state
+            setRecipeIngredients(recipe?.recipe_ingredients || []);
+            setRecipeName(recipe?.recipe_name || "");
+            setSelectedDog(recipe?.dog_id || "");
+            setActiveSection(null);
+
+            // Switch back to view mode with current recipe
+            onModeChange?.("view");
+            onOpenChange?.(true, { mode: "view", recipe });
+            return;
+        }
+
         if (hasFormChanges()) {
             setShowUnsavedChanges(true);
         } else {
@@ -148,49 +187,65 @@ export function RecipeSheet({
                 recipe_name: recipeName,
                 dog_id: selectedDog,
                 profile_id: profile.id,
-                created_at: new Date().toISOString(),
                 last_updated: new Date().toISOString(),
             };
 
-            const ingredients = [
-                ...meatAndBone.map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: 1,
-                    category: "meat_and_bone",
-                })),
-                ...plantMatter.map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: 1,
-                    category: "plant_matter",
-                })),
-                ...secretingOrgans.map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: 1,
-                    category: "secreting_organs",
-                })),
-                ...liver.map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: 1,
-                    category: "liver",
-                })),
-                ...misc.map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: 1,
-                    category: "misc",
-                })),
-            ];
+            if (mode === "edit" && recipe?.recipe_id) {
+                console.log("Edit mode - preparing ingredients...");
+                const ingredients = recipeIngredients.map((ing) => ({
+                    ingredient_id: ing.ingredient_id,
+                    quantity: ing.quantity || 0,
+                }));
 
-            if (mode === "create") {
-                await addRecipe(recipeData, ingredients);
-                toast.success("Recipe created successfully");
-                resetForm();
-            } else if (mode === "edit" && recipe?.recipe_id) {
-                await updateRecipe(recipe.recipe_id, recipeData, ingredients);
-                toast.success("Recipe updated successfully");
+                console.log("Calling updateRecipe...");
+                const updatedRecipe = await updateRecipe(
+                    recipe.recipe_id,
+                    recipeData,
+                    ingredients
+                );
+
+                if (updatedRecipe) {
+                    console.log(
+                        "Update successful, transitioning to view mode..."
+                    );
+                    toast.success("Recipe updated successfully");
+
+                    // Reset edit mode state
+                    setRecipeIngredients([]);
+                    setRecipeName("");
+                    setSelectedDog("");
+                    setActiveSection(null);
+
+                    // Wait for a tick to ensure state is updated
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+
+                    // Get the latest recipe from the recipes array
+                    const latestRecipe = recipes.find(
+                        (r) => r.recipe_id === recipe.recipe_id
+                    );
+
+                    console.log("Latest recipe from state:", latestRecipe);
+                    console.log("Updated recipe from API:", updatedRecipe);
+
+                    // Use the updatedRecipe directly instead of looking up in state
+                    onModeChange?.("view");
+                    onOpenChange?.(true, {
+                        mode: "view",
+                        recipe: updatedRecipe,
+                    });
+
+                    console.log(
+                        "Transitioned to view mode with recipe:",
+                        updatedRecipe
+                    );
+
+                    await handleSaveSuccess(updatedRecipe);
+                }
+                return;
             }
             onOpenChange(false);
         } catch (error) {
-            console.error("Error saving recipe:", error);
+            console.error("Error in handleSave:", error);
             toast.error(
                 "Failed to save recipe: " + (error.message || "Unknown error")
             );
@@ -200,8 +255,15 @@ export function RecipeSheet({
     };
 
     // Add these functions back
-    const handleAddIngredient = (ingredient, section) => {
-        switch (section) {
+    const handleAddIngredient = (ingredient, category) => {
+        if (mode === "edit") {
+            setRecipeIngredients((prev) => [...prev, ingredient]);
+            setActiveSection(null);
+            return;
+        }
+
+        // Create mode handling
+        switch (category) {
             case "meat_and_bone":
                 setMeatAndBone([...meatAndBone, ingredient]);
                 break;
@@ -247,6 +309,48 @@ export function RecipeSheet({
                 setMisc(misc.filter((i) => i.ingredient_id !== ingredientId));
                 break;
         }
+    };
+
+    // Delete functionality
+    const handleDelete = async () => {
+        const success = await deleteRecipe(recipe.recipe_id);
+        if (success) {
+            toast.success("Recipe deleted successfully");
+            onOpenChange(false);
+        } else {
+            toast.error("Failed to delete recipe");
+        }
+    };
+
+    // When transitioning to view mode, force a refresh
+    const handleSaveSuccess = async (updatedRecipe) => {
+        try {
+            const freshRecipe = await fetchRecipeById(updatedRecipe.recipe_id);
+            onModeChange?.("view");
+            onOpenChange?.(true, { mode: "view", recipe: freshRecipe });
+        } catch (error) {
+            console.error("Error refreshing recipe:", error);
+        }
+    };
+
+    // Add this function inside the RecipeSheet component
+    const fetchRecipeFromServer = async (recipeId) => {
+        const { data, error } = await supabase
+            .from("recipes")
+            .select(
+                `
+                *,
+                recipe_ingredients (
+                    *,
+                    ingredients (*)
+                )
+            `
+            )
+            .eq("recipe_id", recipeId)
+            .single();
+
+        if (error) throw error;
+        return data;
     };
 
     // Render content based on mode
@@ -300,7 +404,10 @@ export function RecipeSheet({
             case "edit":
                 return (
                     <RecipeSheetEdit
-                        recipe={recipe}
+                        recipe={{
+                            ...recipe,
+                            recipe_ingredients: recipeIngredients,
+                        }}
                         recipeName={recipeName}
                         setRecipeName={setRecipeName}
                         dogs={dogs}
@@ -356,37 +463,93 @@ export function RecipeSheet({
                         <ScrollArea className="h-[calc(100vh-168px)]">
                             {renderContent()}
                         </ScrollArea>
-                        <SheetFooter className="p-6">
-                            {mode !== "view" && (
-                                <Button
-                                    type="submit"
-                                    onClick={handleSave}
-                                    disabled={
-                                        !recipeName || !selectedDog || isSaving
-                                    }
-                                >
-                                    {isSaving && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    )}
-                                    {mode === "create"
-                                        ? "Create recipe"
-                                        : "Save changes"}
-                                </Button>
+                        <SheetFooter
+                            className={`px-6 flex-row ${
+                                mode === "edit" ? "justify-between" : ""
+                            }`}
+                        >
+                            {mode === "edit" && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive">
+                                            <Trash className="" />
+                                            Delete recipe
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>
+                                                Are you absolutely sure?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone.
+                                                This will permanently delete
+                                                this recipe.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>
+                                                Cancel
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleDelete}
+                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             )}
-                            {mode === "view" && (
-                                <Button
-                                    type="submit"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleClose(true, {
-                                            mode: "edit",
-                                            recipe: recipe,
-                                        });
-                                    }}
-                                >
-                                    Edit recipe
-                                </Button>
-                            )}
+                            <div className="flex flex-row gap-2">
+                                <SheetClose>
+                                    <div className="hover:bg-accent h-10 px-4 py-2 hover:text-accent-foreground inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+                                        {mode === "view" ? "Close" : "Cancel"}
+                                    </div>
+                                </SheetClose>
+                                {mode !== "view" && (
+                                    <Button
+                                        type="submit"
+                                        variant="outline"
+                                        onClick={handleSave}
+                                        disabled={
+                                            !recipeName ||
+                                            !selectedDog ||
+                                            isSaving
+                                        }
+                                    >
+                                        {isSaving && (
+                                            <Loader2 className="animate-spin" />
+                                        )}
+                                        {mode === "create" && !isSaving && (
+                                            <Plus className="" />
+                                        )}
+                                        {mode === "edit" && !isSaving && (
+                                            <CheckCheck className="" />
+                                        )}
+
+                                        {mode === "create"
+                                            ? "Create recipe"
+                                            : "Save changes"}
+                                    </Button>
+                                )}
+                                {mode === "view" && (
+                                    <Button
+                                        type="submit"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleClose(true, {
+                                                mode: "edit",
+                                                recipe: recipe,
+                                            });
+                                        }}
+                                    >
+                                        <Pencil className="" />
+                                        Edit recipe
+                                    </Button>
+                                )}
+                            </div>
                         </SheetFooter>
                     </div>
                 </SheetContent>
