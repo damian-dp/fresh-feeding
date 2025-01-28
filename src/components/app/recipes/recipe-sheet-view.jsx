@@ -208,9 +208,21 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                         {item.ingredients?.ingredient_name}
                                     </span>
                                     <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
+                                        {(() => {
+                                            const dog = dogs.find(
+                                                (d) =>
+                                                    d.dog_id ===
+                                                    localRecipe.dog_id
+                                            );
+                                            const grams = getCategoryGrams(
+                                                dog,
+                                                dog.ratios_muscle_meat +
+                                                    dog.ratios_bone
+                                            );
+                                            return Math.round(
+                                                item.quantity * (grams)
+                                            );
+                                        })()}
                                         g
                                     </span>
                                 </div>
@@ -276,9 +288,20 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                         {item.ingredients?.ingredient_name}
                                     </span>
                                     <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
+                                        {(() => {
+                                            const dog = dogs.find(
+                                                (d) =>
+                                                    d.dog_id ===
+                                                    localRecipe.dog_id
+                                            );
+                                            const grams = getCategoryGrams(
+                                                dog,
+                                                dog.ratios_plant_matter
+                                            );
+                                            return Math.round(
+                                                item.quantity * (grams)
+                                            );
+                                        })()}
                                         g
                                     </span>
                                 </div>
@@ -345,9 +368,20 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                         {item.ingredients?.ingredient_name}
                                     </span>
                                     <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
+                                        {(() => {
+                                            const dog = dogs.find(
+                                                (d) =>
+                                                    d.dog_id ===
+                                                    localRecipe.dog_id
+                                            );
+                                            const grams = getCategoryGrams(
+                                                dog,
+                                                dog.ratios_secreting_organ
+                                            );
+                                            return Math.round(
+                                                item.quantity * (grams)
+                                            );
+                                        })()}
                                         g
                                     </span>
                                 </div>
@@ -413,9 +447,20 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                         {item.ingredients?.ingredient_name}
                                     </span>
                                     <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
+                                        {(() => {
+                                            const dog = dogs.find(
+                                                (d) =>
+                                                    d.dog_id ===
+                                                    localRecipe.dog_id
+                                            );
+                                            const grams = getCategoryGrams(
+                                                dog,
+                                                dog.ratios_liver
+                                            );
+                                            return Math.round(
+                                                item.quantity * (grams)
+                                            );
+                                        })()}
                                         g
                                     </span>
                                 </div>
@@ -463,10 +508,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                         {item.ingredients?.ingredient_name}
                                     </span>
                                     <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
-                                        g
+                                        Custom qty
                                     </span>
                                 </div>
                             ))}

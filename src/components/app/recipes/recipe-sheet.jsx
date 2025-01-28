@@ -39,6 +39,56 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 
+// Update the helper function to calculate percentages instead of grams
+const calculateIngredientQuantities = (ingredients, dog) => {
+    if (!dog || !ingredients || ingredients.length === 0) return [];
+
+    // Group ingredients by category
+    const ingredientsByCategory = {};
+    ingredients.forEach((ing) => {
+        const categoryId = ing.id ? ing.category : ing.ingredients.category_id;
+        if (!ingredientsByCategory[categoryId]) {
+            ingredientsByCategory[categoryId] = [];
+        }
+        ingredientsByCategory[categoryId].push(ing);
+    });
+
+    // Calculate quantities (as percentages) for each ingredient
+    return ingredients.map((ing) => {
+        const categoryId = ing.id ? ing.category : ing.ingredients.category_id;
+        const categoryIngredients = ingredientsByCategory[categoryId].length;
+
+        // For each category, distribute the percentage evenly
+        let quantity = 0;
+
+        switch (categoryId) {
+            case 1: // Meat and Bone
+                // Distribute meat and bone ratio evenly among ingredients
+                quantity =
+                    (dog.ratios_muscle_meat + dog.ratios_bone) /
+                    categoryIngredients;
+                break;
+            case 2: // Plant Matter
+                quantity = dog.ratios_plant_matter / categoryIngredients;
+                break;
+            case 3: // Liver
+                quantity = dog.ratios_liver / categoryIngredients;
+                break;
+            case 4: // Secreting Organs
+                quantity = dog.ratios_secreting_organ / categoryIngredients;
+                break;
+            case 5: // Misc - set to small default value
+                quantity = 0;
+                break;
+        }
+
+        return {
+            ingredient_id: ing.id || ing.ingredient_id,
+            quantity: quantity, // This will be a decimal between 0 and 1
+        };
+    });
+};
+
 export function RecipeSheet({
     mode = "create",
     recipe = null,
@@ -294,83 +344,89 @@ export function RecipeSheet({
             } else {
                 // Create mode
                 console.log("Create mode - preparing ingredients...");
-                const ingredients = [
+                const allIngredients = [
                     ...meatAndBone,
                     ...plantMatter,
                     ...secretingOrgans,
                     ...liver,
                     ...misc,
-                ].map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: ing.quantity || 0,
-                }));
+                ];
 
-                console.log("Calling addRecipe...");
+                // Get the selected dog's data
+                const selectedDogData = dogs.find(
+                    (d) => d.dog_id === selectedDog
+                );
+
+                // Calculate quantities as percentages
+                const ingredientsWithQuantities = calculateIngredientQuantities(
+                    allIngredients,
+                    selectedDogData
+                );
+
+                console.log(
+                    "Calculated ingredient quantities (percentages):",
+                    ingredientsWithQuantities
+                );
+
+                // Call addRecipe with the calculated quantities
+                const newRecipe = await addRecipe(
+                    recipeData,
+                    ingredientsWithQuantities
+                );
+
+                if (!newRecipe) {
+                    throw new Error("Failed to create recipe");
+                }
+
+                console.log(
+                    "Create successful, preparing to transition to view mode..."
+                );
+                toast.success("Recipe created successfully");
+
+                // Wait a moment for the database to settle
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
                 try {
-                    const newRecipe = await addRecipe(recipeData, ingredients);
-
-                    if (!newRecipe) {
-                        throw new Error("Failed to create recipe");
-                    }
-
-                    console.log(
-                        "Create successful, preparing to transition to view mode..."
+                    // Fetch the complete recipe with ingredients
+                    const freshRecipe = await fetchRecipeById(
+                        newRecipe.recipe_id
                     );
-                    toast.success("Recipe created successfully");
+                    console.log("Got fresh recipe:", freshRecipe);
 
-                    // Wait a moment for the database to settle
-                    await new Promise((resolve) => setTimeout(resolve, 100));
-
-                    try {
-                        // Fetch the complete recipe with ingredients
-                        const freshRecipe = await fetchRecipeById(
-                            newRecipe.recipe_id
-                        );
-                        console.log("Got fresh recipe:", freshRecipe);
-
-                        if (!freshRecipe) {
-                            throw new Error("Failed to fetch fresh recipe");
-                        }
-
-                        // Reset create mode state
-                        setRecipeIngredients(
-                            freshRecipe.recipe_ingredients || []
-                        );
-                        setRecipeName(freshRecipe.recipe_name || "");
-                        setSelectedDog(freshRecipe.dog_id || "");
-                        setActiveSection(null);
-
-                        // Wait for a tick to ensure state is updated
-                        await new Promise((resolve) => setTimeout(resolve, 0));
-
-                        console.log("Attempting mode transition to view...");
-
-                        // Switch back to view mode with current recipe - using same pattern as edit mode
-                        onModeChange?.("view");
-                        onOpenChange?.(true, {
-                            mode: "view",
-                            recipe: freshRecipe,
-                        });
-
-                        // Add handleSaveSuccess call like in edit mode
-                        await handleSaveSuccess(freshRecipe);
-                        return;
-                    } catch (fetchError) {
-                        console.error(
-                            "Error fetching fresh recipe:",
-                            fetchError
-                        );
-                        // If we can't fetch the fresh recipe, try using the newRecipe
-                        onModeChange?.("view");
-                        onOpenChange?.(true, {
-                            mode: "view",
-                            recipe: newRecipe,
-                        });
-                        return;
+                    if (!freshRecipe) {
+                        throw new Error("Failed to fetch fresh recipe");
                     }
-                } catch (error) {
-                    console.error("Error in create mode:", error);
-                    toast.error("Failed to create recipe: " + error.message);
+
+                    // Reset create mode state
+                    setRecipeIngredients(freshRecipe.recipe_ingredients || []);
+                    setRecipeName(freshRecipe.recipe_name || "");
+                    setSelectedDog(freshRecipe.dog_id || "");
+                    setActiveSection(null);
+
+                    // Wait for a tick to ensure state is updated
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+
+                    console.log("Attempting mode transition to view...");
+
+                    // Switch back to view mode with current recipe - using same pattern as edit mode
+                    onModeChange?.("view");
+                    onOpenChange?.(true, {
+                        mode: "view",
+                        recipe: freshRecipe,
+                    });
+
+                    // Add handleSaveSuccess call like in edit mode
+                    await handleSaveSuccess(freshRecipe);
+                    return;
+                } catch (fetchError) {
+                    console.error("Error fetching fresh recipe:", fetchError);
+                    // If we can't fetch the fresh recipe, try using the newRecipe
+                    onModeChange?.("view");
+                    onOpenChange?.(true, {
+                        mode: "view",
+                        recipe: newRecipe,
+                    });
+                    return;
                 }
             }
         } catch (error) {
@@ -390,60 +446,138 @@ export function RecipeSheet({
 
         if (mode === "edit") {
             setRecipeIngredients((prev) => {
-                console.log("Previous ingredients:", prev);
-                const updated = [...prev, ingredient];
-                console.log("Updated ingredients:", updated);
-                return updated;
+                // Get all ingredients in this category
+                const categoryId = ingredient.ingredients.category_id;
+                const categoryIngredients = prev.filter(
+                    (ing) => ing.ingredients?.category_id === categoryId
+                );
+
+                // Calculate total used percentage
+                const usedPercentage = categoryIngredients.reduce(
+                    (sum, ing) => sum + (ing.quantity || 0),
+                    0
+                );
+
+                // New ingredient gets remaining percentage
+                const remainingPercentage = Math.max(0, 1 - usedPercentage);
+
+                // Add new ingredient with remaining percentage
+                return [
+                    ...prev,
+                    { ...ingredient, quantity: remainingPercentage },
+                ];
             });
             setActiveSection(null);
             return;
         }
 
         // Create mode handling
-        switch (category) {
-            case "meat_and_bone":
-                setMeatAndBone([...meatAndBone, ingredient]);
-                break;
-            case "plant_matter":
-                setPlantMatter([...plantMatter, ingredient]);
-                break;
-            case "secreting_organs":
-                setSecretingOrgans([...secretingOrgans, ingredient]);
-                break;
-            case "liver":
-                setLiver([...liver, ingredient]);
-                break;
-            case "misc":
-                setMisc([...misc, ingredient]);
-                break;
-        }
-        setActiveSection(null);
+        const getExistingIngredients = (category) => {
+            switch (category) {
+                case "meat_and_bone":
+                    return meatAndBone;
+                case "plant_matter":
+                    return plantMatter;
+                case "secreting_organs":
+                    return secretingOrgans;
+                case "liver":
+                    return liver;
+                case "misc":
+                    return misc;
+                default:
+                    return [];
+            }
+        };
+
+        const setIngredients = (category, ingredients) => {
+            switch (category) {
+                case "meat_and_bone":
+                    setMeatAndBone(ingredients);
+                    break;
+                case "plant_matter":
+                    setPlantMatter(ingredients);
+                    break;
+                case "secreting_organs":
+                    setSecretingOrgans(ingredients);
+                    break;
+                case "liver":
+                    setLiver(ingredients);
+                    break;
+                case "misc":
+                    setMisc(ingredients);
+                    break;
+            }
+        };
+
+        // Get current ingredients for this category
+        const existingIngredients = getExistingIngredients(category);
+
+        // Calculate total used percentage
+        const usedPercentage = existingIngredients.reduce(
+            (sum, ing) => sum + (ing.quantity || 0),
+            0
+        );
+
+        // New ingredient gets remaining percentage
+        const remainingPercentage = Math.max(0, 1 - usedPercentage);
+
+        // Add new ingredient with remaining percentage
+        const newIngredient = {
+            ...ingredient,
+            quantity: remainingPercentage,
+        };
+
+        // Update the category's ingredients
+        setIngredients(category, [...existingIngredients, newIngredient]);
     };
 
     const handleRemoveIngredient = (ingredientId, section) => {
+        console.log("handleRemoveIngredient called with:", {
+            ingredientId,
+            section,
+            mode,
+        });
+
+        if (mode === "edit") {
+            setRecipeIngredients((prev) =>
+                prev.filter((ing) => ing.ingredient_id !== ingredientId)
+            );
+            return;
+        }
+
+        // Create mode handling
+        console.log("Current state before removal:", {
+            meatAndBone,
+            plantMatter,
+            secretingOrgans,
+            liver,
+            misc,
+        });
+
         switch (section) {
             case "meat_and_bone":
                 setMeatAndBone(
-                    meatAndBone.filter((i) => i.ingredient_id !== ingredientId)
+                    meatAndBone.filter((i) => {
+                        console.log("Comparing:", i.id, "with:", ingredientId);
+                        return i.id !== ingredientId;
+                    })
                 );
                 break;
             case "plant_matter":
                 setPlantMatter(
-                    plantMatter.filter((i) => i.ingredient_id !== ingredientId)
+                    plantMatter.filter((i) => i.id !== ingredientId)
                 );
                 break;
             case "secreting_organs":
                 setSecretingOrgans(
-                    secretingOrgans.filter(
-                        (i) => i.ingredient_id !== ingredientId
-                    )
+                    secretingOrgans.filter((i) => i.id !== ingredientId)
                 );
                 break;
             case "liver":
-                setLiver(liver.filter((i) => i.ingredient_id !== ingredientId));
+                setLiver(liver.filter((i) => i.id !== ingredientId));
                 break;
             case "misc":
-                setMisc(misc.filter((i) => i.ingredient_id !== ingredientId));
+                setMisc(misc.filter((i) => i.id !== ingredientId));
                 break;
         }
     };
@@ -559,6 +693,8 @@ export function RecipeSheet({
                             getIngredientsByCategory(ingredients, category)
                         }
                         ingredientsLoading={ingredientsLoading}
+                        setRecipeIngredients={setRecipeIngredients}
+                        recipeIngredients={recipeIngredients}
                     />
                 );
             case "view":

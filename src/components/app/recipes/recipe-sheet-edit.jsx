@@ -20,6 +20,8 @@ export function RecipeSheetEdit({
     handleRemoveIngredient,
     getIngredientsByCategory,
     ingredientsLoading,
+    setRecipeIngredients,
+    recipeIngredients,
 }) {
     const hasEditChanges = () => {
         return (
@@ -62,6 +64,19 @@ export function RecipeSheetEdit({
         // Call the parent handler with the properly structured ingredient
         handleAddIngredient(newIngredient, category);
         setActiveSection(null);
+    };
+
+    const handleUpdateQuantity = (ingredientId, categoryId, newQuantity) => {
+        // Update only the selected ingredient's quantity
+        const updatedIngredients = recipeIngredients.map((ing) => {
+            if (ing.ingredient_id === ingredientId) {
+                return { ...ing, quantity: newQuantity };
+            }
+            return ing;
+        });
+
+        // Update recipe state
+        setRecipeIngredients(updatedIngredients);
     };
 
     return (
@@ -114,6 +129,13 @@ export function RecipeSheetEdit({
                                 "meat_and_bone"
                             )}
                             isLoading={ingredientsLoading}
+                            onUpdateQuantity={(ingredientId, newQuantity) =>
+                                handleUpdateQuantity(
+                                    ingredientId,
+                                    1,
+                                    newQuantity
+                                )
+                            }
                         />
                     </div>
 
@@ -137,6 +159,13 @@ export function RecipeSheetEdit({
                                 "plant_matter"
                             )}
                             isLoading={ingredientsLoading}
+                            onUpdateQuantity={(ingredientId, newQuantity) =>
+                                handleUpdateQuantity(
+                                    ingredientId,
+                                    2,
+                                    newQuantity
+                                )
+                            }
                         />
                     </div>
 
@@ -160,6 +189,13 @@ export function RecipeSheetEdit({
                                 "secreting_organs"
                             )}
                             isLoading={ingredientsLoading}
+                            onUpdateQuantity={(ingredientId, newQuantity) =>
+                                handleUpdateQuantity(
+                                    ingredientId,
+                                    4,
+                                    newQuantity
+                                )
+                            }
                         />
                     </div>
 
@@ -181,6 +217,13 @@ export function RecipeSheetEdit({
                             onToggleActive={setActiveSection}
                             ingredients={getIngredientsByCategory("liver")}
                             isLoading={ingredientsLoading}
+                            onUpdateQuantity={(ingredientId, newQuantity) =>
+                                handleUpdateQuantity(
+                                    ingredientId,
+                                    3,
+                                    newQuantity
+                                )
+                            }
                         />
                     </div>
 
@@ -201,6 +244,13 @@ export function RecipeSheetEdit({
                             onToggleActive={setActiveSection}
                             ingredients={getIngredientsByCategory("misc")}
                             isLoading={ingredientsLoading}
+                            onUpdateQuantity={(ingredientId, newQuantity) =>
+                                handleUpdateQuantity(
+                                    ingredientId,
+                                    5,
+                                    newQuantity
+                                )
+                            }
                         />
                     </div>
                 </div>

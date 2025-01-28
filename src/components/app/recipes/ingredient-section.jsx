@@ -16,6 +16,7 @@ import {
 import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
 import { BadgeStack } from "@/components/ui/badge-stack";
+import { Input } from "@/components/ui/input";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -80,7 +81,28 @@ export function IngredientSection({
     onToggleActive,
     ingredients,
     isLoading,
+    onUpdateQuantity,
 }) {
+    // Calculate total percentage for the category
+    const totalPercentage =
+        items.reduce((sum, item) => sum + (item.quantity || 0), 0) * 100;
+
+    // Determine if the total is valid (100%)
+    const isValidTotal = Math.abs(totalPercentage - 100) < 0.01; // Using small epsilon for float comparison
+
+    // Only show percentage for non-misc categories
+    const showPercentage = category !== "misc";
+
+    // Get the IDs of currently selected ingredients
+    const selectedIds = items.map((item) =>
+        mode === "edit" ? item.ingredient_id : item.id
+    );
+
+    // Filter out already selected ingredients
+    const availableIngredients = ingredients?.filter(
+        (ing) => !selectedIds.includes(ing.id)
+    );
+
     return (
         <div
             className={`flex flex-col gap-6 ${
@@ -126,9 +148,21 @@ export function IngredientSection({
                             : "Other ingredients"
                     }
                     sublabel={
-                        category === "misc"
-                            ? "Toppers, dairy, herbs, etc"
-                            : null
+                        showPercentage ? (
+                            mode === "create" ? null : (
+                                <span
+                                    className={
+                                        mode === "edit" && !isValidTotal
+                                            ? "text-destructive"
+                                            : ""
+                                    }
+                                >
+                                    {`${Math.round(totalPercentage)}% / 100%`}
+                                </span>
+                            )
+                        ) : (
+                            "Toppers, dairy, herbs, etc"
+                        )
                     }
                 />
                 <Button
@@ -153,6 +187,7 @@ export function IngredientSection({
                         onRemoveItem={onRemoveItem}
                         category={category}
                         mode={mode}
+                        onUpdateQuantity={onUpdateQuantity}
                     />
                 )}
 
@@ -162,7 +197,7 @@ export function IngredientSection({
                             <LoadingState />
                         ) : (
                             <IngredientSelector
-                                ingredients={ingredients}
+                                ingredients={availableIngredients}
                                 onSelect={(ingredient) =>
                                     onAddItem(ingredient, category)
                                 }
@@ -183,33 +218,108 @@ function EmptyState({ text }) {
     );
 }
 
-function IngredientList({ items, onRemoveItem, category, mode }) {
+function IngredientList({
+    items,
+    onRemoveItem,
+    category,
+    mode,
+    onUpdateQuantity,
+}) {
     return (
         <div className={items.length > 0 ? "border-t" : ""}>
             {items.map((item) => {
+                console.log("Item in list:", item);
+
                 // Handle both create and edit mode item structures
                 const itemId = mode === "edit" ? item.ingredient_id : item.id;
 
+                console.log("Using itemId:", itemId, "for mode:", mode);
+
                 const itemName =
                     mode === "edit"
-                        ? item.ingredients.ingredient_name
+                        ? item.ingredients?.ingredient_name
                         : item.name;
 
                 return (
                     <div
                         key={itemId}
-                        className="flex items-center justify-between border-b py-2"
+                        className="flex items-center justify-between border-b py-3"
                     >
                         <span>{itemName}</span>
-                        {mode !== "view" && (
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => onRemoveItem(itemId, category)}
-                            >
-                                <Trash className="" />
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {mode === "edit" && (
+                                <div className="relative flex items-center gap-2">
+                                    <Input
+                                        type="text"
+                                        value={
+                                            // Only show 0 if it's not focused
+                                            document.activeElement ===
+                                            document.getElementById(
+                                                `quantity-${itemId}`
+                                            )
+                                                ? Math.round(
+                                                      (item.quantity || 0) * 100
+                                                  ) || ""
+                                                : Math.round(
+                                                      (item.quantity || 0) * 100
+                                                  )
+                                        }
+                                        id={`quantity-${itemId}`}
+                                        onChange={(e) => {
+                                            // Allow empty or numbers only
+                                            const value = e.target.value;
+                                            if (
+                                                value === "" ||
+                                                /^\d+$/.test(value)
+                                            ) {
+                                                const newPercentage =
+                                                    value === ""
+                                                        ? 0
+                                                        : Math.min(
+                                                              parseInt(
+                                                                  value,
+                                                                  10
+                                                              ),
+                                                              100
+                                                          ) / 100;
+                                                onUpdateQuantity(
+                                                    itemId,
+                                                    newPercentage
+                                                );
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            // If empty on blur, set to 0
+                                            if (e.target.value === "") {
+                                                onUpdateQuantity(itemId, 0);
+                                            }
+                                        }}
+                                        className="w-16 text-left"
+                                        maxLength={3}
+                                    />
+                                    <span className="absolute right-3 text-muted-foreground">
+                                        %
+                                    </span>
+                                </div>
+                            )}
+                            {(mode === "edit" || mode === "create") && (
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() => {
+                                        console.log(
+                                            "Removing item with id:",
+                                            itemId,
+                                            "category:",
+                                            category
+                                        );
+                                        onRemoveItem(itemId, category);
+                                    }}
+                                >
+                                    <Trash className="" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 );
             })}

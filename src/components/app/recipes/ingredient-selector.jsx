@@ -6,8 +6,9 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { CommandItem } from "@/components/ui/command";
 
-export function IngredientSelector({ ingredients = [], onSelect }) {
+export function IngredientSelector({ ingredients, onSelect }) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
 
@@ -26,7 +27,6 @@ export function IngredientSelector({ ingredients = [], onSelect }) {
 
     return (
         <div className="">
-
             <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <Input
                     value={search}
