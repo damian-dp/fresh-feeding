@@ -27,8 +27,6 @@ import {
     LoadingProvider,
     useLoading,
 } from "@/components/providers/loading-provider";
-import { LoadingScreen } from "@/components/app/loading-screen";
-import { useEffect } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
 function AppContent() {

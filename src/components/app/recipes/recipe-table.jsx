@@ -439,12 +439,12 @@ export function RecipeTable({
                 open={isSheetOpen}
                 onOpenChange={handleSheetOpenChange}
                 onModeChange={(newMode) => {
-                    console.log(
-                        "RecipeTable mode change requested:",
-                        newMode,
-                        "current mode:",
-                        sheetMode
-                    );
+                    // console.log(
+                    //     "RecipeTable mode change requested:",
+                    //     newMode,
+                    //     "current mode:",
+                    //     sheetMode
+                    // );
                     setSheetMode(newMode);
                 }}
                 defaultDogId={dogId}

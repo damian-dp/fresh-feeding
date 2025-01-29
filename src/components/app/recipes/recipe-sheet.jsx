@@ -38,6 +38,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
+import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
 
 export function RecipeSheet({
     mode = "create",
@@ -232,21 +233,35 @@ export function RecipeSheet({
 
         setIsSaving(true);
         try {
+            // Get all ingredients for the recipe
+            const allIngredients =
+                mode === "edit"
+                    ? recipeIngredients
+                    : [
+                          ...meatAndBone,
+                          ...plantMatter,
+                          ...secretingOrgans,
+                          ...liver,
+                          ...misc,
+                      ];
+
+            // Check if recipe is nutritionally balanced
+            const isBalanced = await isRecipeBalanced(allIngredients, mode);
+
             const recipeData = {
                 recipe_name: recipeName,
                 dog_id: selectedDog,
                 profile_id: profile.id,
                 last_updated: new Date().toISOString(),
+                isNutritionallyBalanced: isBalanced,
             };
 
             if (mode === "edit" && recipe?.recipe_id) {
-                // console.log("Edit mode - preparing ingredients...");
                 const ingredients = recipeIngredients.map((ing) => ({
                     ingredient_id: ing.ingredient_id,
                     quantity: ing.quantity || 0,
                 }));
 
-                // console.log("Calling updateRecipe...");
                 const updatedRecipe = await updateRecipe(
                     recipe.recipe_id,
                     recipeData,
@@ -254,11 +269,7 @@ export function RecipeSheet({
                 );
 
                 if (updatedRecipe) {
-                    // console.log(
-                    //     "Update successful, transitioning to view mode..."
-                    // );
                     toast.success("Recipe updated successfully");
-
                     // Reset edit mode state
                     setRecipeIngredients([]);
                     setRecipeName("");
@@ -273,9 +284,6 @@ export function RecipeSheet({
                         (r) => r.recipe_id === recipe.recipe_id
                     );
 
-                    // console.log("Latest recipe from state:", latestRecipe);
-                    // console.log("Updated recipe from API:", updatedRecipe);
-
                     // Use the updatedRecipe directly instead of looking up in state
                     onModeChange?.("view");
                     onOpenChange?.(true, {
@@ -283,17 +291,11 @@ export function RecipeSheet({
                         recipe: updatedRecipe,
                     });
 
-                    // console.log(
-                    //     "Transitioned to view mode with recipe:",
-                    //     updatedRecipe
-                    // );
-
                     await handleSaveSuccess(updatedRecipe);
                 }
                 return;
             } else {
                 // Create mode
-                // console.log("Create mode - preparing ingredients...");
                 const ingredients = [
                     ...meatAndBone,
                     ...plantMatter,
@@ -305,7 +307,6 @@ export function RecipeSheet({
                     quantity: ing.quantity || 0,
                 }));
 
-                // console.log("Calling addRecipe...");
                 try {
                     const newRecipe = await addRecipe(recipeData, ingredients);
 
@@ -313,9 +314,6 @@ export function RecipeSheet({
                         throw new Error("Failed to create recipe");
                     }
 
-                    // console.log(
-                    //     "Create successful, preparing to transition to view mode..."
-                    // );
                     toast.success("Recipe created successfully");
 
                     // Wait a moment for the database to settle
@@ -326,7 +324,6 @@ export function RecipeSheet({
                         const freshRecipe = await fetchRecipeById(
                             newRecipe.recipe_id
                         );
-                        // console.log("Got fresh recipe:", freshRecipe);
 
                         if (!freshRecipe) {
                             throw new Error("Failed to fetch fresh recipe");
@@ -343,8 +340,6 @@ export function RecipeSheet({
                         // Wait for a tick to ensure state is updated
                         await new Promise((resolve) => setTimeout(resolve, 0));
 
-                        // console.log("Attempting mode transition to view...");
-
                         // Switch back to view mode with current recipe - using same pattern as edit mode
                         onModeChange?.("view");
                         onOpenChange?.(true, {
@@ -352,7 +347,6 @@ export function RecipeSheet({
                             recipe: freshRecipe,
                         });
 
-                        // Add handleSaveSuccess call like in edit mode
                         await handleSaveSuccess(freshRecipe);
                         return;
                     } catch (fetchError) {

@@ -130,7 +130,6 @@ const RatioInput = ({ field, label, form }) => {
                         value={inputValue}
                         onChange={(e) => {
                             const value = e.target.value.replace(/[^\d.]/g, "");
-                            console.log(`${label} input value:`, value);
 
                             // Update the displayed value immediately
                             setInputValue(value);
@@ -141,10 +140,7 @@ const RatioInput = ({ field, label, form }) => {
                                 const parsed = parseFloat(value);
                                 if (!isNaN(parsed)) {
                                     const decimalValue = parsed / 100;
-                                    console.log(
-                                        `${label} stored decimal value:`,
-                                        decimalValue
-                                    );
+                            
                                     field.onChange(decimalValue);
 
                                     // Force form validation update
@@ -857,14 +853,7 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
 
 // Update helper function to calculate total
 function getTotalPercentage(values) {
-    // Log individual values
-    console.log("Current ratio values:", {
-        muscle_meat: values.ratios_muscle_meat,
-        bone: values.ratios_bone,
-        liver: values.ratios_liver,
-        secreting_organ: values.ratios_secreting_organ,
-        plant_matter: values.ratios_plant_matter,
-    });
+
 
     const total =
         ((values.ratios_muscle_meat || 0) +
@@ -874,9 +863,7 @@ function getTotalPercentage(values) {
             (values.ratios_plant_matter || 0)) *
         100;
 
-    console.log("Calculated total before formatting:", total);
     const formatted = total.toFixed(1);
-    console.log("Final formatted total:", formatted);
 
     return formatted;
 }
