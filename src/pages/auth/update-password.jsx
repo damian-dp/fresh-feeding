@@ -10,19 +10,19 @@ export function UpdatePasswordPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // console.log("UpdatePasswordPage: Location", {
-        //     pathname: location.pathname,
-        //     hash: location.hash,
-        // });
+        console.log("UpdatePasswordPage: Location", {
+            pathname: location.pathname,
+            hash: location.hash,
+        });
 
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-            // console.log(
-            //     "UpdatePasswordPage: Auth event",
-            //     event,
-            //     session?.user?.email
-            // );
+            console.log(
+                "UpdatePasswordPage: Auth event",
+                event,
+                session?.user?.email
+            );
 
             if (event === "PASSWORD_RECOVERY") {
                 setIsLoading(false);

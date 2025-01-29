@@ -303,11 +303,14 @@ function IngredientList({
                 console.log("Item in list:", item);
 
                 // Handle both create and edit mode item structures
-                const itemId = mode === "create" ? item.id : item.ingredient_id;
+                const itemId = mode === "edit" ? item.ingredient_id : item.id;
+
+                console.log("Using itemId:", itemId, "for mode:", mode);
+
                 const itemName =
-                    mode === "create"
-                        ? item.name
-                        : item.ingredients.ingredient_name;
+                    mode === "edit"
+                        ? item.ingredients?.ingredient_name
+                        : item.name;
 
                 return (
                     <div

@@ -38,7 +38,6 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
-import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
 
 // First, let's simplify the calculation function
 const calculateRecipeIngredients = ({ ingredients, dog }) => {
@@ -186,7 +185,7 @@ export function RecipeSheet({
     // Update state when recipe changes
     useEffect(() => {
         if (recipe && (mode === "view" || mode === "edit")) {
-            // console.log("Recipe changed in RecipeSheet:", recipe);
+            console.log("Recipe changed in RecipeSheet:", recipe);
             setRecipeName(recipe.recipe_name || "");
             setSelectedDog(recipe.dog_id || "");
             setRecipeIngredients(recipe.recipe_ingredients || []);
@@ -286,11 +285,11 @@ export function RecipeSheet({
     };
 
     const handleClose = (newOpen, options = {}) => {
-        // console.log("RecipeSheet handleClose:", { newOpen, options, mode });
+        console.log("RecipeSheet handleClose:", { newOpen, options, mode });
 
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
-            // console.log("Changing mode to:", options.mode);
+            console.log("Changing mode to:", options.mode);
             onModeChange?.(options.mode);
             onOpenChange?.(true, options);
             return;
@@ -343,35 +342,21 @@ export function RecipeSheet({
 
         setIsSaving(true);
         try {
-            // Get all ingredients for the recipe
-            const allIngredients =
-                mode === "edit"
-                    ? recipeIngredients
-                    : [
-                          ...meatAndBone,
-                          ...plantMatter,
-                          ...secretingOrgans,
-                          ...liver,
-                          ...misc,
-                      ];
-
-            // Check if recipe is nutritionally balanced
-            const isBalanced = await isRecipeBalanced(allIngredients, mode);
-
             const recipeData = {
                 recipe_name: recipeName,
                 dog_id: selectedDog,
                 profile_id: profile.id,
                 last_updated: new Date().toISOString(),
-                isNutritionallyBalanced: isBalanced,
             };
 
             if (mode === "edit" && recipe?.recipe_id) {
+                console.log("Edit mode - preparing ingredients...");
                 const ingredients = recipeIngredients.map((ing) => ({
                     ingredient_id: ing.ingredient_id,
                     quantity: ing.quantity || 0,
                 }));
 
+                console.log("Calling updateRecipe...");
                 const updatedRecipe = await updateRecipe(
                     recipe.recipe_id,
                     recipeData,
@@ -379,7 +364,11 @@ export function RecipeSheet({
                 );
 
                 if (updatedRecipe) {
+                    console.log(
+                        "Update successful, transitioning to view mode..."
+                    );
                     toast.success("Recipe updated successfully");
+
                     // Reset edit mode state
                     setRecipeIngredients([]);
                     setRecipeName("");
@@ -394,6 +383,9 @@ export function RecipeSheet({
                         (r) => r.recipe_id === recipe.recipe_id
                     );
 
+                    console.log("Latest recipe from state:", latestRecipe);
+                    console.log("Updated recipe from API:", updatedRecipe);
+
                     // Use the updatedRecipe directly instead of looking up in state
                     onModeChange?.("view");
                     onOpenChange?.(true, {
@@ -401,12 +393,18 @@ export function RecipeSheet({
                         recipe: updatedRecipe,
                     });
 
+                    console.log(
+                        "Transitioned to view mode with recipe:",
+                        updatedRecipe
+                    );
+
                     await handleSaveSuccess(updatedRecipe);
                 }
                 return;
             } else {
                 // Create mode
-                const ingredients = [
+                console.log("Create mode - preparing ingredients...");
+                const allIngredients = [
                     ...meatAndBone,
                     ...plantMatter,
                     ...secretingOrgans,
@@ -414,8 +412,10 @@ export function RecipeSheet({
                     ...misc,
                 ];
 
-                try {
-                    const newRecipe = await addRecipe(recipeData, ingredients);
+                // Get the selected dog's data
+                const selectedDogData = dogs.find(
+                    (d) => d.dog_id === selectedDog
+                );
 
                 // Calculate quantities as percentages
                 const ingredientsWithQuantities = calculateIngredientQuantities(
@@ -434,57 +434,20 @@ export function RecipeSheet({
                     ingredientsWithQuantities
                 );
 
+                if (newRecipe) {
+                    console.log(
+                        "Create successful, transitioning to view mode..."
+                    );
                     toast.success("Recipe created successfully");
 
-                    // Wait a moment for the database to settle
-                    await new Promise((resolve) => setTimeout(resolve, 100));
+                    // Don't fetch again, just use the newRecipe
+                    onModeChange?.("view");
+                    onOpenChange?.(true, {
+                        mode: "view",
+                        recipe: newRecipe,
+                    });
 
-                    try {
-                        // Fetch the complete recipe with ingredients
-                        const freshRecipe = await fetchRecipeById(
-                            newRecipe.recipe_id
-                        );
-
-                        if (!freshRecipe) {
-                            throw new Error("Failed to fetch fresh recipe");
-                        }
-
-                        // Reset create mode state
-                        setRecipeIngredients(
-                            freshRecipe.recipe_ingredients || []
-                        );
-                        setRecipeName(freshRecipe.recipe_name || "");
-                        setSelectedDog(freshRecipe.dog_id || "");
-                        setActiveSection(null);
-
-                        // Wait for a tick to ensure state is updated
-                        await new Promise((resolve) => setTimeout(resolve, 0));
-
-                        // Switch back to view mode with current recipe - using same pattern as edit mode
-                        onModeChange?.("view");
-                        onOpenChange?.(true, {
-                            mode: "view",
-                            recipe: freshRecipe,
-                        });
-
-                        await handleSaveSuccess(freshRecipe);
-                        return;
-                    } catch (fetchError) {
-                        console.error(
-                            "Error fetching fresh recipe:",
-                            fetchError
-                        );
-                        // If we can't fetch the fresh recipe, try using the newRecipe
-                        onModeChange?.("view");
-                        onOpenChange?.(true, {
-                            mode: "view",
-                            recipe: newRecipe,
-                        });
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error in create mode:", error);
-                    toast.error("Failed to create recipe: " + error.message);
+                    return;
                 }
             }
         } catch (error) {
@@ -497,84 +460,270 @@ export function RecipeSheet({
         }
     };
 
-    // Add this function to handle ingredient additions
+    // Add these functions back
     const handleAddIngredient = (ingredient, category) => {
+        console.log("RecipeSheet handling ingredient:", ingredient);
+        console.log("Category:", category);
+
         if (mode === "edit") {
-            setRecipeIngredients((prev) => [...prev, ingredient]);
+            // Keep the dog validation for edit mode
+            if (!selectedDog) {
+                toast.error("Please select a dog before adding ingredients");
+                setActiveSection(null);
+                return;
+            }
+
+            setRecipeIngredients((prev) => {
+                // Get all ingredients in this category
+                const categoryId = ingredient.ingredients.category_id;
+                const categoryIngredients = prev.filter(
+                    (ing) => ing.ingredients?.category_id === categoryId
+                );
+
+                if (category === "meat_and_bone") {
+                    const selectedDogData = dogs.find(
+                        (d) => d.dog_id === selectedDog
+                    );
+
+                    // Add validation to check if a dog is selected and has the required properties
+                    if (
+                        !selectedDogData ||
+                        typeof selectedDogData.ratios_muscle_meat ===
+                            "undefined"
+                    ) {
+                        toast.error("Please select a dog first");
+                        setActiveSection(null);
+                        return;
+                    }
+
+                    const totalCategoryPercentage =
+                        selectedDogData.ratios_muscle_meat +
+                        selectedDogData.ratios_bone;
+                    const targetBonePercentage = selectedDogData.ratios_bone;
+
+                    // Get existing bone-containing ingredients
+                    const boneIngredients = categoryIngredients.filter(
+                        (ing) => ing.ingredients?.bone_percent
+                    );
+
+                    // If this ingredient has bone content
+                    if (ingredient.ingredients?.bone_percent) {
+                        console.log(
+                            "Adding bone ingredient:",
+                            ingredient.ingredients.bone_percent
+                        );
+
+                        // Get all bone-containing ingredients (including the new one)
+                        const allBoneIngredients = [
+                            ...boneIngredients,
+                            ingredient,
+                        ];
+                        const totalBoneNeeded = selectedDogData.ratios_bone; // 0.10 or 10%
+
+                        // Calculate the total bone percentage from all bone ingredients
+                        const totalBonePercentage = allBoneIngredients.reduce(
+                            (sum, ing) =>
+                                sum + ing.ingredients.bone_percent / 100,
+                            0
+                        );
+
+                        // Calculate how much meat we can get from bone ingredients
+                        const totalMeatFromBone = allBoneIngredients.reduce(
+                            (sum, ing) => {
+                                const nonBoneRatio =
+                                    1 - ing.ingredients.bone_percent / 100;
+                                return sum + nonBoneRatio;
+                            },
+                            0
+                        );
+
+                        // Calculate quantities to minimize excess meat while meeting bone requirements
+                        const scaleFactor = Math.min(
+                            totalBoneNeeded / totalBonePercentage,
+                            (selectedDogData.ratios_muscle_meat * 0.7) /
+                                totalMeatFromBone // Allow bone ingredients to provide up to 70% of meat
+                        );
+
+                        // Calculate new quantity for each bone ingredient
+                        const boneRatio =
+                            ingredient.ingredients.bone_percent / 100;
+                        const newQuantity = scaleFactor / boneRatio;
+
+                        // Update existing bone ingredients
+                        const updatedIngredients = prev.map((ing) => {
+                            if (!ing.ingredients?.bone_percent) return ing;
+
+                            const ingBoneRatio =
+                                ing.ingredients.bone_percent / 100;
+                            const ingBoneContribution =
+                                ingBoneRatio / totalBonePercentage;
+                            return {
+                                ...ing,
+                                quantity: totalBoneNeeded * ingBoneContribution,
+                                isLocked: true,
+                            };
+                        });
+
+                        return [
+                            ...updatedIngredients,
+                            {
+                                ...ingredient,
+                                quantity: newQuantity,
+                                isLocked: true,
+                            },
+                        ];
+                    } else {
+                        // For non-bone ingredients, calculate remaining percentage after bone ingredients
+                        const totalBoneNeeded = selectedDogData.ratios_bone; // 0.10 or 10%
+                        const totalMeatNeeded =
+                            selectedDogData.ratios_muscle_meat; // 0.55 or 55%
+
+                        // Calculate how much meat is coming from bone ingredients
+                        const meatFromBoneIngredients = boneIngredients.reduce(
+                            (sum, ing) => {
+                                const boneRatio =
+                                    ing.ingredients.bone_percent / 100;
+                                const nonBoneRatio = 1 - boneRatio; // e.g., if 21% bone, then 79% is meat
+                                return sum + ing.quantity * nonBoneRatio;
+                            },
+                            0
+                        );
+
+                        // Calculate remaining meat needed
+                        const remainingMeatNeeded =
+                            totalMeatNeeded - meatFromBoneIngredients;
+
+                        // Get count of non-bone ingredients (including the new one)
+                        const nonBoneCount =
+                            categoryIngredients.filter(
+                                (ing) => !ing.ingredients?.bone_percent
+                            ).length + 1;
+
+                        // Distribute remaining meat percentage evenly
+                        return [
+                            ...prev,
+                            {
+                                ...ingredient,
+                                quantity: remainingMeatNeeded / nonBoneCount,
+                            },
+                        ];
+                    }
+                } else {
+                    // Handle other categories as before
+                    const usedPercentage = categoryIngredients.reduce(
+                        (sum, ing) => sum + (ing.quantity || 0),
+                        0
+                    );
+                    const remainingPercentage = Math.max(0, 1 - usedPercentage);
+
+                    return [
+                        ...prev,
+                        { ...ingredient, quantity: remainingPercentage },
+                    ];
+                }
+            });
+            setActiveSection(null);
+            return;
         }
 
-        // Map category to the correct state setter
-        switch (category) {
-            case "meat_and_bone":
-                setMeatAndBone((prev) => [...prev, ingredient]);
-                break;
-            case "plant_matter":
-                setPlantMatter((prev) => [...prev, ingredient]);
-                break;
-            case "secreting_organs":
-                setSecretingOrgans((prev) => [...prev, ingredient]);
-                break;
-            case "liver":
-                setLiver((prev) => [...prev, ingredient]);
-                break;
-            case "misc":
-                setMisc((prev) => [...prev, ingredient]);
-                break;
-        }
+        // Create mode handling - simplified without validation
+        const getExistingIngredients = (category) => {
+            switch (category) {
+                case "meat_and_bone":
+                    return meatAndBone;
+                case "plant_matter":
+                    return plantMatter;
+                case "secreting_organs":
+                    return secretingOrgans;
+                case "liver":
+                    return liver;
+                case "misc":
+                    return misc;
+                default:
+                    return [];
+            }
+        };
+
+        const setIngredients = (category, ingredients) => {
+            switch (category) {
+                case "meat_and_bone":
+                    setMeatAndBone(ingredients);
+                    break;
+                case "plant_matter":
+                    setPlantMatter(ingredients);
+                    break;
+                case "secreting_organs":
+                    setSecretingOrgans(ingredients);
+                    break;
+                case "liver":
+                    setLiver(ingredients);
+                    break;
+                case "misc":
+                    setMisc(ingredients);
+                    break;
+            }
+        };
+
+        // Get current ingredients for this category
+        const existingIngredients = getExistingIngredients(category);
+
+        // In create mode, just add the ingredient without calculating percentages
+        const newIngredient = {
+            ...ingredient,
+            quantity: 0, // Default to 0, will be calculated on submit
+        };
+
+        setIngredients(category, [...existingIngredients, newIngredient]);
+        setActiveSection(null);
     };
 
     const handleRemoveIngredient = (ingredientId, section) => {
+        console.log("handleRemoveIngredient called with:", {
+            ingredientId,
+            section,
+            mode,
+        });
+
         if (mode === "edit") {
             setRecipeIngredients((prev) =>
-                prev.filter((i) => i.ingredient_id !== ingredientId)
+                prev.filter((ing) => ing.ingredient_id !== ingredientId)
             );
+            return;
         }
+
+        // Create mode handling
+        console.log("Current state before removal:", {
+            meatAndBone,
+            plantMatter,
+            secretingOrgans,
+            liver,
+            misc,
+        });
 
         switch (section) {
             case "meat_and_bone":
-                setMeatAndBone((prev) =>
-                    prev.filter((i) =>
-                        mode === "create"
-                            ? i.id !== ingredientId
-                            : i.ingredient_id !== ingredientId
-                    )
+                setMeatAndBone(
+                    meatAndBone.filter((i) => {
+                        console.log("Comparing:", i.id, "with:", ingredientId);
+                        return i.id !== ingredientId;
+                    })
                 );
                 break;
             case "plant_matter":
-                setPlantMatter((prev) =>
-                    prev.filter((i) =>
-                        mode === "create"
-                            ? i.id !== ingredientId
-                            : i.ingredient_id !== ingredientId
-                    )
+                setPlantMatter(
+                    plantMatter.filter((i) => i.id !== ingredientId)
                 );
                 break;
             case "secreting_organs":
-                setSecretingOrgans((prev) =>
-                    prev.filter((i) =>
-                        mode === "create"
-                            ? i.id !== ingredientId
-                            : i.ingredient_id !== ingredientId
-                    )
+                setSecretingOrgans(
+                    secretingOrgans.filter((i) => i.id !== ingredientId)
                 );
                 break;
             case "liver":
-                setLiver((prev) =>
-                    prev.filter((i) =>
-                        mode === "create"
-                            ? i.id !== ingredientId
-                            : i.ingredient_id !== ingredientId
-                    )
-                );
+                setLiver(liver.filter((i) => i.id !== ingredientId));
                 break;
             case "misc":
-                setMisc((prev) =>
-                    prev.filter((i) =>
-                        mode === "create"
-                            ? i.id !== ingredientId
-                            : i.ingredient_id !== ingredientId
-                    )
-                );
+                setMisc(misc.filter((i) => i.id !== ingredientId));
                 break;
         }
     };
@@ -621,43 +770,34 @@ export function RecipeSheet({
         return data;
     };
 
-    // Create an object that maps each section to its items
-    const ingredientSections = {
-        meat_and_bone: {
-            title: "Muscle Meat & Bone",
-            emptyStateText: "Add muscle meat and bone ingredients",
-            category: 1,
-            getItems: () => (mode === "edit" ? meatAndBone : meatAndBone),
-        },
-        plant_matter: {
-            title: "Plant Matter",
-            emptyStateText: "Add plant matter ingredients",
-            category: 2,
-            getItems: () => (mode === "edit" ? plantMatter : plantMatter),
-        },
-        liver: {
-            title: "Liver",
-            emptyStateText: "Add liver ingredients",
-            category: 3,
-            getItems: () => (mode === "edit" ? liver : liver),
-        },
-        secreting_organs: {
-            title: "Secreting Organs",
-            emptyStateText: "Add secreting organ ingredients",
-            category: 4,
-            getItems: () =>
-                mode === "edit" ? secretingOrgans : secretingOrgans,
-        },
-        misc: {
-            title: "Misc",
-            emptyStateText: "Add miscellaneous ingredients",
-            category: 5,
-            getItems: () => (mode === "edit" ? misc : misc),
-        },
-    };
-
     // Render content based on mode
     const renderContent = () => {
+        const sections = Object.entries(INGREDIENT_SECTIONS).reduce(
+            (acc, [key, section]) => {
+                acc[key] = {
+                    ...section,
+                    getItems: () => {
+                        switch (key) {
+                            case "meat_and_bone":
+                                return meatAndBone;
+                            case "plant_matter":
+                                return plantMatter;
+                            case "liver":
+                                return liver;
+                            case "secreting_organs":
+                                return secretingOrgans;
+                            case "misc":
+                                return misc;
+                            default:
+                                return [];
+                        }
+                    },
+                };
+                return acc;
+            },
+            {}
+        );
+
         switch (mode) {
             case "create":
                 return (
@@ -667,7 +807,7 @@ export function RecipeSheet({
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
                         setShowAddDog={setShowAddDog}
-                        ingredientSections={ingredientSections}
+                        ingredientSections={sections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                         handleAddIngredient={handleAddIngredient}
@@ -690,7 +830,7 @@ export function RecipeSheet({
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
                         setShowAddDog={setShowAddDog}
-                        ingredientSections={ingredientSections}
+                        ingredientSections={sections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                         handleAddIngredient={handleAddIngredient}

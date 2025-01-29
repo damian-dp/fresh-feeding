@@ -148,7 +148,7 @@ export function RecipeTable({
         const latestRecipe = recipes.find(
             (r) => r.recipe_id === recipe.recipe_id
         );
-        // console.log("Viewing recipe:", latestRecipe);
+        console.log("Viewing recipe:", latestRecipe);
         setSelectedRecipe(latestRecipe);
         setSheetMode("view");
         if (onOpenChange) {
@@ -163,7 +163,7 @@ export function RecipeTable({
         const latestRecipe = recipes.find(
             (r) => r.recipe_id === recipe.recipe_id
         );
-        // console.log("Editing recipe:", latestRecipe);
+        console.log("Editing recipe:", latestRecipe);
         setSelectedRecipe(latestRecipe);
         setSheetMode("edit");
         if (onOpenChange) {
@@ -184,20 +184,20 @@ export function RecipeTable({
 
     // Update the handleSheetOpenChange function
     const handleSheetOpenChange = (newOpen, options) => {
-        // console.log("RecipeTable handleSheetOpenChange:", {
-        //     newOpen,
-        //     options,
-        //     sheetMode,
-        // });
+        console.log("RecipeTable handleSheetOpenChange:", {
+            newOpen,
+            options,
+            sheetMode,
+        });
 
         // If we have options with mode and recipe, update both FIRST
         if (options?.mode) {
-            // console.log("Setting new mode and recipe:", options);
+            console.log("Setting new mode and recipe:", options);
             // Set mode first
             setSheetMode(options.mode);
             // Then set recipe if provided
             if (options.recipe) {
-                // console.log("Setting selected recipe:", options.recipe);
+                console.log("Setting selected recipe:", options.recipe);
                 setSelectedRecipe(options.recipe);
             }
         }
@@ -224,9 +224,9 @@ export function RecipeTable({
     }, [open, selectedRecipe]);
 
     // Add effect to log when recipes prop changes
-    // useEffect(() => {
-    //     console.log("RecipeTable recipes prop changed:", recipes);
-    // }, [recipes]);
+    useEffect(() => {
+        console.log("RecipeTable recipes prop changed:", recipes);
+    }, [recipes]);
 
     // Add this near the top of the RecipeTable component, after the state declarations
     useEffect(() => {
@@ -239,10 +239,10 @@ export function RecipeTable({
                 updatedRecipe &&
                 JSON.stringify(updatedRecipe) !== JSON.stringify(selectedRecipe)
             ) {
-                // console.log(
-                //     "Updating selectedRecipe with new data:",
-                //     updatedRecipe
-                // );
+                console.log(
+                    "Updating selectedRecipe with new data:",
+                    updatedRecipe
+                );
                 setSelectedRecipe(updatedRecipe);
             }
         }
@@ -439,12 +439,12 @@ export function RecipeTable({
                 open={isSheetOpen}
                 onOpenChange={handleSheetOpenChange}
                 onModeChange={(newMode) => {
-                    // console.log(
-                    //     "RecipeTable mode change requested:",
-                    //     newMode,
-                    //     "current mode:",
-                    //     sheetMode
-                    // );
+                    console.log(
+                        "RecipeTable mode change requested:",
+                        newMode,
+                        "current mode:",
+                        sheetMode
+                    );
                     setSheetMode(newMode);
                 }}
                 defaultDogId={dogId}

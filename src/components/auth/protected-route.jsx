@@ -5,7 +5,7 @@ import { LoadingScreen } from "@/components/app/loading-screen";
 
 export function ProtectedRoute({ children }) {
     const { session, loading: authLoading } = useAuth();
-    const { isReady, isLoading } = useLoading();
+    const { isReady } = useLoading();
 
     if (authLoading) {
         return <LoadingScreen />;
@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }) {
         return <Navigate to="/auth" />;
     }
 
-    if (isLoading) {
+    if (!isReady) {
         return <LoadingScreen />;
     }
 

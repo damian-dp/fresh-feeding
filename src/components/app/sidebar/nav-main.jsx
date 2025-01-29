@@ -42,7 +42,7 @@ export function NavMain({ main }) {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
-                <Collapsible asChild defaultOpen className="group/collapsible">
+                <Collapsible asChild className="group/collapsible">
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton tooltip="Dogs">

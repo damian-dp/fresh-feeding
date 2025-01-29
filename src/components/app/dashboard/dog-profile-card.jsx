@@ -10,12 +10,9 @@ import {
     PlusIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { useAddDog } from "@/components/providers/add-dog-provider";
 
 export function DogProfileCard() {
     const { dogs, loading } = useDogs();
-    const { setShowAddDog } = useAddDog();
 
     if (loading) {
         return (
@@ -31,8 +28,8 @@ export function DogProfileCard() {
                 <p className="text-muted-foreground mb-4">
                     You haven't added any dogs yet
                 </p>
-                <Button variant="outline" onClick={() => setShowAddDog(true)}>
-                    Add dog
+                <Button asChild>
+                    <Link to="/dogs/new">Add your first dog</Link>
                 </Button>
             </div>
         );
@@ -51,15 +48,15 @@ export function DogProfileCard() {
             )}
         >
             <CardContent className="pt-6 h-full">
-                <div
-                    onClick={() => setShowAddDog(true)}
-                    className="flex flex-col items-center cursor-pointer justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
+                <Link
+                    to="/dogs/new"
+                    className="flex flex-col items-center justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <div className="rounded-full border-2 border-dashed p-4 mb-4">
                         <PlusIcon className="w-6 h-6" />
                     </div>
                     <p className="font-medium">Add another dog</p>
-                </div>
+                </Link>
             </CardContent>
         </Card>
     );
@@ -183,15 +180,15 @@ export function DogProfileCard() {
                     )}
                 >
                     <CardContent className="pt-6 h-full">
-                        <div
-                            onClick={() => setShowAddDog(true)}
-                            className="flex flex-col items-center cursor-pointer justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
+                        <Link
+                            to="/dogs/new"
+                            className="flex flex-col items-center justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <div className="rounded-full border-2 border-dashed p-4 mb-4">
                                 <PlusIcon className="w-6 h-6" />
                             </div>
                             <p className="font-medium">Add another dog</p>
-                        </div>
+                        </Link>
                     </CardContent>
                 </Card>
             ))}

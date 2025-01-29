@@ -33,7 +33,7 @@ export function RecipesProvider({ children }) {
 
                 if (error) throw error;
 
-                // console.log("Recipes loaded:", data);
+                console.log("Recipes loaded:", data);
                 setRecipes(data);
             } catch (error) {
                 console.error("Error loading recipes:", error);
@@ -56,8 +56,8 @@ export function RecipesProvider({ children }) {
                     table: "recipes",
                     filter: `profile_id=eq.${session?.user?.id}`,
                 },
-                async (payload) => {
-                    // console.log("Recipes changed:", payload);
+                (payload) => {
+                    console.log("Recipes changed:", payload);
                     if (payload.eventType === "DELETE") {
                         setRecipes((prev) =>
                             prev.filter(
@@ -65,35 +65,9 @@ export function RecipesProvider({ children }) {
                                     recipe.recipe_id !== payload.old.recipe_id
                             )
                         );
-                    } else if (payload.eventType === "INSERT") {
-                        // For INSERT, wait a brief moment to ensure ingredients are inserted
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 100)
-                        );
-                        const newRecipe = await fetchRecipeById(
-                            payload.new.recipe_id
-                        );
-                        // Only add if it doesn't already exist
-                        setRecipes((prev) => {
-                            const exists = prev.some(
-                                (r) => r.recipe_id === newRecipe.recipe_id
-                            );
-                            if (!exists) {
-                                return [newRecipe, ...prev];
-                            }
-                            return prev;
-                        });
-                    } else if (payload.eventType === "UPDATE") {
-                        const updatedRecipe = await fetchRecipeById(
-                            payload.new.recipe_id
-                        );
-                        setRecipes((prev) =>
-                            prev.map((recipe) =>
-                                recipe.recipe_id === updatedRecipe.recipe_id
-                                    ? updatedRecipe
-                                    : recipe
-                            )
-                        );
+                    } else {
+                        // For INSERT and UPDATE, fetch the full recipe with ingredients
+                        fetchRecipeById(payload.new.recipe_id);
                     }
                 }
             )
@@ -131,7 +105,7 @@ export function RecipesProvider({ children }) {
                 throw new Error("Recipe not found");
             }
 
-            // console.log("Fetched recipe:", data);
+            console.log("Fetched recipe:", data);
 
             // Update recipes state with the fetched recipe
             setRecipes((prev) => {
@@ -195,20 +169,23 @@ export function RecipesProvider({ children }) {
             const { data: recipeIngredients, error: ingredientsError } =
                 await supabase
                     .from("recipe_ingredients")
-                    .insert(
-                        ingredients.map((ing) => ({
-                            recipe_id: recipe.recipe_id,
-                            ingredient_id: ing.ingredient_id,
-                            quantity: ing.quantity,
-                        }))
-                    );
+                    .insert(ingredientsToInsert).select(`
+                    *,
+                    ingredients (*)
+                `);
 
-                if (ingredientsError) throw ingredientsError;
-            }
+            if (ingredientsError) throw ingredientsError;
 
-            // Instead of immediately updating the state, let the subscription handle it
-            // The subscription will trigger fetchRecipeById which will update the state
-            return recipe;
+            // Combine the recipe with its ingredients
+            const completeRecipe = {
+                ...recipe,
+                recipe_ingredients: recipeIngredients,
+            };
+
+            // Update local state using the optimistic update function
+            addRecipeToState(completeRecipe);
+
+            return completeRecipe;
         } catch (error) {
             console.error("Error in addRecipe:", error);
             throw error;
@@ -216,7 +193,7 @@ export function RecipesProvider({ children }) {
     };
 
     const updateRecipe = async (recipeId, recipeData, ingredients) => {
-        // console.log("RecipesProvider: Starting updateRecipe...");
+        console.log("RecipesProvider: Starting updateRecipe...");
         try {
             // Update recipe details
             const { error: recipeError } = await supabase
@@ -314,9 +291,9 @@ export function RecipesProvider({ children }) {
     };
 
     // Also add a useEffect to log recipes state changes
-    // useEffect(() => {
-    //     console.log("Recipes state updated:", recipes);
-    // }, [recipes]);
+    useEffect(() => {
+        console.log("Recipes state updated:", recipes);
+    }, [recipes]);
 
     return (
         <RecipesContext.Provider value={value}>

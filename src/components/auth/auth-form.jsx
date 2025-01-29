@@ -68,7 +68,7 @@ export function AuthForm() {
                     ? await authService.signUp(email, password, name)
                     : await authService.signIn(email, password);
 
-                // console.log("Auth result:", result);
+                console.log("Auth result:", result);
 
                 if (result) {
                     if (isSignUp) {
@@ -77,7 +77,7 @@ export function AuthForm() {
                         );
                         setTimeout(() => setIsSignUp(false), 2000);
                     } else {
-                        // console.log("Navigating to dashboard...");
+                        console.log("Navigating to dashboard...");
                         setTimeout(() => {
                             navigate("/dashboard", { replace: true });
                         }, 100);

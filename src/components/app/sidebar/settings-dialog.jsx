@@ -1,8 +1,16 @@
-import { useEffect, useState, useRef, useMemo, useCallback, memo } from "react";
+import {
+    useEffect,
+    useState,
+    useRef,
+    useMemo,
+    useCallback,
+    lazy,
+    Suspense,
+} from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
     Dialog,
     DialogClose,
-    DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
@@ -15,7 +23,6 @@ import {
     DrawerTitle,
     DrawerFooter,
     DrawerClose,
-    DrawerContent,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
@@ -27,6 +34,7 @@ import { AlertCircle, CheckCheck, Loader2, Trash, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
     Select,
@@ -37,7 +45,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useCountries } from "@/components/providers/countries-provider";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { countries } from "countries-list";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -49,6 +63,27 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useDebounce } from "@/hooks/use-debounce";
+
+// Move countryOptions outside the component to prevent re-renders
+const countryOptions = Object.entries(countries)
+    .map(([code, country]) => ({
+        value: code,
+        label: country.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+// Keep the lazy imports with unique variable names
+const LazyDialogContent = lazy(() =>
+    import("@/components/ui/dialog").then((mod) => ({
+        default: mod.DialogContent,
+    }))
+);
+
+const LazyDrawerContent = lazy(() =>
+    import("@/components/ui/drawer").then((mod) => ({
+        default: mod.DrawerContent,
+    }))
+);
 
 export function SettingsDialog({ open, onOpenChange }) {
     const isDesktop = useMediaQuery("(min-width: 768px)", {
@@ -79,7 +114,7 @@ export function SettingsDialog({ open, onOpenChange }) {
     });
 
     // Memoize country list
-    const countries = useCountries();
+    const memoizedCountryOptions = useMemo(() => countryOptions, []);
 
     // Add mount effect to avoid SSR mismatch
     useEffect(() => {
@@ -111,8 +146,26 @@ export function SettingsDialog({ open, onOpenChange }) {
         debouncedCheckChanges,
     ]);
 
+    // Optimize country list rendering
+    const renderCountryOptions = useCallback(
+        () =>
+            memoizedCountryOptions.map((c) => (
+                <SelectItem
+                    key={c.value}
+                    value={c.value}
+                    className="break-words hyphens-auto py-2 pr-2 [word-wrap:break-word]"
+                    style={{ maxWidth: "100%" }}
+                >
+                    {c.label}
+                </SelectItem>
+            )),
+        [memoizedCountryOptions]
+    );
+
     // Reset form when dialog opens/closes
     useEffect(() => {
+        if (!profile) return;
+
         if (open) {
             const values = {
                 name: profile.name || "",
@@ -184,7 +237,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                 .update({
                     name,
                     country,
-                    postcode: postcode === "" ? profile.postcode : postcode,
+                    postcode:
+                        postcode.trim() === "" ? profile.postcode : postcode,
                     unit_metric: unitMetric,
                 })
                 .eq("profile_id", profile.profile_id);
@@ -239,6 +293,16 @@ export function SettingsDialog({ open, onOpenChange }) {
         }
     };
 
+    if (profileLoading) {
+        return (
+            <div className="flex items-center justify-center p-6">
+                <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!mounted) return null;
+
     const Content = (
         <form id="settings-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-6 px-6">
@@ -253,7 +317,36 @@ export function SettingsDialog({ open, onOpenChange }) {
                         />
                     </div>
                     <div className="flex flex-col gap-4 w-full">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">
+                            Email
+                            {!profile?.email_confirmed_at && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <AlertCircle className="h-4 w-4 text-warning" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>
+                                                Email not verified.{" "}
+                                                <button
+                                                    onClick={
+                                                        handleResendVerification
+                                                    }
+                                                    className="underline font-medium hover:text-primary"
+                                                    disabled={
+                                                        sendingVerification
+                                                    }
+                                                >
+                                                    {sendingVerification
+                                                        ? "Sending..."
+                                                        : "Send again"}
+                                                </button>
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </Label>
 
                         <Input
                             id="email"
@@ -275,20 +368,13 @@ export function SettingsDialog({ open, onOpenChange }) {
                                 <SelectValue placeholder="Select a country" />
                             </SelectTrigger>
                             <SelectContent
-                                className="max-h-[200px]"
+                                className="max-h-[200px] w-[var(--radix-select-trigger-width)]"
                                 side="bottom"
                                 position="popper"
                                 align="start"
                             >
                                 <SelectGroup>
-                                    {countries.map((c) => (
-                                        <SelectItem
-                                            key={c.value}
-                                            value={c.value}
-                                        >
-                                            {c.label}
-                                        </SelectItem>
-                                    ))}
+                                    {renderCountryOptions()}
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -368,50 +454,64 @@ export function SettingsDialog({ open, onOpenChange }) {
         <div className="contents">
             {isDesktop ? (
                 <>
-                    <Dialog open={open} onOpenChange={handleOpenChange}>
-                        <DialogContent>
-                            <DialogHeader className="flex flex-row items-center justify-between">
-                                <DialogTitle>Account Settings</DialogTitle>
-                                <DialogDescription className="hidden">
-                                    Update your account preferences.
-                                </DialogDescription>
-                                <Avatar className="size-12 mt-0">
-                                    <AvatarImage src={profile?.avatar_url} />
-                                    <AvatarFallback className="text-lg">
-                                        {profile?.name?.charAt(0) || "?"}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </DialogHeader>
-                            <div className="py-6">{Content}</div>
-                            <DialogFooter>
-                                <div className="flex flex-row items-center gap-2">
-                                    <DialogClose asChild>
-                                        <Button variant="link" tabIndex={-1}>
-                                            Cancel
+                    <Dialog
+                        open={open}
+                        onOpenChange={handleOpenChange}
+                        initialFocus={false}
+                        preventScroll
+                    >
+                        <Suspense fallback={null}>
+                            <LazyDialogContent>
+                                <DialogHeader className="flex flex-row items-center justify-between">
+                                    <DialogTitle>Account Settings</DialogTitle>
+                                    <DialogDescription className="hidden">
+                                        Update your account preferences.
+                                    </DialogDescription>
+                                    <Avatar className="size-12 mt-0">
+                                        <AvatarImage
+                                            src={profile?.avatar_url}
+                                        />
+                                        <AvatarFallback className="text-lg">
+                                            {profile?.name?.charAt(0) || "?"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </DialogHeader>
+                                <div className="py-6">{Content}</div>
+                                <DialogFooter>
+                                    <div className="flex flex-row items-center gap-2">
+                                        <DialogClose asChild>
+                                            <Button
+                                                variant="link"
+                                                tabIndex={-1}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button
+                                            variant="outline"
+                                            form="settings-form"
+                                            type="submit"
+                                            disabled={
+                                                saving || !hasUnsavedChanges
+                                            }
+                                            tabIndex={-1}
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Saving
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCheck className="mr-2 h-4 w-4" />
+                                                    Save
+                                                </>
+                                            )}
                                         </Button>
-                                    </DialogClose>
-                                    <Button
-                                        variant="outline"
-                                        form="settings-form"
-                                        type="submit"
-                                        disabled={saving || !hasUnsavedChanges}
-                                        tabIndex={-1}
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Saving
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCheck className="mr-2 h-4 w-4" />
-                                                Save
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </DialogFooter>
-                        </DialogContent>
+                                    </div>
+                                </DialogFooter>
+                            </LazyDialogContent>
+                        </Suspense>
 
                         <AlertDialog
                             open={showDiscardDialog}
@@ -449,40 +549,50 @@ export function SettingsDialog({ open, onOpenChange }) {
                         onOpenChange={handleOpenChange}
                         initialFocus={false}
                     >
-                        <DrawerContent>
-                            <DrawerHeader>
-                                <DrawerTitle>Account Settings</DrawerTitle>
-                                <DrawerDescription>
-                                    Update your account preferences.
-                                </DrawerDescription>
-                            </DrawerHeader>
-                            <div className="p-4">{Content}</div>
-                            <DrawerFooter>
-                                <div className="flex flex-row items-center gap-2">
-                                    <DrawerClose asChild>
-                                        <Button variant="link">Cancel</Button>
-                                    </DrawerClose>
-                                    <Button
-                                        variant="outline"
-                                        form="settings-form"
-                                        type="submit"
-                                        disabled={saving || !hasUnsavedChanges}
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Saving
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCheck className="mr-2 h-4 w-4" />
-                                                Save
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </DrawerFooter>
-                        </DrawerContent>
+                        <Suspense fallback={null}>
+                            <LazyDrawerContent>
+                                <DrawerHeader>
+                                    <DrawerTitle>Account Settings</DrawerTitle>
+                                    <DrawerDescription>
+                                        Update your account preferences.
+                                    </DrawerDescription>
+                                </DrawerHeader>
+                                <div className="p-4">{Content}</div>
+                                <DrawerFooter>
+                                    <div className="flex flex-row items-center gap-2">
+                                        <DrawerClose asChild>
+                                            <Button
+                                                variant="link"
+                                                tabIndex={-1}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </DrawerClose>
+                                        <Button
+                                            variant="outline"
+                                            form="settings-form"
+                                            type="submit"
+                                            disabled={
+                                                saving || !hasUnsavedChanges
+                                            }
+                                            tabIndex={-1}
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Saving
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCheck className="mr-2 h-4 w-4" />
+                                                    Save
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </DrawerFooter>
+                            </LazyDrawerContent>
+                        </Suspense>
                     </Drawer>
 
                     <AlertDialog
