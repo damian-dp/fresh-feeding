@@ -170,7 +170,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                 if (!dog) return "Unknown";
                                 const grams = getCategoryGrams(
                                     dog,
-                                    dog.ratios_muscle_meat + dog.ratios_bone
+                                    dog.ratios_muscle_meat
                                 );
                                 return (
                                     <>

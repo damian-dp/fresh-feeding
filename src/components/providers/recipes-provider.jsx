@@ -125,49 +125,20 @@ export function RecipesProvider({ children }) {
         }
     };
 
-    // Add this function to handle optimistic updates
-    const addRecipeToState = (newRecipe) => {
-        setRecipes((prev) => {
-            // Check if recipe already exists to prevent duplicates
-            const exists = prev.some(
-                (r) => r.recipe_id === newRecipe.recipe_id
-            );
-            if (exists) {
-                // If it exists, update it
-                return prev.map((r) =>
-                    r.recipe_id === newRecipe.recipe_id ? newRecipe : r
-                );
-            }
-            // If it doesn't exist, add it
-            return [...prev, newRecipe];
-        });
-    };
-
     const addRecipe = async (recipeData, ingredients) => {
         try {
-            // Insert the recipe first, ensuring profile_id is included
+            // First insert the recipe
             const { data: recipe, error: recipeError } = await supabase
                 .from("recipes")
-                .insert([
-                    {
-                        ...recipeData,
-                        profile_id: session.user.id, // Add this back
-                    },
-                ])
+                .insert([{ ...recipeData, profile_id: session.user.id }])
                 .select()
                 .single();
 
             if (recipeError) throw recipeError;
 
             // Then insert the ingredients
-            const ingredientsToInsert = ingredients.map((ing) => ({
-                recipe_id: recipe.recipe_id,
-                ingredient_id: ing.ingredient_id,
-                quantity: ing.quantity,
-            }));
-
-            const { data: recipeIngredients, error: ingredientsError } =
-                await supabase
+            if (ingredients?.length) {
+                const { error: ingredientsError } = await supabase
                     .from("recipe_ingredients")
                     .insert(ingredientsToInsert).select(`
                     *,
@@ -187,7 +158,7 @@ export function RecipesProvider({ children }) {
 
             return completeRecipe;
         } catch (error) {
-            console.error("Error in addRecipe:", error);
+            console.error("Error adding recipe:", error);
             throw error;
         }
     };
