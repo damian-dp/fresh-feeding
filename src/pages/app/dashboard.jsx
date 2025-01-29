@@ -29,10 +29,11 @@ import { RecipeTable } from "@/components/app/recipes/recipe-table";
 import { Badge } from "@/components/ui/badge";
 import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
 import { useState } from "react";
+import { useAddDog } from "@/components/providers/add-dog-provider";
 
 export function DashboardPage() {
     const { profile, loading } = useUser();
-    const [showAddDog, setShowAddDog] = useState(false);
+    const { showAddDog, setShowAddDog } = useAddDog();
     const [sheetOpen, setSheetOpen] = useState(false);
 
     // Get first name for greeting
@@ -55,13 +56,7 @@ export function DashboardPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="#">
-                                    Building Your Application
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                                    Dashboard
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -113,15 +108,15 @@ export function DashboardPage() {
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Helpful resources</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <CardContent className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4">
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
                                 <Link to="/ingredients">
-                                    <CardContent className="p-4">
-                                        <div className="flex flex-row items-center gap-4 text-sm">
-                                            <Apple className="w-9 h-9" />
+                                    <CardContent className="p-4 px-5">
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
+                                            <Apple className="w-8 h-8 text-muted-foreground [&>svg]:shrink-0" />
                                             <div className="flex flex-col gap-0">
-                                                <p className="font-medium">
-                                                    Ingredients database
+                                                <p className="font-medium whitespace-nowrap">
+                                                    Ingredient database
                                                 </p>
                                                 <div className="flex items-center gap-1">
                                                     <span className="text-sm font-regular text-muted-foreground group-hover:text-foreground group-hover:underline transition-colors">
@@ -136,12 +131,16 @@ export function DashboardPage() {
                             </Card>
 
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
-                                <Link to="/ingredients">
-                                    <CardContent className="p-4">
-                                        <div className="flex flex-row items-center gap-4 text-sm">
-                                            <FileTextIcon className="w-9 h-9" />
+                                <Link
+                                    to="https://www.freshfoodtribe.com/how-to-start"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <CardContent className="p-4 px-5">
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
+                                            <FileTextIcon className="w-8 h-8 text-muted-foreground" />
                                             <div className="flex flex-col gap-0">
-                                                <p className="font-medium">
+                                                <p className="font-medium whitespace-nowrap">
                                                     Fresh feeding guide
                                                 </p>
                                                 <div className="flex items-center gap-1">
@@ -157,12 +156,16 @@ export function DashboardPage() {
                             </Card>
 
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
-                                <Link to="/ingredients">
-                                    <CardContent className="p-4">
-                                        <div className="flex flex-row items-center gap-4 text-sm">
-                                            <Users className="w-9 h-9" />
+                                <Link
+                                    to="https://www.facebook.com/share/g/1F9fy5447T/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <CardContent className="p-4 px-5">
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
+                                            <Users className="w-8 h-8 text-muted-foreground" />
                                             <div className="flex flex-col gap-0">
-                                                <p className="font-medium">
+                                                <p className="font-medium whitespace-nowrap">
                                                     Facebook group
                                                 </p>
                                                 <div className="flex items-center gap-1">

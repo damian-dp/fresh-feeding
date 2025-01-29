@@ -15,12 +15,12 @@ import {
     CookingPot,
     Apple,
     ShoppingBasket,
+    LogOut,
 } from "lucide-react";
 
 import { NavMain } from "@/components/app/sidebar/nav-main";
 import { NavResources } from "@/components/app/sidebar/nav-resources";
-import { NavUser } from "@/components/app/sidebar/nav-user";
-import { TeamSwitcher } from "@/components/app/sidebar/team-switcher";
+import { NavFooter } from "@/components/app/sidebar/nav-footer";
 import {
     Sidebar,
     SidebarContent,
@@ -78,6 +78,16 @@ const data = {
             icon: ShoppingBasket,
         },
     ],
+    account: [
+        {
+            name: "Account Settings",
+            icon: Settings2,
+        },
+        {
+            name: "Log out",
+            icon: LogOut,
+        },
+    ],
 };
 
 export function AppSidebar({ ...props }) {
@@ -99,11 +109,11 @@ export function AppSidebar({ ...props }) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain main={data.main} />
-                <Separator className="hidden border-sidebar-border w-[60%] mx-auto group-data-[collapsible=icon]:block" />
-                <NavResources resources={data.resources} />
+                {/* <Separator className="hidden border-sidebar-border w-[60%] mx-auto group-data-[collapsible=icon]:block" />
+                <NavResources resources={data.resources} /> */}
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavFooter account={data.account} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

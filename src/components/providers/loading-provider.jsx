@@ -8,6 +8,7 @@ const LoadingContext = createContext({});
 
 export function LoadingProvider({ children }) {
     const [isReady, setIsReady] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [imagesLoaded, setImagesLoaded] = useState(false);
     const { loading: userLoading, profile } = useUser();
     const { loading: dogsLoading, dogs } = useDogs();
@@ -59,23 +60,19 @@ export function LoadingProvider({ children }) {
                     if (loadedCount === totalImages) {
                         setImagesLoaded(true);
                     }
-                    // Still resolve on error to not block loading
                     resolve();
                 };
             });
         };
 
-        // Load all images concurrently
         Promise.all(imagesToLoad.map((src) => preloadImage(src))).catch(
             (error) => {
                 console.error("Error preloading images:", error);
-                // Set images as loaded even if there's an error
                 setImagesLoaded(true);
             }
         );
 
         return () => {
-            // Cleanup if component unmounts during loading
             setImagesLoaded(false);
         };
     }, [dogs, dogsLoading, profile, userLoading]);
@@ -89,15 +86,17 @@ export function LoadingProvider({ children }) {
             imagesLoaded;
 
         if (allDataLoaded) {
-            // Add a small delay to ensure all UI updates are complete
             const timer = setTimeout(() => {
                 setIsReady(true);
-                console.log("[LoadingProvider] All data loaded, setting isReady");
+                setIsInitialLoad(false);
+                console.log(
+                    "[LoadingProvider] All data loaded, setting isReady"
+                );
             }, 300);
 
             return () => clearTimeout(timer);
         }
-        // Reset isReady if any provider starts loading again
+
         setIsReady(false);
     }, [
         userLoading,
@@ -108,7 +107,13 @@ export function LoadingProvider({ children }) {
     ]);
 
     return (
-        <LoadingContext.Provider value={{ isReady }}>
+        <LoadingContext.Provider
+            value={{
+                isReady,
+                isLoading: !isReady && isInitialLoad,
+                isInitialLoad,
+            }}
+        >
             {children}
         </LoadingContext.Provider>
     );

@@ -23,6 +23,7 @@ export function NavResources({ resources }) {
                             tooltip={item.name}
                             asChild
                             className={pathname === item.url ? "bg-accent ring-1 ring-border" : ""}
+                            
                         >
                             <Link to={item.url}>
                                 <item.icon />

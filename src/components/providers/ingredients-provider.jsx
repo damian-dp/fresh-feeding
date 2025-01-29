@@ -54,7 +54,7 @@ export function IngredientsProvider({ children }) {
                     })) || [];
 
                 setIngredients(transformedData);
-                console.log("Ingredients loaded:", transformedData);
+                // console.log("Ingredients loaded:", transformedData);
             } catch (error) {
                 console.error("Error fetching ingredients:", error);
             } finally {
@@ -77,7 +77,7 @@ export function IngredientsProvider({ children }) {
                     table: "ingredients",
                 },
                 async (payload) => {
-                    console.log("Ingredients changed:", payload);
+                    // console.log("Ingredients changed:", payload);
                     // Refetch all data when there's a change since we need the relations
                     const { data, error } = await supabase.from("ingredients")
                         .select(`
