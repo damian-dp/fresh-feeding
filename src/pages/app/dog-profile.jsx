@@ -150,7 +150,7 @@ export function DogProfilePage() {
 
     // Add effect to log when recipes changes
     useEffect(() => {
-        console.log("DogProfilePage recipes changed:", recipes);
+        // console.log("DogProfilePage recipes changed:", recipes);
     }, [recipes]);
 
     if (loading) {
@@ -399,33 +399,33 @@ export function DogProfilePage() {
                                 variant="meat"
                                 icon={<Bone />}
                                 label="Meat and bone"
-                                sublabel={`${meatGrams}g / ${
+                                sublabel={`${meatGrams}g / ${Math.round(
                                     dog.ratios_muscle_meat * 100
-                                }%`}
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="plant"
                                 icon={<Bone />}
                                 label="Plant matter"
-                                sublabel={`${plantGrams}g / ${
+                                sublabel={`${plantGrams}g / ${Math.round(
                                     dog.ratios_plant_matter * 100
-                                }%`}
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="liver"
                                 icon={<Heart />}
                                 label="Liver"
-                                sublabel={`${liverGrams}g / ${
+                                sublabel={`${liverGrams}g / ${Math.round(
                                     dog.ratios_liver * 100
-                                }%`}
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="organ"
                                 icon={<Brain />}
                                 label="Secreting organs"
-                                sublabel={`${organGrams}g / ${
+                                sublabel={`${organGrams}g / ${Math.round(
                                     dog.ratios_secreting_organ * 100
-                                }%`}
+                                )}%`}
                             />
                         </div>
                     </CardContent>

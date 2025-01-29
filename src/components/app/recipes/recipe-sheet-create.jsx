@@ -4,6 +4,7 @@ import { DogSwitcher } from "./dog-switcher";
 import { IngredientSection } from "./ingredient-section";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+import { NutrientGroupAlert } from "./nutrient-group-alert";
 
 export function RecipeSheetCreate({
     recipeName,
@@ -60,7 +61,7 @@ export function RecipeSheetCreate({
             </div>
 
             {/* Ingredients section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-y-16 p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-y-16 p-8 border-b border-border">
                 {Object.entries(ingredientSections).map(([key, section]) => (
                     <IngredientSection
                         key={key}
@@ -77,6 +78,18 @@ export function RecipeSheetCreate({
                         isLoading={ingredientsLoading}
                     />
                 ))}
+            </div>
+
+            <div className="flex flex-col gap-6 p-8">
+                <p className="font-medium">Nutrition status</p>
+                <div className="flex gap-8">
+                    <NutrientGroupAlert
+                        recipeIngredients={Object.values(
+                            ingredientSections
+                        ).flatMap((section) => section.getItems())}
+                        mode="create"
+                    />
+                </div>
             </div>
         </>
     );

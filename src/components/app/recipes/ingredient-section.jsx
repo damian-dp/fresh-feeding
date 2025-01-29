@@ -187,12 +187,11 @@ function IngredientList({ items, onRemoveItem, category, mode }) {
         <div className={items.length > 0 ? "border-t" : ""}>
             {items.map((item) => {
                 // Handle both create and edit mode item structures
-                const itemId = mode === "edit" ? item.ingredient_id : item.id;
-
+                const itemId = mode === "create" ? item.id : item.ingredient_id;
                 const itemName =
-                    mode === "edit"
-                        ? item.ingredients.ingredient_name
-                        : item.name;
+                    mode === "create"
+                        ? item.name
+                        : item.ingredients.ingredient_name;
 
                 return (
                     <div

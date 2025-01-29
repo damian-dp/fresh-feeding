@@ -75,7 +75,7 @@ export function RecipeSheet({
     // Update state when recipe changes
     useEffect(() => {
         if (recipe && (mode === "view" || mode === "edit")) {
-            console.log("Recipe changed in RecipeSheet:", recipe);
+            // console.log("Recipe changed in RecipeSheet:", recipe);
             setRecipeName(recipe.recipe_name || "");
             setSelectedDog(recipe.dog_id || "");
             setRecipeIngredients(recipe.recipe_ingredients || []);
@@ -175,11 +175,11 @@ export function RecipeSheet({
     };
 
     const handleClose = (newOpen, options = {}) => {
-        console.log("RecipeSheet handleClose:", { newOpen, options, mode });
+        // console.log("RecipeSheet handleClose:", { newOpen, options, mode });
 
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
-            console.log("Changing mode to:", options.mode);
+            // console.log("Changing mode to:", options.mode);
             onModeChange?.(options.mode);
             onOpenChange?.(true, options);
             return;
@@ -240,13 +240,13 @@ export function RecipeSheet({
             };
 
             if (mode === "edit" && recipe?.recipe_id) {
-                console.log("Edit mode - preparing ingredients...");
+                // console.log("Edit mode - preparing ingredients...");
                 const ingredients = recipeIngredients.map((ing) => ({
                     ingredient_id: ing.ingredient_id,
                     quantity: ing.quantity || 0,
                 }));
 
-                console.log("Calling updateRecipe...");
+                // console.log("Calling updateRecipe...");
                 const updatedRecipe = await updateRecipe(
                     recipe.recipe_id,
                     recipeData,
@@ -254,9 +254,9 @@ export function RecipeSheet({
                 );
 
                 if (updatedRecipe) {
-                    console.log(
-                        "Update successful, transitioning to view mode..."
-                    );
+                    // console.log(
+                    //     "Update successful, transitioning to view mode..."
+                    // );
                     toast.success("Recipe updated successfully");
 
                     // Reset edit mode state
@@ -273,8 +273,8 @@ export function RecipeSheet({
                         (r) => r.recipe_id === recipe.recipe_id
                     );
 
-                    console.log("Latest recipe from state:", latestRecipe);
-                    console.log("Updated recipe from API:", updatedRecipe);
+                    // console.log("Latest recipe from state:", latestRecipe);
+                    // console.log("Updated recipe from API:", updatedRecipe);
 
                     // Use the updatedRecipe directly instead of looking up in state
                     onModeChange?.("view");
@@ -283,17 +283,17 @@ export function RecipeSheet({
                         recipe: updatedRecipe,
                     });
 
-                    console.log(
-                        "Transitioned to view mode with recipe:",
-                        updatedRecipe
-                    );
+                    // console.log(
+                    //     "Transitioned to view mode with recipe:",
+                    //     updatedRecipe
+                    // );
 
                     await handleSaveSuccess(updatedRecipe);
                 }
                 return;
             } else {
                 // Create mode
-                console.log("Create mode - preparing ingredients...");
+                // console.log("Create mode - preparing ingredients...");
                 const ingredients = [
                     ...meatAndBone,
                     ...plantMatter,
@@ -305,7 +305,7 @@ export function RecipeSheet({
                     quantity: ing.quantity || 0,
                 }));
 
-                console.log("Calling addRecipe...");
+                // console.log("Calling addRecipe...");
                 try {
                     const newRecipe = await addRecipe(recipeData, ingredients);
 
@@ -313,9 +313,9 @@ export function RecipeSheet({
                         throw new Error("Failed to create recipe");
                     }
 
-                    console.log(
-                        "Create successful, preparing to transition to view mode..."
-                    );
+                    // console.log(
+                    //     "Create successful, preparing to transition to view mode..."
+                    // );
                     toast.success("Recipe created successfully");
 
                     // Wait a moment for the database to settle
@@ -326,7 +326,7 @@ export function RecipeSheet({
                         const freshRecipe = await fetchRecipeById(
                             newRecipe.recipe_id
                         );
-                        console.log("Got fresh recipe:", freshRecipe);
+                        // console.log("Got fresh recipe:", freshRecipe);
 
                         if (!freshRecipe) {
                             throw new Error("Failed to fetch fresh recipe");
@@ -343,7 +343,7 @@ export function RecipeSheet({
                         // Wait for a tick to ensure state is updated
                         await new Promise((resolve) => setTimeout(resolve, 0));
 
-                        console.log("Attempting mode transition to view...");
+                        // console.log("Attempting mode transition to view...");
 
                         // Switch back to view mode with current recipe - using same pattern as edit mode
                         onModeChange?.("view");
@@ -383,67 +383,84 @@ export function RecipeSheet({
         }
     };
 
-    // Add these functions back
+    // Add this function to handle ingredient additions
     const handleAddIngredient = (ingredient, category) => {
-        console.log("RecipeSheet handling ingredient:", ingredient);
-        console.log("Category:", category);
-
         if (mode === "edit") {
-            setRecipeIngredients((prev) => {
-                console.log("Previous ingredients:", prev);
-                const updated = [...prev, ingredient];
-                console.log("Updated ingredients:", updated);
-                return updated;
-            });
-            setActiveSection(null);
-            return;
+            setRecipeIngredients((prev) => [...prev, ingredient]);
         }
 
-        // Create mode handling
+        // Map category to the correct state setter
         switch (category) {
             case "meat_and_bone":
-                setMeatAndBone([...meatAndBone, ingredient]);
+                setMeatAndBone((prev) => [...prev, ingredient]);
                 break;
             case "plant_matter":
-                setPlantMatter([...plantMatter, ingredient]);
+                setPlantMatter((prev) => [...prev, ingredient]);
                 break;
             case "secreting_organs":
-                setSecretingOrgans([...secretingOrgans, ingredient]);
+                setSecretingOrgans((prev) => [...prev, ingredient]);
                 break;
             case "liver":
-                setLiver([...liver, ingredient]);
+                setLiver((prev) => [...prev, ingredient]);
                 break;
             case "misc":
-                setMisc([...misc, ingredient]);
+                setMisc((prev) => [...prev, ingredient]);
                 break;
         }
-        setActiveSection(null);
     };
 
     const handleRemoveIngredient = (ingredientId, section) => {
+        if (mode === "edit") {
+            setRecipeIngredients((prev) =>
+                prev.filter((i) => i.ingredient_id !== ingredientId)
+            );
+        }
+
         switch (section) {
             case "meat_and_bone":
-                setMeatAndBone(
-                    meatAndBone.filter((i) => i.ingredient_id !== ingredientId)
+                setMeatAndBone((prev) =>
+                    prev.filter((i) =>
+                        mode === "create"
+                            ? i.id !== ingredientId
+                            : i.ingredient_id !== ingredientId
+                    )
                 );
                 break;
             case "plant_matter":
-                setPlantMatter(
-                    plantMatter.filter((i) => i.ingredient_id !== ingredientId)
+                setPlantMatter((prev) =>
+                    prev.filter((i) =>
+                        mode === "create"
+                            ? i.id !== ingredientId
+                            : i.ingredient_id !== ingredientId
+                    )
                 );
                 break;
             case "secreting_organs":
-                setSecretingOrgans(
-                    secretingOrgans.filter(
-                        (i) => i.ingredient_id !== ingredientId
+                setSecretingOrgans((prev) =>
+                    prev.filter((i) =>
+                        mode === "create"
+                            ? i.id !== ingredientId
+                            : i.ingredient_id !== ingredientId
                     )
                 );
                 break;
             case "liver":
-                setLiver(liver.filter((i) => i.ingredient_id !== ingredientId));
+                setLiver((prev) =>
+                    prev.filter((i) =>
+                        mode === "create"
+                            ? i.id !== ingredientId
+                            : i.ingredient_id !== ingredientId
+                    )
+                );
                 break;
             case "misc":
-                setMisc(misc.filter((i) => i.ingredient_id !== ingredientId));
+                setMisc((prev) =>
+                    prev.filter((i) =>
+                        mode === "create"
+                            ? i.id !== ingredientId
+                            : i.ingredient_id !== ingredientId
+                    )
+                );
                 break;
         }
     };
@@ -490,34 +507,43 @@ export function RecipeSheet({
         return data;
     };
 
+    // Create an object that maps each section to its items
+    const ingredientSections = {
+        meat_and_bone: {
+            title: "Muscle Meat & Bone",
+            emptyStateText: "Add muscle meat and bone ingredients",
+            category: 1,
+            getItems: () => (mode === "edit" ? meatAndBone : meatAndBone),
+        },
+        plant_matter: {
+            title: "Plant Matter",
+            emptyStateText: "Add plant matter ingredients",
+            category: 2,
+            getItems: () => (mode === "edit" ? plantMatter : plantMatter),
+        },
+        liver: {
+            title: "Liver",
+            emptyStateText: "Add liver ingredients",
+            category: 3,
+            getItems: () => (mode === "edit" ? liver : liver),
+        },
+        secreting_organs: {
+            title: "Secreting Organs",
+            emptyStateText: "Add secreting organ ingredients",
+            category: 4,
+            getItems: () =>
+                mode === "edit" ? secretingOrgans : secretingOrgans,
+        },
+        misc: {
+            title: "Misc",
+            emptyStateText: "Add miscellaneous ingredients",
+            category: 5,
+            getItems: () => (mode === "edit" ? misc : misc),
+        },
+    };
+
     // Render content based on mode
     const renderContent = () => {
-        const sections = Object.entries(INGREDIENT_SECTIONS).reduce(
-            (acc, [key, section]) => {
-                acc[key] = {
-                    ...section,
-                    getItems: () => {
-                        switch (key) {
-                            case "meat_and_bone":
-                                return meatAndBone;
-                            case "plant_matter":
-                                return plantMatter;
-                            case "liver":
-                                return liver;
-                            case "secreting_organs":
-                                return secretingOrgans;
-                            case "misc":
-                                return misc;
-                            default:
-                                return [];
-                        }
-                    },
-                };
-                return acc;
-            },
-            {}
-        );
-
         switch (mode) {
             case "create":
                 return (
@@ -527,7 +553,7 @@ export function RecipeSheet({
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
                         setShowAddDog={setShowAddDog}
-                        ingredientSections={sections}
+                        ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                         handleAddIngredient={handleAddIngredient}
@@ -550,7 +576,7 @@ export function RecipeSheet({
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
                         setShowAddDog={setShowAddDog}
-                        ingredientSections={sections}
+                        ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                         handleAddIngredient={handleAddIngredient}

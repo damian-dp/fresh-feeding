@@ -158,7 +158,7 @@ export function DogsProvider({ children }) {
                 })
             );
 
-            console.log("Dogs loaded:", dogsWithSignedUrls);
+            // console.log("Dogs loaded:", dogsWithSignedUrls);
             setDogs(dogsWithSignedUrls);
         } catch (error) {
             console.error("Error loading dogs:", error);
@@ -183,7 +183,7 @@ export function DogsProvider({ children }) {
                     filter: `profile_id=eq.${session?.user?.id}`,
                 },
                 async (payload) => {
-                    console.log("Dogs changed:", payload);
+                    // console.log("Dogs changed:", payload);
                     if (payload.eventType === "DELETE") {
                         setDogs((prev) =>
                             prev.filter(

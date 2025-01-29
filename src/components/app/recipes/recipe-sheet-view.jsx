@@ -8,11 +8,14 @@ import {
     Heart,
     Leaf,
     Pill,
+    AlertCircle,
 } from "lucide-react";
 import { BatchCalculator } from "./batch-calculator";
 import { useState, useEffect } from "react";
 import { useRecipes } from "@/components/providers/recipes-provider";
 import { IngredientSection } from "./ingredient-section";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { NutrientGroupAlert } from "./nutrient-group-alert";
 
 const getIngredientsByCategory = (recipeIngredients, categoryId) => {
     return (recipeIngredients || []).filter(
@@ -154,7 +157,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
 
             {/* Ingredients sections */}
 
-            <div className="flex flex-col gap-8 p-8">
+            <div className="flex flex-col gap-8 p-8 border-b border-border">
                 <p className="font-medium">Ingredients</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gap-y-16">
                     {/* Meat and Bone Section */}
@@ -176,7 +179,11 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <>
                                         {grams}g{" "}
                                         <span className="text-muted-foreground">
-                                            / {dog.ratios_muscle_meat * 100}%
+                                            /{" "}
+                                            {Math.round(
+                                                dog.ratios_muscle_meat * 100
+                                            )}
+                                            %
                                         </span>
                                     </>
                                 );
@@ -203,12 +210,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <span>
                                         {item.ingredients?.ingredient_name}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    {/* <span className="text-muted-foreground">
                                         {Math.round(
                                             item.quantity * (batchSize * 1000)
                                         )}
                                         g
-                                    </span>
+                                    </span> */}
                                 </div>
                             ))}
 
@@ -244,7 +251,11 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <>
                                         {grams}g{" "}
                                         <span className="text-muted-foreground">
-                                            / {dog.ratios_plant_matter * 100}%
+                                            /{" "}
+                                            {Math.round(
+                                                dog.ratios_plant_matter * 100
+                                            )}
+                                            %
                                         </span>
                                     </>
                                 );
@@ -271,12 +282,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <span>
                                         {item.ingredients?.ingredient_name}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    {/* <span className="text-muted-foreground">
                                         {Math.round(
                                             item.quantity * (batchSize * 1000)
                                         )}
                                         g
-                                    </span>
+                                    </span> */}
                                 </div>
                             ))}
 
@@ -312,7 +323,10 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <>
                                         {grams}g{" "}
                                         <span className="text-muted-foreground">
-                                            / {dog.ratios_secreting_organ * 100}
+                                            /{" "}
+                                            {Math.round(
+                                                dog.ratios_secreting_organ * 100
+                                            )}
                                             %
                                         </span>
                                     </>
@@ -340,12 +354,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <span>
                                         {item.ingredients?.ingredient_name}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    {/* <span className="text-muted-foreground">
                                         {Math.round(
                                             item.quantity * (batchSize * 1000)
                                         )}
                                         g
-                                    </span>
+                                    </span> */}
                                 </div>
                             ))}
 
@@ -381,7 +395,9 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <>
                                         {grams}g{" "}
                                         <span className="text-muted-foreground">
-                                            / {dog.ratios_liver * 100}%
+                                            /{" "}
+                                            {Math.round(dog.ratios_liver * 100)}
+                                            %
                                         </span>
                                     </>
                                 );
@@ -408,12 +424,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <span>
                                         {item.ingredients?.ingredient_name}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    {/* <span className="text-muted-foreground">
                                         {Math.round(
                                             item.quantity * (batchSize * 1000)
                                         )}
                                         g
-                                    </span>
+                                    </span> */}
                                 </div>
                             ))}
 
@@ -458,12 +474,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                                     <span>
                                         {item.ingredients?.ingredient_name}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    {/* <span className="text-muted-foreground">
                                         {Math.round(
                                             item.quantity * (batchSize * 1000)
                                         )}
                                         g
-                                    </span>
+                                    </span> */}
                                 </div>
                             ))}
 
@@ -479,6 +495,16 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                             )}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="flex flex-col gap-6 p-8">
+                <p className="font-medium">Nutrition status</p>
+                <div className="flex gap-8">
+                    <NutrientGroupAlert
+                        recipeIngredients={recipe.recipe_ingredients}
+                        mode="view"
+                    />
                 </div>
             </div>
         </>

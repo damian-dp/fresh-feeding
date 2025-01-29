@@ -5,6 +5,7 @@ import { IngredientSection } from "./ingredient-section";
 import { toast } from "sonner";
 import { BadgeStack } from "@/components/ui/badge-stack";
 import { Bone, Brain, Heart, Leaf, Pill } from "lucide-react";
+import { NutrientGroupAlert } from "./nutrient-group-alert";
 
 export function RecipeSheetEdit({
     recipe,
@@ -41,23 +42,17 @@ export function RecipeSheetEdit({
 
     // Update the handleIngredientAdd function
     const handleIngredientAdd = (ingredient, category) => {
-        console.log("Adding ingredient:", ingredient);
-        console.log("Category:", category);
-
         // Create the recipe_ingredients structure with proper category_id
         const newIngredient = {
-            ingredient_id: ingredient.id, // Changed from ingredient.ingredient_id
+            ingredient_id: ingredient.id,
             ingredients: {
                 ingredient_id: ingredient.id,
                 ingredient_name: ingredient.name,
                 category_id: ingredient.category,
-                // Include any other properties from the original ingredient
                 ...ingredient,
             },
             quantity: 0,
         };
-
-        console.log("Structured ingredient:", newIngredient);
 
         // Call the parent handler with the properly structured ingredient
         handleAddIngredient(newIngredient, category);
@@ -93,14 +88,20 @@ export function RecipeSheetEdit({
             {/* Ingredients section */}
             <div className="flex flex-col gap-8 p-8">
                 <p className="font-medium">Ingredients</p>
+                <div className="-mt-2">
+                    <NutrientGroupAlert
+                        recipeIngredients={Object.values(
+                            ingredientSections
+                        ).flatMap((section) => section.getItems())}
+                        mode="edit"
+                    />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gap-y-16">
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Meat and bone"
-                            items={(recipe.recipe_ingredients || []).filter(
-                                (item) => item?.ingredients?.category_id === 1
-                            )}
+                            items={ingredientSections.meat_and_bone.getItems()}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "meat_and_bone")
                             }
@@ -121,9 +122,7 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Plant matter"
-                            items={(recipe.recipe_ingredients || []).filter(
-                                (item) => item?.ingredients?.category_id === 2
-                            )}
+                            items={ingredientSections.plant_matter.getItems()}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "plant_matter")
                             }
@@ -144,9 +143,7 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Secreting organs"
-                            items={(recipe.recipe_ingredients || []).filter(
-                                (item) => item?.ingredients?.category_id === 4
-                            )}
+                            items={ingredientSections.secreting_organs.getItems()}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "secreting_organs")
                             }
@@ -167,9 +164,7 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6">
                         <IngredientSection
                             title="Liver"
-                            items={(recipe.recipe_ingredients || []).filter(
-                                (item) => item?.ingredients?.category_id === 3
-                            )}
+                            items={ingredientSections.liver.getItems()}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "liver")
                             }
@@ -187,9 +182,7 @@ export function RecipeSheetEdit({
                     <div className="flex flex-col gap-6 col-span-2">
                         <IngredientSection
                             title="Other ingredients"
-                            items={(recipe.recipe_ingredients || []).filter(
-                                (item) => item?.ingredients?.category_id === 5
-                            )}
+                            items={ingredientSections.misc.getItems()}
                             onRemoveItem={(id) =>
                                 handleRemoveIngredient(id, "misc")
                             }
