@@ -320,7 +320,7 @@ export function DogProfilePage() {
                                 sublabel="Current weight"
                                 flipped={true}
                             />
-                            <div className="flex flex-col col-span-2 justify-between h-full row-span-2 text-xl font-normal text-muted-foreground/60 lg:pr-20 leading-relaxed align-top">
+                            <div className="flex flex-col col-span-2 justify-between gap-2 h-full row-span-2 text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
                                 {(dog.goal === "maintain" ||
                                     dog.goal === "custom") && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
@@ -376,7 +376,7 @@ export function DogProfilePage() {
                                     </p>
                                 )}
                                 <p className="">
-                                    Daily total can be divided across meals.
+                                    Total can be divided across meals.
                                 </p>
                             </div>
                             <BadgeStack
