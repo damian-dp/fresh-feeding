@@ -162,6 +162,7 @@ export function RecipesProvider({ children }) {
             throw error;
         }
     };
+    // Console
 
     const updateRecipe = async (recipeId, recipeData, ingredients) => {
         console.log("RecipesProvider: Starting updateRecipe...");
