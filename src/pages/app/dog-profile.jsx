@@ -40,6 +40,7 @@ import { supabase } from "@/lib/supabase";
 import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profile-dialog";
 import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
 import { useRecipes } from "@/components/providers/recipes-provider";
+import { EditDogRatiosDialog } from "@/components/app/dashboard/edit-dog-ratios-dialog";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
@@ -48,6 +49,7 @@ export function DogProfilePage() {
     const textareaRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showEditRatiosDialog, setShowEditRatiosDialog] = useState(false);
     const [sheetOpen, setSheetOpen] = useState(false);
 
     // Local state for notes
@@ -191,12 +193,16 @@ export function DogProfilePage() {
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
                                 <BreadcrumbLink href="#">
-                                    Building Your Application
+                                    Dashboard
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator className="hidden md:block" />
+                            <BreadcrumbItem className="hidden md:block">
+                                Your dogs
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block" />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                                <BreadcrumbPage>{dog.dog_name}</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -293,7 +299,10 @@ export function DogProfilePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Nutritional ratios</CardTitle>
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowEditRatiosDialog(true)}
+                        >
                             <Pencil className="w-4 h-4" />
                             Edit ratios
                         </Button>
@@ -483,6 +492,11 @@ export function DogProfilePage() {
             <EditDogProfileDialog
                 open={showEditDialog}
                 onOpenChange={setShowEditDialog}
+                dog={dog}
+            />
+            <EditDogRatiosDialog
+                open={showEditRatiosDialog}
+                onOpenChange={setShowEditRatiosDialog}
                 dog={dog}
             />
         </>

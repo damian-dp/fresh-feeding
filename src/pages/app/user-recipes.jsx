@@ -19,6 +19,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { RecipeTable } from "@/components/app/recipes/recipe-table";
+import {
+    Breadcrumb,
+    BreadcrumbList,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbSeparator,
+    BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function UserRecipesPage() {
     const { recipes, loading: recipesLoading, deleteRecipe } = useRecipes();
@@ -79,25 +89,46 @@ export function UserRecipesPage() {
     }
 
     return (
-        <div className="container max-w-7xl mx-auto py-8 px-4">
-            <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold mb-2">
-                            Your Recipes
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Manage and organize your dog's recipes
-                        </p>
-                    </div>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Recipe
-                    </Button>
+        <>
+            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+                <div className="flex items-center gap-2 px-4">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator orientation="vertical" className="mr-2 h-4" />
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem className="hidden md:block">
+                                <BreadcrumbLink href="#">
+                                    Dashboard
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block" />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>Your recipes</BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
                 </div>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                <div className="space-y-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2">
+                                Your Recipes
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Manage and organize your dog's recipes
+                            </p>
+                        </div>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Recipe
+                        </Button>
+                    </div>
 
-                <RecipeTable onDelete={handleDeleteRecipe} />
+                    <RecipeTable onDelete={handleDeleteRecipe} />
+                </div>
             </div>
-        </div>
+        </>
     );
 }

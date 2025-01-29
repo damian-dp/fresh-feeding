@@ -317,36 +317,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                         />
                     </div>
                     <div className="flex flex-col gap-4 w-full">
-                        <Label htmlFor="email">
-                            Email
-                            {!profile?.email_confirmed_at && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <AlertCircle className="h-4 w-4 text-warning" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>
-                                                Email not verified.{" "}
-                                                <button
-                                                    onClick={
-                                                        handleResendVerification
-                                                    }
-                                                    className="underline font-medium hover:text-primary"
-                                                    disabled={
-                                                        sendingVerification
-                                                    }
-                                                >
-                                                    {sendingVerification
-                                                        ? "Sending..."
-                                                        : "Send again"}
-                                                </button>
-                                            </p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                        </Label>
+                        <Label htmlFor="email">Email</Label>
 
                         <Input
                             id="email"
