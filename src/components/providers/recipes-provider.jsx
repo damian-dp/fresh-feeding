@@ -193,15 +193,18 @@ export function RecipesProvider({ children }) {
             }));
 
             const { data: recipeIngredients, error: ingredientsError } =
-                await supabase.from("recipe_ingredients").insert(
-                    ingredients.map((ing) => ({
-                        recipe_id: recipe.recipe_id,
-                        ingredient_id: ing.ingredient_id,
-                        quantity: ing.quantity,
-                    }))
-                );
+                await supabase
+                    .from("recipe_ingredients")
+                    .insert(
+                        ingredients.map((ing) => ({
+                            recipe_id: recipe.recipe_id,
+                            ingredient_id: ing.ingredient_id,
+                            quantity: ing.quantity,
+                        }))
+                    );
 
-            if (ingredientsError) throw ingredientsError;
+                if (ingredientsError) throw ingredientsError;
+            }
 
             // Instead of immediately updating the state, let the subscription handle it
             // The subscription will trigger fetchRecipeById which will update the state
