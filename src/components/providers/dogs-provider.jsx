@@ -158,7 +158,7 @@ export function DogsProvider({ children }) {
                 })
             );
 
-            console.log("Dogs loaded:", dogsWithSignedUrls);
+            // console.log("Dogs loaded:", dogsWithSignedUrls);
             setDogs(dogsWithSignedUrls);
         } catch (error) {
             console.error("Error loading dogs:", error);
@@ -183,7 +183,7 @@ export function DogsProvider({ children }) {
                     filter: `profile_id=eq.${session?.user?.id}`,
                 },
                 async (payload) => {
-                    console.log("Dogs changed:", payload);
+                    // console.log("Dogs changed:", payload);
                     if (payload.eventType === "DELETE") {
                         setDogs((prev) =>
                             prev.filter(
@@ -245,17 +245,48 @@ export function DogsProvider({ children }) {
     };
 
     // Update the updateDog function to handle image cleanup and refresh URLs
-    const updateDog = async (dogData) => {
+    const updateDog = async (data) => {
         try {
-            // Get the current dog data to compare with new data
-            const currentDog = dogs.find(
-                (dog) => dog.dog_id === dogData.dog_id
+            // Check if this is a ratios-only update
+            const isRatiosUpdate = Object.keys(data).every(key => 
+                key === 'dog_id' || 
+                key.startsWith('ratios_') || 
+                key === 'goal'
             );
 
-            const { data, error } = await supabase
+            if (isRatiosUpdate) {
+                // For ratio updates, just update the database
+                const { data: updatedDog, error } = await supabase
+                    .from('dogs')
+                    .update(data)
+                    .eq('dog_id', data.dog_id)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Update local state
+                setDogs(prev => 
+                    prev.map(dog => 
+                        dog.dog_id === data.dog_id 
+                            ? { ...dog, ...updatedDog }
+                            : dog
+                    )
+                );
+
+                return { data: updatedDog };
+            }
+
+            // Handle full profile updates with images
+            // Get the current dog data to compare with new data
+            const currentDog = dogs.find(
+                (dog) => dog.dog_id === data.dog_id
+            );
+
+            const { data: updatedDog, error } = await supabase
                 .from("dogs")
-                .update(dogData)
-                .eq("dog_id", dogData.dog_id)
+                .update(data)
+                .eq("dog_id", data.dog_id)
                 .select()
                 .single();
 
@@ -265,20 +296,20 @@ export function DogsProvider({ children }) {
             if (currentDog) {
                 if (
                     currentDog.dog_avatar &&
-                    currentDog.dog_avatar !== dogData.dog_avatar
+                    currentDog.dog_avatar !== data.dog_avatar
                 ) {
                     await deleteStorageObject(currentDog.dog_avatar);
                 }
                 if (
                     currentDog.dog_cover &&
-                    currentDog.dog_cover !== dogData.dog_cover
+                    currentDog.dog_cover !== data.dog_cover
                 ) {
                     await deleteStorageObject(currentDog.dog_cover);
                 }
             }
 
             // Get fresh signed URLs for the updated dog
-            const processedDog = { ...data };
+            const processedDog = { ...updatedDog };
 
             // Handle avatar URL
             if (data.dog_avatar && typeof data.dog_avatar === "string") {
@@ -307,8 +338,8 @@ export function DogsProvider({ children }) {
 
             return processedDog;
         } catch (error) {
-            console.error("Error updating dog:", error);
-            throw error;
+            console.error('Error updating dog:', error);
+            return { error };
         }
     };
 

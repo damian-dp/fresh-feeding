@@ -40,6 +40,7 @@ import { supabase } from "@/lib/supabase";
 import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profile-dialog";
 import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
 import { useRecipes } from "@/components/providers/recipes-provider";
+import { EditDogRatiosDialog } from "@/components/app/dashboard/edit-dog-ratios-dialog";
 
 export function DogProfilePage() {
     const { dogId } = useParams();
@@ -48,6 +49,7 @@ export function DogProfilePage() {
     const textareaRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showEditRatiosDialog, setShowEditRatiosDialog] = useState(false);
     const [sheetOpen, setSheetOpen] = useState(false);
 
     // Local state for notes
@@ -150,7 +152,7 @@ export function DogProfilePage() {
 
     // Add effect to log when recipes changes
     useEffect(() => {
-        console.log("DogProfilePage recipes changed:", recipes);
+        // console.log("DogProfilePage recipes changed:", recipes);
     }, [recipes]);
 
     if (loading) {
@@ -193,12 +195,16 @@ export function DogProfilePage() {
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
                                 <BreadcrumbLink href="#">
-                                    Building Your Application
+                                    Dashboard
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator className="hidden md:block" />
+                            <BreadcrumbItem className="hidden md:block">
+                                Your dogs
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block" />
                             <BreadcrumbItem>
-                                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                                <BreadcrumbPage>{dog.dog_name}</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -295,7 +301,10 @@ export function DogProfilePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Nutritional ratios</CardTitle>
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowEditRatiosDialog(true)}
+                        >
                             <Pencil className="w-4 h-4" />
                             Edit ratios
                         </Button>
@@ -322,7 +331,7 @@ export function DogProfilePage() {
                                 sublabel="Current weight"
                                 flipped={true}
                             />
-                            <div className="flex flex-col col-span-2 justify-between h-full row-span-2 text-xl font-normal text-muted-foreground/60 lg:pr-20 leading-relaxed align-top">
+                            <div className="flex flex-col col-span-2 justify-between gap-2 h-full row-span-2 text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
                                 {(dog.goal === "maintain" ||
                                     dog.goal === "custom") && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
@@ -378,7 +387,7 @@ export function DogProfilePage() {
                                     </p>
                                 )}
                                 <p className="">
-                                    Daily total can be divided across meals.
+                                    Total can be divided across meals.
                                 </p>
                             </div>
                             <BadgeStack
@@ -401,34 +410,33 @@ export function DogProfilePage() {
                                 variant="meat"
                                 icon={<Bone />}
                                 label="Meat and bone"
-                                sublabel={`${meatGrams}g / ${
-                                    (dog.ratios_muscle_meat + dog.ratios_bone) *
-                                    100
-                                }%`}
+                                sublabel={`${meatGrams}g / ${Math.round(
+                                    dog.ratios_muscle_meat * 100
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="plant"
                                 icon={<Bone />}
                                 label="Plant matter"
-                                sublabel={`${plantGrams}g / ${
+                                sublabel={`${plantGrams}g / ${Math.round(
                                     dog.ratios_plant_matter * 100
-                                }%`}
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="liver"
                                 icon={<Heart />}
                                 label="Liver"
-                                sublabel={`${liverGrams}g / ${
+                                sublabel={`${liverGrams}g / ${Math.round(
                                     dog.ratios_liver * 100
-                                }%`}
+                                )}%`}
                             />
                             <BadgeStack
                                 variant="organ"
                                 icon={<Brain />}
                                 label="Secreting organs"
-                                sublabel={`${organGrams}g / ${
+                                sublabel={`${organGrams}g / ${Math.round(
                                     dog.ratios_secreting_organ * 100
-                                }%`}
+                                )}%`}
                             />
                         </div>
                     </CardContent>
@@ -486,6 +494,11 @@ export function DogProfilePage() {
             <EditDogProfileDialog
                 open={showEditDialog}
                 onOpenChange={setShowEditDialog}
+                dog={dog}
+            />
+            <EditDogRatiosDialog
+                open={showEditRatiosDialog}
+                onOpenChange={setShowEditRatiosDialog}
                 dog={dog}
             />
         </>

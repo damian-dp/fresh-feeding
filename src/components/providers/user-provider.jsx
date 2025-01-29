@@ -25,7 +25,7 @@ export function UserProvider({ children }) {
 
                 if (error) throw error;
 
-                console.log("Profile loaded:", data);
+                // console.log("Profile loaded:", data);
                 setProfile({
                     ...data,
                     name:
@@ -56,7 +56,7 @@ export function UserProvider({ children }) {
                     filter: `profile_id=eq.${session?.user?.id}`,
                 },
                 (payload) => {
-                    console.log("Profile changed:", payload);
+                    // console.log("Profile changed:", payload);
                     setProfile({
                         ...payload.new,
                         name:

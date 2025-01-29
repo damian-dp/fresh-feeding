@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
                 const storedSession = localStorage.getItem(
                     "sb-stjoiaqeuxfgvgkfkhhi-auth-token"
                 );
-                console.log("Stored session found:", !!storedSession);
+                // console.log("Stored session found:", !!storedSession);
 
                 if (storedSession) {
                     // Parse the stored session
@@ -35,13 +35,13 @@ export function AuthProvider({ children }) {
 
                 if (error) throw error;
 
-                console.log("Session check:", {
-                    hasSession: !!currentSession,
-                    user: currentSession?.user?.email,
-                });
+                // console.log("Session check:", {
+                //     hasSession: !!currentSession,
+                //     user: currentSession?.user?.email,
+                // });
 
                 setSession(currentSession);
-                console.log("Session set:", currentSession);
+                // console.log("Session set:", currentSession);
             } catch (error) {
                 console.error("Auth initialization error:", error);
                 setSession(null);
@@ -56,10 +56,10 @@ export function AuthProvider({ children }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-            console.log("Auth state changed:", _event, {
-                hasSession: !!currentSession,
-                user: currentSession?.user?.email,
-            });
+            // console.log("Auth state changed:", _event, {
+            //     hasSession: !!currentSession,
+            //     user: currentSession?.user?.email,
+            // });
             setSession(currentSession);
             setLoading(false);
         });
