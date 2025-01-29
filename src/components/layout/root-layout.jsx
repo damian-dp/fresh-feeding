@@ -20,7 +20,7 @@ export function RootLayout() {
                         <SidebarProvider>
                             <AppSidebar />
                             <SidebarInset className="max-w-7xl mx-auto w-full min-h-screen">
-                                <div className="flex flex-col justify-between w-full min-h-screen">
+                                <div className="flex flex-col w-full min-h-screen">
                                     <Outlet />
                                     <footer className="py-6">
                                         <div className="max-w-7xl mx-auto px-4">

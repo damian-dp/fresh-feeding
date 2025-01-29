@@ -1,6 +1,17 @@
 import { supabase } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useSettingsDialog } from "@/components/providers/settings-dialog-provider";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import {
     SidebarGroup,
@@ -13,6 +24,7 @@ import {
 
 export function NavFooter({ account }) {
     const { setShowSettings } = useSettingsDialog();
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -26,30 +38,56 @@ export function NavFooter({ account }) {
     };
 
     return (
-        <SidebarGroup>
-            <SidebarMenu>
-                {account.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                        <SidebarMenuButton
-                            tooltip={item.name}
-                            
-                            onClick={
-                                item.name === "Account Settings"
-                                    ? () => setShowSettings(true)
-                                    : handleLogout
-                            }
-                            className={
-                                item.name !== "Account Settings"
-                                    ? "hover:bg-error hover:text-error-foreground hover:ring-error-border"
-                                    : ""
-                            }
+        <>
+            <SidebarGroup>
+                <SidebarMenu>
+                    {account.map((item) => (
+                        <SidebarMenuItem key={item.name}>
+                            <SidebarMenuButton
+                                tooltip={item.name}
+                                onClick={
+                                    item.name === "Account Settings"
+                                        ? () => setShowSettings(true)
+                                        : () => setShowLogoutDialog(true)
+                                }
+                                className={
+                                    item.name !== "Account Settings"
+                                        ? "hover:bg-error hover:text-error-foreground hover:ring-error-border"
+                                        : ""
+                                }
+                            >
+                                <item.icon />
+                                <span>{item.name}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <AlertDialog
+                open={showLogoutDialog}
+                onOpenChange={setShowLogoutDialog}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Log out?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to log out of your account?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                handleLogout();
+                                setShowLogoutDialog(false);
+                            }}
                         >
-                            <item.icon />
-                            <span>{item.name}</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
-        </SidebarGroup>
+                            Log out
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
