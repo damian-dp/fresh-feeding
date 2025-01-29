@@ -144,6 +144,7 @@ export function RecipesProvider({ children }) {
                     *,
                     ingredients (*)
                 `);
+            }
 
             if (ingredientsError) throw ingredientsError;
 
