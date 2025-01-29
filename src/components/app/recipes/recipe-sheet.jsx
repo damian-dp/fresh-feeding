@@ -40,6 +40,116 @@ import {
 import { supabase } from "@/lib/supabase";
 import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
 
+// First, let's simplify the calculation function
+const calculateRecipeIngredients = ({ ingredients, dog }) => {
+    const { ratios_bone, ratios_muscle_meat } = dog;
+    const categoryTotal = ratios_bone + ratios_muscle_meat; // e.g., 0.65 (65%)
+
+    // Helper functions
+    const getBonePercent = (ing) =>
+        ing.bone_percent || ing.ingredients?.bone_percent || 0;
+
+    // Find the single bone ingredient
+    const boneIngredient = ingredients.find((ing) => getBonePercent(ing) > 0);
+    const meatIngredients = ingredients.filter(
+        (ing) => getBonePercent(ing) === 0
+    );
+
+    if (!boneIngredient) {
+        throw new Error("No bone ingredient found");
+    }
+
+    if (!meatIngredients.length) {
+        throw new Error("No meat ingredients found");
+    }
+
+    // Calculate quantities within the category total
+    const bonePercent = getBonePercent(boneIngredient) / 100;
+    const boneIngredientQuantity = (ratios_bone / bonePercent) * categoryTotal;
+    const meatIngredientQuantity =
+        (categoryTotal - boneIngredientQuantity) / meatIngredients.length;
+
+    // Verify the ratios
+    const totalBone = boneIngredientQuantity * bonePercent;
+    const totalMeat =
+        boneIngredientQuantity * (1 - bonePercent) +
+        meatIngredientQuantity * meatIngredients.length;
+
+    console.log("Recipe ratios:", {
+        categoryTotal: (categoryTotal * 100).toFixed(1) + "%",
+        totalBone: (totalBone * 100).toFixed(1) + "%",
+        totalMeat: (totalMeat * 100).toFixed(1) + "%",
+        boneIngredientQuantity: (boneIngredientQuantity * 100).toFixed(1) + "%",
+        meatIngredientQuantity: (meatIngredientQuantity * 100).toFixed(1) + "%",
+    });
+
+    return [
+        {
+            ingredient_id: boneIngredient.id || boneIngredient.ingredient_id,
+            quantity: boneIngredientQuantity,
+            isLocked: true,
+        },
+        ...meatIngredients.map((ing) => ({
+            ingredient_id: ing.id || ing.ingredient_id,
+            quantity: meatIngredientQuantity,
+            isLocked: false,
+        })),
+    ];
+};
+
+// Now modify the existing calculateIngredientQuantities function
+const calculateIngredientQuantities = (ingredients, dog) => {
+    if (!dog || !ingredients || ingredients.length === 0) return [];
+
+    // Group ingredients by category
+    const ingredientsByCategory = {};
+    ingredients.forEach((ing) => {
+        const categoryId = ing.id ? ing.category : ing.ingredients?.category_id;
+        if (!ingredientsByCategory[categoryId]) {
+            ingredientsByCategory[categoryId] = [];
+        }
+        ingredientsByCategory[categoryId].push(ing);
+    });
+
+    try {
+        // Handle meat and bone category (1) with new calculation
+        const meatAndBoneResults = ingredientsByCategory[1]
+            ? calculateRecipeIngredients({
+                  ingredients: ingredientsByCategory[1],
+                  dog,
+              })
+            : [];
+
+        // Handle other categories (distribute evenly)
+        const otherResults = ingredients
+            .filter((ing) => {
+                const categoryId = ing.id
+                    ? ing.category
+                    : ing.ingredients?.category_id;
+                return categoryId !== 1;
+            })
+            .map((ing) => {
+                const categoryId = ing.id
+                    ? ing.category
+                    : ing.ingredients?.category_id;
+                return {
+                    ingredient_id: ing.id || ing.ingredient_id,
+                    quantity:
+                        1 / (ingredientsByCategory[categoryId]?.length || 1),
+                };
+            });
+
+        return [...meatAndBoneResults, ...otherResults];
+    } catch (error) {
+        console.error("Error calculating quantities:", error);
+        toast.error(error.message);
+        return ingredients.map((ing) => ({
+            ingredient_id: ing.id || ing.ingredient_id,
+            quantity: 0,
+        }));
+    }
+};
+
 export function RecipeSheet({
     mode = "create",
     recipe = null,
@@ -302,17 +412,27 @@ export function RecipeSheet({
                     ...secretingOrgans,
                     ...liver,
                     ...misc,
-                ].map((ing) => ({
-                    ingredient_id: ing.id,
-                    quantity: ing.quantity || 0,
-                }));
+                ];
 
                 try {
                     const newRecipe = await addRecipe(recipeData, ingredients);
 
-                    if (!newRecipe) {
-                        throw new Error("Failed to create recipe");
-                    }
+                // Calculate quantities as percentages
+                const ingredientsWithQuantities = calculateIngredientQuantities(
+                    allIngredients,
+                    selectedDogData
+                );
+
+                console.log(
+                    "Calculated ingredient quantities (percentages):",
+                    ingredientsWithQuantities
+                );
+
+                // Call addRecipe with the calculated quantities
+                const newRecipe = await addRecipe(
+                    recipeData,
+                    ingredientsWithQuantities
+                );
 
                     toast.success("Recipe created successfully");
 
@@ -473,9 +593,9 @@ export function RecipeSheet({
     // When transitioning to view mode, force a refresh
     const handleSaveSuccess = async (updatedRecipe) => {
         try {
-            const freshRecipe = await fetchRecipeById(updatedRecipe.recipe_id);
+            // Instead of fetching again, use the recipe we already have
             onModeChange?.("view");
-            onOpenChange?.(true, { mode: "view", recipe: freshRecipe });
+            onOpenChange?.(true, { mode: "view", recipe: updatedRecipe });
         } catch (error) {
             console.error("Error refreshing recipe:", error);
         }
@@ -579,6 +699,8 @@ export function RecipeSheet({
                             getIngredientsByCategory(ingredients, category)
                         }
                         ingredientsLoading={ingredientsLoading}
+                        setRecipeIngredients={setRecipeIngredients}
+                        recipeIngredients={recipeIngredients}
                     />
                 );
             case "view":

@@ -11,10 +11,13 @@ import {
     Leaf,
     Plus,
     Trash,
+    Heart,
 } from "lucide-react";
 import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
 import { BadgeStack } from "@/components/ui/badge-stack";
+import { Input } from "@/components/ui/input";
+import React from "react";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -79,7 +82,57 @@ export function IngredientSection({
     onToggleActive,
     ingredients,
     isLoading,
+    children,
+    optimalRatios,
+    dog,
 }) {
+    // Calculate total percentage for the category
+    const totalPercentage =
+        items.reduce((sum, item) => sum + (item.quantity || 0), 0) * 100;
+
+    // Get target ratio for the category
+    const getTargetRatio = () => {
+        switch (category) {
+            case "meat_and_bone":
+                return (dog?.ratios_muscle_meat + dog?.ratios_bone) * 100;
+            case "plant_matter":
+                return dog?.ratios_plant_matter * 100;
+            case "liver":
+                return dog?.ratios_liver * 100;
+            case "secreting_organs":
+                return dog?.ratios_secreting_organ * 100;
+            default:
+                return null;
+        }
+    };
+
+    // Determine if the total matches the target ratio
+    const isValidTotal =
+        category === "misc"
+            ? true
+            : Math.abs(totalPercentage - getTargetRatio()) < 0.01;
+
+    // Only show percentage for non-misc categories
+    const showPercentage = category !== "misc";
+
+    // Get the IDs of currently selected ingredients
+    const selectedIds = items.map((item) =>
+        mode === "edit" ? item.ingredient_id : item.id
+    );
+
+    // Filter out already selected ingredients
+    const availableIngredients = ingredients?.filter(
+        (ing) => !selectedIds.includes(ing.id)
+    );
+
+    // Make sure we're cloning the children with the category prop
+    const childrenWithProps = React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+            return React.cloneElement(child, { category });
+        }
+        return child;
+    });
+
     return (
         <div
             className={`flex flex-col gap-6 ${
@@ -106,7 +159,7 @@ export function IngredientSection({
                         ) : category === "plant_matter" ? (
                             <Leaf />
                         ) : category === "liver" ? (
-                            <Brain />
+                            <Heart />
                         ) : category === "secreting_organs" ? (
                             <Brain />
                         ) : (
@@ -125,9 +178,42 @@ export function IngredientSection({
                             : "Other ingredients"
                     }
                     sublabel={
-                        category === "misc"
-                            ? "Toppers, dairy, herbs, etc"
-                            : null
+                        showPercentage ? (
+                            mode === "create" ? null : (
+                                <span
+                                    className={
+                                        mode === "edit" && !isValidTotal
+                                            ? "text-destructive"
+                                            : "text-success-foreground"
+                                    }
+                                >
+                                    {`${Math.round(totalPercentage)}% / ${
+                                        category === "meat_and_bone"
+                                            ? `${Math.round(
+                                                  (dog?.ratios_muscle_meat +
+                                                      dog?.ratios_bone) *
+                                                      100
+                                              )}%`
+                                            : category === "plant_matter"
+                                            ? `${Math.round(
+                                                  dog?.ratios_plant_matter * 100
+                                              )}%`
+                                            : category === "liver"
+                                            ? `${Math.round(
+                                                  dog?.ratios_liver * 100
+                                              )}%`
+                                            : category === "secreting_organs"
+                                            ? `${Math.round(
+                                                  dog?.ratios_secreting_organ *
+                                                      100
+                                              )}%`
+                                            : "Other ingredients"
+                                    }`}
+                                </span>
+                            )
+                        ) : (
+                            "Toppers, dairy, herbs, etc"
+                        )
                     }
                 />
                 <Button
@@ -152,6 +238,8 @@ export function IngredientSection({
                         onRemoveItem={onRemoveItem}
                         category={category}
                         mode={mode}
+                        onUpdateQuantity={onAddItem}
+                        isValidTotal={isValidTotal}
                     />
                 )}
 
@@ -161,15 +249,34 @@ export function IngredientSection({
                             <LoadingState />
                         ) : (
                             <IngredientSelector
-                                ingredients={ingredients}
+                                ingredients={availableIngredients}
                                 onSelect={(ingredient) =>
                                     onAddItem(ingredient, category)
                                 }
+                                category={category}
+                                existingIngredients={items}
                             />
                         )}
                     </div>
                 )}
             </div>
+
+            {optimalRatios && category === "meat_and_bone" && (
+                <div className="p-4 bg-muted rounded-md my-2">
+                    <p className="text-sm text-muted-foreground">
+                        Suggested ratios to meet {optimalRatios.targetBone}%
+                        bone / {optimalRatios.targetMeat}% meat:
+                        <br />
+                        {optimalRatios.boneIngredient.name}:{" "}
+                        {optimalRatios.boneIngredient.percentage}%
+                        <br />
+                        Meat ingredients:{" "}
+                        {optimalRatios.meatIngredients.percentage}%
+                        <br />
+                        Total: {optimalRatios.total}%
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
@@ -182,10 +289,19 @@ function EmptyState({ text }) {
     );
 }
 
-function IngredientList({ items, onRemoveItem, category, mode }) {
+function IngredientList({
+    items,
+    onRemoveItem,
+    category,
+    mode,
+    onUpdateQuantity,
+    isValidTotal,
+}) {
     return (
         <div className={items.length > 0 ? "border-t" : ""}>
             {items.map((item) => {
+                console.log("Item in list:", item);
+
                 // Handle both create and edit mode item structures
                 const itemId = mode === "create" ? item.id : item.ingredient_id;
                 const itemName =
@@ -196,18 +312,107 @@ function IngredientList({ items, onRemoveItem, category, mode }) {
                 return (
                     <div
                         key={itemId}
-                        className="flex items-center justify-between border-b py-2"
+                        className="flex items-center justify-between border-b py-3"
                     >
                         <span>{itemName}</span>
-                        {mode !== "view" && (
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => onRemoveItem(itemId, category)}
-                            >
-                                <Trash className="" />
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {mode === "edit" && (
+                                <div className="relative flex items-center gap-2">
+                                    <Input
+                                        type="text"
+                                        value={
+                                            // Only show 0 if it's not focused
+                                            document.activeElement ===
+                                            document.getElementById(
+                                                `quantity-${itemId}`
+                                            )
+                                                ? Math.round(
+                                                      (item.quantity || 0) * 100
+                                                  ) || ""
+                                                : Math.round(
+                                                      (item.quantity || 0) * 100
+                                                  )
+                                        }
+                                        id={`quantity-${itemId}`}
+                                        onChange={(e) => {
+                                            if (
+                                                item.isLocked ||
+                                                item.ingredients?.bone_percent >
+                                                    0
+                                            )
+                                                return; // Check both isLocked and bone_percent
+                                            // Allow empty or numbers only
+                                            const value = e.target.value;
+                                            if (
+                                                value === "" ||
+                                                /^\d+$/.test(value)
+                                            ) {
+                                                const newPercentage =
+                                                    value === ""
+                                                        ? 0
+                                                        : Math.min(
+                                                              parseInt(
+                                                                  value,
+                                                                  10
+                                                              ),
+                                                              100
+                                                          ) / 100;
+                                                onUpdateQuantity(
+                                                    itemId,
+                                                    newPercentage
+                                                );
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            // If empty on blur, set to 0
+                                            if (e.target.value === "") {
+                                                onUpdateQuantity(itemId, 0);
+                                            }
+                                        }}
+                                        disabled={
+                                            item.isLocked ||
+                                            item.ingredients?.bone_percent > 0
+                                        } // Add this condition
+                                        className={`w-16 text-left ${
+                                            mode === "edit" && !isValidTotal
+                                                ? "text-destructive bg-error border-error-border focus-visible:ring-error-foreground"
+                                                : item.isLocked ||
+                                                  item.ingredients
+                                                      ?.bone_percent > 0
+                                                ? "bg-muted"
+                                                : ""
+                                        }`}
+                                        maxLength={3}
+                                    />
+                                    <span
+                                        className={`absolute right-3 ${
+                                            mode === "edit" && !isValidTotal
+                                                ? "text-destructive"
+                                                : "text-muted-foreground"
+                                        }`}
+                                    >
+                                        %
+                                    </span>
+                                </div>
+                            )}
+                            {(mode === "edit" || mode === "create") && (
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() => {
+                                        console.log(
+                                            "Removing item with id:",
+                                            itemId,
+                                            "category:",
+                                            category
+                                        );
+                                        onRemoveItem(itemId, category);
+                                    }}
+                                >
+                                    <Trash className="" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 );
             })}
