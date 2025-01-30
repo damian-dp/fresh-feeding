@@ -18,21 +18,25 @@ export function ImageEditorDialog({
     onSave,
     onCancel,
     title = "Edit Image",
-    aspectRatio = 1, // width/height ratio
+    aspectRatio,
     shape = "circle",
     borderRadius = 0,
     minZoom = 1,
     maxZoom = 3,
     initialZoom = 1.2,
     allowRotate = true,
-    quality = 0.95,
+    quality = 1,
     mimeType = "image/jpeg",
     className,
 }) {
     const [scale, setScale] = useState(initialZoom);
     const [rotation, setRotation] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [editorSize, setEditorSize] = useState({ width: 300, height: 300 });
+    const [editorSize, setEditorSize] = useState(() => {
+        const width = 300;
+        const height = aspectRatio ? width / aspectRatio : width;
+        return { width, height };
+    });
     const editorRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -41,14 +45,21 @@ export function ImageEditorDialog({
         if (!containerRef.current) return;
 
         const updateSize = () => {
-            // Get the actual available width accounting for padding
             const containerRect = containerRef.current.getBoundingClientRect();
-            const parentPadding = 0; // 24px padding on each side
-            const availableWidth = containerRect.width - parentPadding;
+            const availableWidth = containerRect.width;
 
-            // Calculate dimensions maintaining aspect ratio
-            const width = Math.min(availableWidth, 800);
-            const height = width / aspectRatio;
+            // Base width calculation
+            let width = Math.min(availableWidth - 48, 800); // subtract padding
+
+            // Calculate height based on aspect ratio
+            let height = aspectRatio ? width / aspectRatio : width;
+
+            // If height is too large, constrain by height instead
+            const maxHeight = window.innerHeight * 0.6; // 60% of viewport height
+            if (height > maxHeight) {
+                height = maxHeight;
+                width = height * aspectRatio;
+            }
 
             setEditorSize({ width, height });
         };
@@ -71,7 +82,7 @@ export function ImageEditorDialog({
         if (editorRef.current) {
             setLoading(true);
             try {
-                const canvas = editorRef.current.getImageScaledToCanvas();
+                const canvas = editorRef.current.getImage();
                 const croppedImage = await new Promise((resolve) => {
                     canvas.toBlob(
                         (blob) => {
@@ -145,7 +156,11 @@ export function ImageEditorDialog({
                     <Button variant="ghost" onClick={onCancel}>
                         Cancel
                     </Button>
-                    <Button variant="outline" onClick={handleSave} disabled={loading}>
+                    <Button
+                        variant="outline"
+                        onClick={handleSave}
+                        disabled={loading}
+                    >
                         {loading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

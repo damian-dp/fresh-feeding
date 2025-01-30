@@ -494,10 +494,14 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                                                         getIntakeFromGoal(
                                                             value
                                                         );
-                                                    // Set the actual value without dividing by 100
+                                                    // Set the intake value and mark it as dirty
                                                     form.setValue(
                                                         "ratios_intake",
-                                                        newIntake
+                                                        newIntake,
+                                                        {
+                                                            shouldDirty: true, // Add this to mark the field as dirty
+                                                            shouldTouch: true, // Optional: marks the field as touched
+                                                        }
                                                     );
                                                 }
                                             }}

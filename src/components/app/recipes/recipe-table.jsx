@@ -71,7 +71,9 @@ export function RecipeTable({
     const { recipes, deleteRecipe } = useRecipes();
     const { dogs, loading } = useDogs();
     const tableRef = useRef(null);
+    const cardRef = useRef(null);
     const [tableWidth, setTableWidth] = useState(0);
+    const [cardWidth, setCardWidth] = useState(0);
     const [internalSheetOpen, setInternalSheetOpen] = useState(false);
     const isSheetOpen = open !== undefined ? open : internalSheetOpen;
     const [sheetMode, setSheetMode] = useState("view");
@@ -90,9 +92,24 @@ export function RecipeTable({
         return () => resizeObserver.disconnect();
     }, []);
 
+    useEffect(() => {
+        if (!cardRef.current) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setCardWidth(entry.contentRect.width);
+            }
+        });
+
+        resizeObserver.observe(cardRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
     // Only show ingredients if both prop is true and table is wide enough
-    const shouldShowIngredients = showIngredients && tableWidth > 980;
-    const shouldShowNutritionStatus = showNutritionStatus && tableWidth > 720;
+    const shouldShowIngredients = showIngredients && tableWidth > 0;
+    const shouldShowNutritionStatus = showNutritionStatus && cardWidth > 800;
+    const shouldShowDog = showDog && cardWidth > 620;
+
 
     // Create a default implementation if not provided
     const internalGetDogName = (dogId) => {
@@ -257,18 +274,18 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-name`}
-                    className="font-medium sticky left-0 border-r border-border bg-card"
+                    className="font-medium sticky left-0 border-r border-border bg-card w-[1px] whitespace-nowrap"
                 >
-                    <p className="font-medium mb-0.5 whitespace-nowrap">
+                    <p className="font-medium mb-0.5 capitalize">
                         {recipe.recipe_name}
                     </p>
-                    <p className="font-normal text-xs text-muted-foreground whitespace-nowrap">
+                    <p className="font-normal text-xs text-muted-foreground">
                         {formatDate(recipe.created_at)}
                     </p>
                 </TableCell>
             ),
         },
-        showDog && {
+        shouldShowDog && {
             id: "dog",
             header: "Dog",
             cell: (recipe) => {
@@ -277,7 +294,7 @@ export function RecipeTable({
 
                 return (
                     <TableCell
-                        className="border-r border-border"
+                        className="border-r border-border w-[1px]"
                         key={`${recipe.recipe_id}-dog`}
                     >
                         <BadgeStack
@@ -299,9 +316,12 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-ingredients`}
-                    className="text-xs text-muted-foreground leading-[1.15rem] border-r border-border"
+                    className="text-xs text-muted-foreground border-r border-border"
                 >
-                    {formatIngredients(recipe.recipe_ingredients)}
+                    <span className="line-clamp-2 leading-[1.15rem]">
+                        <span className="text-foreground">Ingredients: </span>
+                        {formatIngredients(recipe.recipe_ingredients)}
+                    </span>
                 </TableCell>
             ),
         },
@@ -314,7 +334,7 @@ export function RecipeTable({
 
                 return (
                     <TableCell
-                        className="border-r border-border"
+                        className="border-r border-border pl-5 w-[1px]"
                         key={`${recipe.recipe_id}-nutrition-status`}
                     >
                         {nutritionStatus ? (
@@ -344,14 +364,11 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-actions`}
-                    className="lg:px-4 flex justify-center items-center"
+                    className=" w-[1px] whitespace-nowrap"
                 >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                            >
+                            <Button variant="outline" size="icon">
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -415,14 +432,14 @@ export function RecipeTable({
     ].filter(Boolean);
 
     return (
-        <>
-            <Table ref={tableRef} className="w-full max-w-full">
+        <div ref={cardRef}>
+            <Table ref={tableRef} className="max-w-full">
                 <TableBody>
                     {visibleRecipes.length === 0 ? (
                         <TableRow>
                             <TableCell
                                 colSpan={columns.length}
-                                className="text-center h-24 min-w-0"
+                                className="text-center h-24"
                             >
                                 No recipes found
                             </TableCell>
@@ -455,6 +472,6 @@ export function RecipeTable({
                 }}
                 defaultDogId={dogId}
             />
-        </>
+        </div>
     );
 }

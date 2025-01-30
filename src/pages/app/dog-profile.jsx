@@ -316,11 +316,11 @@ export function DogProfilePage() {
                             <BadgeStack
                                 icon={<Target />}
                                 label={
-                                    dog.goal === "maintain"
+                                    dog.ratios_intake === 2.5
                                         ? "Maintain weight"
-                                        : dog.goal === "gain"
+                                        : dog.ratios_intake === 3
                                         ? "Gain weight"
-                                        : dog.goal === "lose"
+                                        : dog.ratios_intake === 2
                                         ? "Lose weight"
                                         : "Custom"
                                 }
@@ -334,8 +334,7 @@ export function DogProfilePage() {
                                 flipped={true}
                             />
                             <div className="flex flex-col col-span-2 justify-between gap-2 h-full row-span-2 text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
-                                {(dog.goal === "maintain" ||
-                                    dog.goal === "custom") && (
+                                {dog.ratios_intake === 2.5 && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
                                         To help maintain{" "}
                                         <span className="text-foreground">
@@ -355,7 +354,7 @@ export function DogProfilePage() {
                                         per day.
                                     </p>
                                 )}
-                                {dog.goal === "gain" && (
+                                {dog.ratios_intake === 3 && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
                                         To help{" "}
                                         <span className="text-foreground">
@@ -376,7 +375,7 @@ export function DogProfilePage() {
                                         per day.
                                     </p>
                                 )}
-                                {dog.goal === "lose" && (
+                                {dog.ratios_intake === 2 && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
                                         To help{" "}
                                         <span className="text-foreground">
@@ -397,6 +396,25 @@ export function DogProfilePage() {
                                         per day.
                                     </p>
                                 )}
+                                {dog.ratios_intake !== 2.5 &&
+                                    dog.ratios_intake !== 3 &&
+                                    dog.ratios_intake !== 2 && (
+                                        <p className="-mt-[0.2em] -mb-[0.15em]">
+                                            To help{" "}
+                                            <span className="text-foreground">
+                                                {dog.dog_name}
+                                            </span>{" "}
+                                            reach your custom goal, you should
+                                            feed{" "}
+                                            <span className="whitespace-nowrap text-foreground">
+                                                {new Intl.NumberFormat().format(
+                                                    intakeGrams
+                                                )}
+                                                g
+                                            </span>{" "}
+                                            per day.
+                                        </p>
+                                    )}
                                 <p className="">
                                     Total can be divided across meals.
                                 </p>
@@ -483,6 +501,7 @@ export function DogProfilePage() {
                             }}
                             open={sheetOpen}
                             onOpenChange={setSheetOpen}
+                            showDog={false}
                         />
                     </CardContent>
                 </Card>

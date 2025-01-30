@@ -28,8 +28,9 @@ import { DogProfileCard } from "@/components/app/dashboard/dog-profile-card";
 import { RecipeTable } from "@/components/app/recipes/recipe-table";
 import { Badge } from "@/components/ui/badge";
 import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAddDog } from "@/components/providers/add-dog-provider";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export function DashboardPage() {
     const { profile, loading } = useUser();
@@ -56,7 +57,7 @@ export function DashboardPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
-                                    Dashboard
+                                Dashboard
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
@@ -101,6 +102,7 @@ export function DashboardPage() {
                                 limit={5}
                                 open={sheetOpen}
                                 onOpenChange={setSheetOpen}
+                                showNutritionStatus={true}
                             />
                         </CardContent>
                     </Card>

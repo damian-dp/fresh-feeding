@@ -664,6 +664,8 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                     maxZoom={3}
                     initialZoom={1.2}
                     allowRotate={true}
+                    quality={1}
+                    mimeType="image/png"
                     className="sm:max-w-[425px]"
                 />
 
@@ -817,6 +819,8 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                 maxZoom={3}
                 initialZoom={1.2}
                 allowRotate={true}
+                quality={1}
+                mimeType="image/png"
                 className="sm:max-w-[425px]"
             />
 

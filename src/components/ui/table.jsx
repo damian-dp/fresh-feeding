@@ -5,7 +5,10 @@ import { cn } from "@/lib/utils";
 const Table = React.forwardRef(({ className, ...props }, ref) => (
     <table
         ref={ref}
-        className={cn("caption-bottom text-sm", className)}
+        className={cn(
+            "caption-bottom text-sm block overflow-x-auto",
+            className
+        )}
         {...props}
     />
 ));
@@ -19,7 +22,7 @@ TableHeader.displayName = "TableHeader";
 const TableBody = React.forwardRef(({ className, ...props }, ref) => (
     <tbody
         ref={ref}
-        className={cn("[&_tr:last-child]:border-0 overflow-scroll", className)}
+        className={cn("[&_tr:last-child]:border-0 table w-full", className)}
         {...props}
     />
 ));
