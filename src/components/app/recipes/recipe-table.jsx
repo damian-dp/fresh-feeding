@@ -67,6 +67,8 @@ export function RecipeTable({
     onOpenChange,
     // Add getDogName prop
     getDogName,
+    // Add searchQuery prop with default value
+    searchQuery = "",
 }) {
     const { recipes, deleteRecipe } = useRecipes();
     const { dogs, loading } = useDogs();
@@ -109,7 +111,6 @@ export function RecipeTable({
     const shouldShowIngredients = showIngredients && tableWidth > 0;
     const shouldShowNutritionStatus = showNutritionStatus && cardWidth > 800;
     const shouldShowDog = showDog && cardWidth > 620;
-
 
     // Create a default implementation if not provided
     const internalGetDogName = (dogId) => {
@@ -155,10 +156,46 @@ export function RecipeTable({
         );
     };
 
-    // Update the visibleRecipes logic to filter by dogId if provided
-    const visibleRecipes = recipes
-        .filter((recipe) => !dogId || recipe.dog_id === dogId) // Filter by dogId if provided
-        .slice(0, limit || recipes.length);
+    // Filter recipes based on search query
+    const filteredRecipes = recipes.filter((recipe) => {
+        if (!searchQuery) return true;
+
+        const query = searchQuery.toLowerCase().trim();
+
+        // 1. Search by recipe name
+        if (recipe.recipe_name.toLowerCase().includes(query)) {
+            return true;
+        }
+
+        // 2. Search by dog name
+        const dogName = dogNameResolver(recipe.dog_id).toLowerCase();
+        if (dogName.includes(query)) {
+            return true;
+        }
+
+        // 3. Search by ingredients
+        if (
+            recipe.recipe_ingredients &&
+            Array.isArray(recipe.recipe_ingredients)
+        ) {
+            const hasMatchingIngredient = recipe.recipe_ingredients.some(
+                (ing) =>
+                    ing?.ingredients?.ingredient_name
+                        ?.toLowerCase()
+                        .includes(query)
+            );
+            if (hasMatchingIngredient) {
+                return true;
+            }
+        }
+
+        return false;
+    });
+
+    // Apply other filters (dogId, limit) to the filtered results
+    const displayedRecipes = filteredRecipes
+        .filter((recipe) => !dogId || recipe.dog_id === dogId)
+        .slice(0, limit || filteredRecipes.length);
 
     // Update the handler functions
     const handleViewRecipe = (recipe) => {
@@ -435,7 +472,7 @@ export function RecipeTable({
         <div ref={cardRef}>
             <Table ref={tableRef} className="max-w-full">
                 <TableBody>
-                    {visibleRecipes.length === 0 ? (
+                    {displayedRecipes.length === 0 ? (
                         <TableRow>
                             <TableCell
                                 colSpan={columns.length}
@@ -445,7 +482,7 @@ export function RecipeTable({
                             </TableCell>
                         </TableRow>
                     ) : (
-                        visibleRecipes.map((recipe) => (
+                        displayedRecipes.map((recipe) => (
                             <TableRow key={recipe.recipe_id}>
                                 {columns.map(
                                     (column) => column && column.cell(recipe)
