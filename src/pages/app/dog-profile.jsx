@@ -5,7 +5,6 @@ import {
     Brain,
     CheckCheck,
     CheckIcon,
-    Dog,
     Heart,
     Loader2,
     PartyPopper,
@@ -15,6 +14,7 @@ import {
     Target,
     Weight,
 } from "lucide-react";
+import Dog from "@/assets/icons/dog";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -169,11 +169,13 @@ export function DogProfilePage() {
 
     if (!dog) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
-                <h1 className="text-2xl font-semibold">Dog not found</h1>
-                <p className="text-muted-foreground">
-                    The dog profile you're looking for doesn't exist.
-                </p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[200px] gap-4">
+                <div className="text-center h-72 text-muted flex flex-col gap-4 items-center justify-center">
+                    <Dog width={85} height={85} />
+                    <p className="text-lg text-muted-foreground/60 leading-6">
+                        Dog not found
+                    </p>
+                </div>
             </div>
         );
     }

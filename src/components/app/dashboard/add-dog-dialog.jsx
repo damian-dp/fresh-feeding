@@ -26,10 +26,10 @@ import {
     ArrowRight,
     CalendarDays,
     Check,
-    Dog,
     Loader2,
     Pencil,
 } from "lucide-react";
+import Dog from "@/assets/icons/dog";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -403,7 +403,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <div className="inline-flex w-12 h-12 z-10 absolute left-1 text-foreground items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                                                                     <Pencil className="size-5" />
                                                                 </div>
-                                                                <div className="relative w-32 h-32 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                                                <div className="relative w-32 h-32 rounded-full text-muted-foreground overflow-hidden bg-muted/40 border border-border flex items-center justify-center">
                                                                     {avatarPreview ? (
                                                                         <img
                                                                             src={
@@ -413,7 +413,11 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                             className="w-full h-full object-cover"
                                                                         />
                                                                     ) : (
-                                                                        <Dog className="size-16 text-muted-foreground" />
+                                                                        <Dog
+                                                                            width={75}
+                                                                            height={85}
+                                                                            className=""
+                                                                        />
                                                                     )}
                                                                 </div>
                                                                 <Input
@@ -428,7 +432,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                             </div>
                                                         </div>
                                                     </FormControl>
-                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
@@ -472,7 +475,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                     }}
                                                                 />
                                                             </FormControl>
-                                                            <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
@@ -514,7 +516,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                     }}
                                                                 />
                                                             </FormControl>
-                                                            <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
@@ -599,7 +600,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                         />
                                                                     </PopoverContent>
                                                                 </Popover>
-                                                                <FormMessage />
                                                             </FormItem>
                                                         )}
                                                     />
@@ -717,7 +717,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                         }}
                                                                     />
                                                                 </FormControl>
-                                                                <FormMessage />
                                                             </FormItem>
                                                         )}
                                                     />
@@ -823,7 +822,6 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                             </motion.div>
                                                         ))}
                                                     </div>
-                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
@@ -1069,7 +1067,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                 </AlertDialog>
                 <ImageEditorDialog
                     file={selectedFile}
-                    onSave={handleCroppedImage}
+                    onSave={(blob) => handleCroppedImage(blob, "avatar")}
                     onCancel={() => setSelectedFile(null)}
                     title="Edit Profile Picture"
                     aspectRatio={1}
@@ -1078,6 +1076,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                     maxZoom={3}
                     initialZoom={1.2}
                     allowRotate={true}
+                    type="avatar"
                     className="sm:max-w-[325px]"
                 />
             </>
@@ -1128,15 +1127,17 @@ export function AddDogDialog({ open, onOpenChange }) {
             </AlertDialog>
             <ImageEditorDialog
                 file={selectedFile}
-                onSave={handleCroppedImage}
+                onSave={(blob) => handleCroppedImage(blob, "avatar")}
                 onCancel={() => setSelectedFile(null)}
                 title="Edit Profile Picture"
-                width={300}
-                height={300}
+                aspectRatio={1}
                 shape="circle"
                 minZoom={1}
                 maxZoom={3}
+                initialZoom={1.2}
                 allowRotate={true}
+                type="avatar"
+                className="sm:max-w-[325px]"
             />
         </>
     );

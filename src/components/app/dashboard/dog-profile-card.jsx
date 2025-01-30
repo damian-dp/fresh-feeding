@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAddDog } from "@/components/providers/add-dog-provider";
+import FileAlert from "@/assets/icons/file-alert";
+import Dog from "@/assets/icons/dog";
 
 export function DogProfileCard() {
     const { dogs, loading } = useDogs();
@@ -27,13 +29,13 @@ export function DogProfileCard() {
 
     if (dogs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-[200px] text-center">
-                <p className="text-muted-foreground mb-4">
-                    You haven't added any dogs yet
+            <div className="text-center h-72 text-muted flex flex-col gap-4 items-center justify-center">
+                <Dog width={85} height={85} />
+                <p className="text-lg text-muted-foreground/60 leading-6">
+                    You haven't added
+                    <br />
+                    any dogs yet
                 </p>
-                <Button variant="outline" onClick={() => setShowAddDog(true)}>
-                    Add dog
-                </Button>
             </div>
         );
     }

@@ -43,6 +43,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import FileAlert from "@/assets/icons/file-alert";
 
 export function RecipeTable({
     // Configurable columns
@@ -473,12 +474,17 @@ export function RecipeTable({
             <Table ref={tableRef} className="max-w-full">
                 <TableBody>
                     {displayedRecipes.length === 0 ? (
-                        <TableRow>
+                        <TableRow className="hover:bg-card data-[state=selected]:bg-card">
                             <TableCell
                                 colSpan={columns.length}
-                                className="text-center h-24"
+                                className="text-center h-72 my-6 text-muted flex flex-col gap-5 items-center justify-center"
                             >
-                                No recipes found
+                                <FileAlert width={80} height={80} />
+                                <p className="text-lg text-muted-foreground/60 leading-6">
+                                    You haven't created
+                                    <br />
+                                    any recipes yet
+                                </p>
                             </TableCell>
                         </TableRow>
                     ) : (
