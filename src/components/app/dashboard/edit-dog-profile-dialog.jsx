@@ -227,48 +227,37 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
     const onSubmit = async (data) => {
         setIsPending(true);
         try {
-            // Get the form's dirty fields
-            const dirtyFields = form.formState.dirtyFields;
-
-            // Start with the original dog data
-            const updatedData = {
+            // Only include fields that have changed
+            const updates = {
                 dog_id: dog.dog_id,
-                ...dog, // Include all original data
             };
 
-            // Update only the fields that have changed
-            if (dirtyFields.dog_name) updatedData.dog_name = data.dog_name;
-            if (dirtyFields.breed) updatedData.breed = data.breed;
-            if (dirtyFields.dob) updatedData.dob = data.dob;
-            if (dirtyFields.weight_metric)
-                updatedData.weight_metric = data.weight_metric;
-            if (dirtyFields.weight_imperial)
-                updatedData.weight_imperial = data.weight_imperial;
-
-            // Handle avatar and cover image uploads
+            // Only include avatar if it was changed
             if (avatarFile) {
-                updatedData.dog_avatar = await uploadImage(
+                updates.dog_avatar = await uploadImage(
                     avatarFile,
                     "dog_avatars"
                 );
             }
+
+            // Only include cover if it was changed
             if (coverFile) {
-                updatedData.dog_cover = await uploadImage(
-                    coverFile,
-                    "dog_covers"
-                );
+                updates.dog_cover = await uploadImage(coverFile, "dog_covers");
             }
 
-            // Only update if there are changes
-            if (
-                Object.keys(dirtyFields).length > 0 ||
-                avatarFile ||
-                coverFile
-            ) {
-                await updateDog(updatedData);
-                toast.success("Profile updated successfully");
-                onOpenChange(false);
-            }
+            // Add other fields if they've changed
+            if (data.dog_name !== dog.dog_name)
+                updates.dog_name = data.dog_name;
+            if (data.dob !== dog.dob) updates.dob = data.dob;
+            if (data.breed !== dog.breed) updates.breed = data.breed;
+            if (data.weight_metric !== dog.weight_metric)
+                updates.weight_metric = data.weight_metric;
+            if (data.weight_imperial !== dog.weight_imperial)
+                updates.weight_imperial = data.weight_imperial;
+
+            await updateDog(updates);
+            toast.success("Profile updated successfully");
+            onOpenChange(false);
         } catch (error) {
             console.error("Error updating profile:", error);
             toast.error(error.message || "Error updating profile");
@@ -310,30 +299,26 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
 
     // Helper function for image uploads
     const uploadImage = async (file, bucket) => {
-        if (!session) {
-            throw new Error("No authenticated session");
-        }
+        try {
+            // Use extension based on the actual file type
+            const extension = file.type === "image/webp" ? "webp" : "jpg";
+            const fileName = `${dog.dog_id}-${Date.now()}.${extension}`;
 
-        // Ensure we get the correct file extension
-        const fileExt = file.type.split("/")[1] || "jpg"; // Fallback to jpg if no extension found
-        const fileName = `${session.user.id}/${
-            dog.dog_id
-        }-${Date.now()}.${fileExt}`;
+            const { data, error } = await supabase.storage
+                .from(bucket)
+                .upload(`${session.user.id}/${fileName}`, file, {
+                    contentType: file.type, // Use the actual file type
+                    cacheControl: "3600",
+                    upsert: false,
+                });
 
-        const { error } = await supabase.storage
-            .from(bucket)
-            .upload(fileName, file, {
-                contentType: file.type,
-                cacheControl: "3600",
-                upsert: false,
-            });
+            if (error) throw error;
 
-        if (error) {
-            console.error("Upload error:", error);
+            return `${bucket}/${session.user.id}/${fileName}`;
+        } catch (error) {
+            console.error("Error uploading image:", error);
             throw error;
         }
-
-        return `${bucket}/${fileName}`;
     };
 
     if (profileLoading) {
@@ -664,8 +649,6 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                     maxZoom={3}
                     initialZoom={1.2}
                     allowRotate={true}
-                    quality={1}
-                    mimeType="image/png"
                     className="sm:max-w-[425px]"
                 />
 

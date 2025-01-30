@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import AvatarEditor from "react-avatar-editor";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -13,11 +13,58 @@ import {
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
+const resizeImage = async (blob, maxWidth, maxHeight) => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            let width = img.width;
+            let height = img.height;
+
+            // Calculate new dimensions while maintaining aspect ratio
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+            if (height > maxHeight) {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Always try WebP first with 85% quality for avatars, 80% for covers
+            canvas.toBlob(
+                (webpBlob) => {
+                    if (webpBlob) {
+                        resolve(webpBlob);
+                    } else {
+                        // Fallback to JPEG if WebP is not supported
+                        canvas.toBlob(
+                            (jpegBlob) => resolve(jpegBlob),
+                            "image/jpeg",
+                            0.9
+                        );
+                    }
+                },
+                "image/webp",
+                maxWidth === 288 ? 0.85 : 0.8 // 85% quality for avatars, 80% for covers
+            );
+        };
+        img.src = URL.createObjectURL(blob);
+    });
+};
+
 export function ImageEditorDialog({
     file,
     onSave,
     onCancel,
-    title = "Edit Image",
     aspectRatio,
     shape = "circle",
     borderRadius = 0,
@@ -25,9 +72,9 @@ export function ImageEditorDialog({
     maxZoom = 3,
     initialZoom = 1.2,
     allowRotate = true,
-    quality = 1,
-    mimeType = "image/jpeg",
+
     className,
+    type,
 }) {
     const [scale, setScale] = useState(initialZoom);
     const [rotation, setRotation] = useState(0);
@@ -78,28 +125,126 @@ export function ImageEditorDialog({
         };
     }, [aspectRatio]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (editorRef.current) {
             setLoading(true);
             try {
-                const canvas = editorRef.current.getImage();
-                const croppedImage = await new Promise((resolve) => {
+                // Get initial JPEG from editor with lower quality
+                const dataUrl = editorRef.current
+                    .getImage()
+                    .toDataURL("image/jpeg", 0.8); // Reduced initial quality
+
+                // Convert data URL to blob
+                const response = await fetch(dataUrl);
+                const initialBlob = await response.blob();
+
+                console.log("Initial blob type:", initialBlob.type);
+
+                // Create an image from the blob
+                const img = new Image();
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.src = URL.createObjectURL(initialBlob);
+                });
+
+                // Create canvas for final processing
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d", {
+                    alpha: false,
+                    willReadFrequently: true, // Optimization for multiple operations
+                });
+
+                // Calculate dimensions - More aggressive reduction
+                let width = img.width;
+                let height = img.height;
+
+                if (type === "avatar") {
+                    // For avatars, force exact dimensions
+                    width = 288;
+                    height = 288;
+                } else {
+                    // For covers, more aggressive scaling
+                    const targetWidth = 1246; // Max display width
+                    const targetHeight = 288; // Fixed height
+
+                    // Scale to fit these dimensions
+                    const scale = Math.min(
+                        targetWidth / width,
+                        targetHeight / height
+                    );
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+
+                // Resize canvas to new dimensions
+                canvas.width = width;
+                canvas.height = height;
+
+                // Fill with white background
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw with high-quality settings
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Try WebP first, fallback to JPEG with more aggressive compression
+                const finalBlob = await new Promise((resolve) => {
                     canvas.toBlob(
-                        (blob) => {
-                            resolve(blob);
+                        (webpBlob) => {
+                            if (webpBlob) {
+                                const processedBlob = new Blob([webpBlob], {
+                                    type: "image/webp",
+                                });
+                                console.log(
+                                    "Final WebP type:",
+                                    processedBlob.type,
+                                    "Size (KB):",
+                                    Math.round(processedBlob.size / 1024),
+                                    "Dimensions:",
+                                    `${width}x${height}`
+                                );
+                                resolve(processedBlob);
+                            } else {
+                                canvas.toBlob(
+                                    (jpegBlob) => {
+                                        const processedBlob = new Blob(
+                                            [jpegBlob],
+                                            {
+                                                type: "image/jpeg",
+                                            }
+                                        );
+                                        console.log(
+                                            "Final JPEG type:",
+                                            processedBlob.type,
+                                            "Size (KB):",
+                                            Math.round(
+                                                processedBlob.size / 1024
+                                            ),
+                                            "Dimensions:",
+                                            `${width}x${height}`
+                                        );
+                                        resolve(processedBlob);
+                                    },
+                                    "image/jpeg",
+                                    type === "avatar" ? 0.8 : 0.85 // Increased quality for covers
+                                );
+                            }
                         },
-                        mimeType,
-                        quality
+                        "image/webp",
+                        type === "avatar" ? 0.2 : 0.4 // Increased quality for covers
                     );
                 });
-                onSave(croppedImage);
+
+                onSave(finalBlob);
             } catch (error) {
-                console.error("Error saving image:", error);
+                console.error("Error processing image:", error);
             } finally {
                 setLoading(false);
             }
         }
-    };
+    }, [onSave, type]);
 
     return (
         <Dialog open={!!file} onOpenChange={() => onCancel()}>

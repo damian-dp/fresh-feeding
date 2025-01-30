@@ -9,52 +9,46 @@ const getSignedUrl = async (path) => {
     if (!path) return null;
 
     try {
-        // If it's already a signed URL, return it
-        if (path.includes("token=")) {
-            return path;
-        }
-
-        // Extract bucket and filename from various URL formats
+        // Extract bucket and filename
         let bucket, filename;
 
-        if (path.includes("/storage/v1/object/public/")) {
-            // Handle full Supabase URL format
-            const matches = path.match(/public\/([^/]+)\/(.+)$/);
-            if (matches) {
-                [, bucket, filename] = matches;
+        // If it's already a full signed URL, extract the path part
+        if (path.includes("/storage/v1/object/sign/")) {
+            const match = path.match(/\/sign\/([^/]+)\/(.+?)(?:\?|$)/);
+            if (match) {
+                bucket = match[1];
+                filename = match[2];
             }
         } else if (path.includes("/")) {
-            // Handle our standard path format: "bucket/profile_id/dog_id-timestamp.ext"
+            // Handle simple path format (e.g. "dog_covers/profile_id/filename")
             const parts = path.split("/");
             bucket = parts[0];
-            // Join the rest of the parts to preserve the full path including profile_id folder
             filename = parts.slice(1).join("/");
-        } else {
-            console.warn("Invalid path format:", path);
-            return path;
         }
 
         if (!bucket || !filename) {
-            console.warn("Could not parse path:", path);
+            console.error("Could not parse path:", path);
             return path;
         }
 
-        // Clean up the filename (remove any query parameters or tokens)
+        // Clean up the filename
         filename = filename.split("?")[0];
 
-        // Create a fresh signed URL
         const { data, error } = await supabase.storage
             .from(bucket)
-            .createSignedUrl(filename, 60 * 60); // 1 hour expiry
+            .createSignedUrl(filename, 3600 * 24); // 24 hours
 
         if (error) {
-            console.warn("Error creating signed URL:", error);
+            console.error("Error creating signed URL:", error.message, {
+                bucket,
+                filename,
+            });
             return path;
         }
 
         return data.signedUrl;
     } catch (error) {
-        console.error("Error getting signed URL:", error);
+        console.error("Error getting signed URL:", error, { path });
         return path;
     }
 };
@@ -89,8 +83,6 @@ const deleteStorageObject = async (path) => {
 
         // Clean up the filename
         filename = filename.split("?")[0];
-
-        console.log("Deleting from bucket:", bucket, "filename:", filename);
 
         const { error } = await supabase.storage
             .from(bucket)
@@ -161,7 +153,7 @@ export function DogsProvider({ children }) {
             // console.log("Dogs loaded:", dogsWithSignedUrls);
             setDogs(dogsWithSignedUrls);
         } catch (error) {
-            console.error("Error loading dogs:", error);
+            console.error("Error fetching dogs:", error);
             setDogs([]);
         } finally {
             setLoading(false);
@@ -228,6 +220,30 @@ export function DogsProvider({ children }) {
         };
     }, [session?.user?.id, isAuthenticated]);
 
+    // Add a URL refresh mechanism
+    useEffect(() => {
+        if (!dogs.length) return;
+
+        // Refresh cover URLs every 20 hours
+        const interval = setInterval(async () => {
+            const updatedDogs = await Promise.all(
+                dogs.map(async (dog) => {
+                    if (!dog.dog_cover) return dog;
+
+                    const freshCoverUrl = await getSignedUrl(dog.dog_cover);
+                    return {
+                        ...dog,
+                        dog_cover: freshCoverUrl,
+                    };
+                })
+            );
+
+            setDogs(updatedDogs);
+        }, 3600000 * 20); // 20 hours
+
+        return () => clearInterval(interval);
+    }, [dogs]);
+
     const addDog = async (dogData) => {
         try {
             const { data, error } = await supabase
@@ -248,27 +264,28 @@ export function DogsProvider({ children }) {
     const updateDog = async (data) => {
         try {
             // Check if this is a ratios-only update
-            const isRatiosUpdate = Object.keys(data).every(key => 
-                key === 'dog_id' || 
-                key.startsWith('ratios_') || 
-                key === 'goal'
+            const isRatiosUpdate = Object.keys(data).every(
+                (key) =>
+                    key === "dog_id" ||
+                    key.startsWith("ratios_") ||
+                    key === "goal"
             );
 
             if (isRatiosUpdate) {
                 // For ratio updates, just update the database
                 const { data: updatedDog, error } = await supabase
-                    .from('dogs')
+                    .from("dogs")
                     .update(data)
-                    .eq('dog_id', data.dog_id)
+                    .eq("dog_id", data.dog_id)
                     .select()
                     .single();
 
                 if (error) throw error;
 
                 // Update local state
-                setDogs(prev => 
-                    prev.map(dog => 
-                        dog.dog_id === data.dog_id 
+                setDogs((prev) =>
+                    prev.map((dog) =>
+                        dog.dog_id === data.dog_id
                             ? { ...dog, ...updatedDog }
                             : dog
                     )
@@ -277,68 +294,118 @@ export function DogsProvider({ children }) {
                 return { data: updatedDog };
             }
 
-            // Handle full profile updates with images
-            // Get the current dog data to compare with new data
-            const currentDog = dogs.find(
-                (dog) => dog.dog_id === data.dog_id
-            );
+            // Get current dog data
+            const currentDog = dogs.find((dog) => dog.dog_id === data.dog_id);
+            if (!currentDog) throw new Error("Dog not found");
 
+            // Start with just the dog_id
+            const processedData = {
+                dog_id: data.dog_id,
+            };
+
+            // Handle avatar update - only if it's being changed
+            if (data.hasOwnProperty("dog_avatar")) {
+                try {
+                    // Clean up old avatar first if it exists
+                    if (currentDog?.dog_avatar) {
+                        await deleteStorageObject(currentDog.dog_avatar);
+                    }
+
+                    // Process new avatar
+                    if (
+                        data.dog_avatar &&
+                        !data.dog_avatar.includes("https://")
+                    ) {
+                        const { data: exists } = await supabase.storage
+                            .from(data.dog_avatar.split("/")[0])
+                            .getPublicUrl(
+                                data.dog_avatar.split("/").slice(1).join("/")
+                            );
+
+                        if (!exists) throw new Error("Avatar image not found");
+                        processedData.dog_avatar = data.dog_avatar;
+                    } else {
+                        processedData.dog_avatar = null;
+                    }
+                } catch (error) {
+                    console.error("Error processing avatar:", error);
+                    processedData.dog_avatar = null;
+                }
+            }
+
+            // Handle cover update - only if it's being changed
+            if (data.hasOwnProperty("dog_cover")) {
+                try {
+                    // Clean up old cover first if it exists
+                    if (currentDog?.dog_cover) {
+                        await deleteStorageObject(currentDog.dog_cover);
+                    }
+
+                    // Process new cover
+                    if (
+                        data.dog_cover &&
+                        !data.dog_cover.includes("https://")
+                    ) {
+                        const { data: exists } = await supabase.storage
+                            .from(data.dog_cover.split("/")[0])
+                            .getPublicUrl(
+                                data.dog_cover.split("/").slice(1).join("/")
+                            );
+
+                        if (!exists) throw new Error("Cover image not found");
+                        processedData.dog_cover = data.dog_cover;
+                    } else {
+                        processedData.dog_cover = null;
+                    }
+                } catch (error) {
+                    console.error("Error processing cover:", error);
+                    processedData.dog_cover = null;
+                }
+            }
+
+            // Add other fields that are being updated
+            Object.keys(data).forEach((key) => {
+                if (
+                    !["dog_avatar", "dog_cover"].includes(key) &&
+                    key !== "dog_id"
+                ) {
+                    processedData[key] = data[key];
+                }
+            });
+
+            // Update database
             const { data: updatedDog, error } = await supabase
                 .from("dogs")
-                .update(data)
+                .update(processedData)
                 .eq("dog_id", data.dog_id)
                 .select()
                 .single();
 
             if (error) throw error;
 
-            // Clean up old images if they've been changed
-            if (currentDog) {
-                if (
-                    currentDog.dog_avatar &&
-                    currentDog.dog_avatar !== data.dog_avatar
-                ) {
-                    await deleteStorageObject(currentDog.dog_avatar);
-                }
-                if (
-                    currentDog.dog_cover &&
-                    currentDog.dog_cover !== data.dog_cover
-                ) {
-                    await deleteStorageObject(currentDog.dog_cover);
-                }
+            // Get fresh signed URLs for images if they exist
+            const processedUpdatedDog = { ...updatedDog };
+            if (processedUpdatedDog.dog_avatar) {
+                processedUpdatedDog.dog_avatar = await getSignedUrl(
+                    processedUpdatedDog.dog_avatar
+                );
+            }
+            if (processedUpdatedDog.dog_cover) {
+                processedUpdatedDog.dog_cover = await getSignedUrl(
+                    processedUpdatedDog.dog_cover
+                );
             }
 
-            // Get fresh signed URLs for the updated dog
-            const processedDog = { ...updatedDog };
-
-            // Handle avatar URL
-            if (data.dog_avatar && typeof data.dog_avatar === "string") {
-                processedDog.dog_avatar = await getSignedUrl(data.dog_avatar);
-            } else {
-                processedDog.dog_avatar = null;
-            }
-
-            // Handle cover URL
-            if (
-                data.dog_cover &&
-                typeof data.dog_cover === "string" &&
-                data.dog_cover !== "NULL"
-            ) {
-                processedDog.dog_cover = await getSignedUrl(data.dog_cover);
-            } else {
-                processedDog.dog_cover = null;
-            }
-
-            // Update local state with processed URLs
+            // Update local state
             setDogs(
                 dogs.map((dog) =>
-                    dog.dog_id === data.dog_id ? processedDog : dog
+                    dog.dog_id === data.dog_id ? processedUpdatedDog : dog
                 )
             );
 
-            return processedDog;
+            return processedUpdatedDog;
         } catch (error) {
-            console.error('Error updating dog:', error);
+            console.error("Error updating dog:", error);
             return { error };
         }
     };
