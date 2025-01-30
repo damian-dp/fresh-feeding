@@ -311,6 +311,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                     <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="measurement">Measurement system</Label>
                         <Select
+                            disabled={true}
                             value={unitMetric ? "metric" : "imperial"}
                             onValueChange={(value) =>
                                 setUnitMetric(value === "metric")

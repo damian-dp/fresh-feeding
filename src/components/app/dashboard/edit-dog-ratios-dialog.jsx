@@ -74,41 +74,22 @@ const DEFAULT_RATIOS = {
 };
 
 // Form validation schema
-const formSchema = z
-    .object({
-        dog_name: z.string().min(1, "Name is required"),
-        breed: z.string().min(1, "Breed is required"),
-        dob: z.date({
-            required_error: "Date of birth is required",
-        }),
-        weight_metric: z.number().min(0, "Weight must be greater than 0"),
-        weight_imperial: z.number().min(0, "Weight must be greater than 0"),
-        ratios_intake: z.number().min(0).max(100),
-        ratios_muscle_meat: z.number().min(0).max(1),
-        ratios_bone: z.number().min(0).max(1),
-        ratios_liver: z.number().min(0).max(1),
-        ratios_secreting_organ: z.number().min(0).max(1),
-        ratios_plant_matter: z.number().min(0).max(1),
-        goal: z.enum(["maintain", "gain", "lose", "custom"]),
-    })
-    .refine(
-        (data) => {
-            // Calculate total of all ratios except intake
-            const total =
-                (data.ratios_muscle_meat +
-                    data.ratios_bone +
-                    data.ratios_liver +
-                    data.ratios_secreting_organ +
-                    data.ratios_plant_matter) *
-                100;
-
-            // Allow for small floating point differences
-            return Math.abs(total - 100) < 0.01;
-        },
-        {
-            message: "Ratios must total 100%",
-        }
-    );
+const formSchema = z.object({
+    dog_name: z.string().min(1, "Name is required"),
+    breed: z.string().min(1, "Breed is required"),
+    dob: z.date({
+        required_error: "Date of birth is required",
+    }),
+    weight_metric: z.number().min(0, "Weight must be greater than 0"),
+    weight_imperial: z.number().min(0, "Weight must be greater than 0"),
+    ratios_intake: z.number().min(0).max(100),
+    ratios_muscle_meat: z.number().min(0).max(1),
+    ratios_bone: z.number().min(0).max(1),
+    ratios_liver: z.number().min(0).max(1),
+    ratios_secreting_organ: z.number().min(0).max(1),
+    ratios_plant_matter: z.number().min(0).max(1),
+    goal: z.enum(["maintain", "gain", "lose", "custom"]),
+});
 
 // Update the RatioInput component to accept form prop
 const RatioInput = ({ field, label, form }) => {
@@ -140,7 +121,7 @@ const RatioInput = ({ field, label, form }) => {
                                 const parsed = parseFloat(value);
                                 if (!isNaN(parsed)) {
                                     const decimalValue = parsed / 100;
-                            
+
                                     field.onChange(decimalValue);
 
                                     // Force form validation update
@@ -298,6 +279,21 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
     }, [open, dog, form.reset]);
 
     const onSubmit = async (data) => {
+        // Check if ratios total 100 before proceeding
+        const total = (
+            (data.ratios_muscle_meat +
+                data.ratios_bone +
+                data.ratios_liver +
+                data.ratios_secreting_organ +
+                data.ratios_plant_matter) *
+            100
+        ).toFixed(1);
+
+        if (Math.abs(parseFloat(total) - 100) >= 0.01) {
+            toast.error("Ingredient ratios must total 100%");
+            return;
+        }
+
         setIsPending(true);
         try {
             const updatedData = {
@@ -307,8 +303,13 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
             const { dirtyFields } = form.formState;
 
             // Only include ratio fields
-            if (dirtyFields.ratios_intake)
-                updatedData.ratios_intake = data.ratios_intake;
+            if (dirtyFields.ratios_intake) {
+                // Convert ratios_intake to number if it's a string
+                updatedData.ratios_intake =
+                    typeof data.ratios_intake === "string"
+                        ? parseFloat(data.ratios_intake)
+                        : data.ratios_intake;
+            }
             if (dirtyFields.ratios_muscle_meat)
                 updatedData.ratios_muscle_meat = data.ratios_muscle_meat;
             if (dirtyFields.ratios_bone)
@@ -374,7 +375,6 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                                         <div className="relative flex flex-row items-center gap-1">
                                             <Input
                                                 type="text"
-                                                // Don't convert empty or partial input
                                                 value={
                                                     field.value === "" ||
                                                     field.value === 0
@@ -853,8 +853,6 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
 
 // Update helper function to calculate total
 function getTotalPercentage(values) {
-
-
     const total =
         ((values.ratios_muscle_meat || 0) +
             (values.ratios_bone || 0) +

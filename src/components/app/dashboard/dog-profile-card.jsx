@@ -105,7 +105,7 @@ export function DogProfileCard() {
                                         src={dog.dog_avatar}
                                         alt={dog.dog_name}
                                     />
-                                    <AvatarFallback className="text-2xl font-medium text-muted-foreground">
+                                    <AvatarFallback className="text-3xl">
                                         {dog.dog_name[0].toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>

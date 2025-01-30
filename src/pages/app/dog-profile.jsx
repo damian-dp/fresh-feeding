@@ -42,6 +42,10 @@ import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
 import { useRecipes } from "@/components/providers/recipes-provider";
 import { EditDogRatiosDialog } from "@/components/app/dashboard/edit-dog-ratios-dialog";
 
+const formatNumber = (number) => {
+    return new Intl.NumberFormat().format(number);
+};
+
 export function DogProfilePage() {
     const { dogId } = useParams();
     const { dogs, loading } = useDogs();
@@ -342,8 +346,11 @@ export function DogProfilePage() {
                                             {dog.weight_metric}kg
                                         </span>
                                         , they should be fed{" "}
-                                        <span className="text-foreground">
-                                            {intakeGrams}g
+                                        <span className="whitespace-nowrap text-foreground">
+                                            {new Intl.NumberFormat().format(
+                                                intakeGrams
+                                            )}
+                                            g
                                         </span>{" "}
                                         per day.
                                     </p>
@@ -360,8 +367,11 @@ export function DogProfilePage() {
                                             {dog.weight_metric}kg
                                         </span>
                                         , they should be fed{" "}
-                                        <span className="text-foreground">
-                                            {intakeGrams}g
+                                        <span className="whitespace-nowrap text-foreground">
+                                            {new Intl.NumberFormat().format(
+                                                intakeGrams
+                                            )}
+                                            g
                                         </span>{" "}
                                         per day.
                                     </p>
@@ -378,8 +388,11 @@ export function DogProfilePage() {
                                             {dog.weight_metric}kg
                                         </span>
                                         , they should be fed{" "}
-                                        <span className="text-foreground">
-                                            {intakeGrams}g
+                                        <span className="whitespace-nowrap text-foreground">
+                                            {new Intl.NumberFormat().format(
+                                                intakeGrams
+                                            )}
+                                            g
                                         </span>{" "}
                                         per day.
                                     </p>
@@ -390,7 +403,9 @@ export function DogProfilePage() {
                             </div>
                             <BadgeStack
                                 icon={<Scale />}
-                                label={`${intakeGrams}g`}
+                                label={`${new Intl.NumberFormat().format(
+                                    intakeGrams
+                                )}g`}
                                 sublabel="Daily intake (g)"
                                 flipped={true}
                             />
@@ -408,7 +423,9 @@ export function DogProfilePage() {
                                 variant="meat"
                                 icon={<Bone />}
                                 label="Meat and bone"
-                                sublabel={`${meatGrams}g / ${Math.round(
+                                sublabel={`${new Intl.NumberFormat().format(
+                                    meatGrams
+                                )}g / ${Math.round(
                                     dog.ratios_muscle_meat * 100
                                 )}%`}
                             />
@@ -416,7 +433,9 @@ export function DogProfilePage() {
                                 variant="plant"
                                 icon={<Bone />}
                                 label="Plant matter"
-                                sublabel={`${plantGrams}g / ${Math.round(
+                                sublabel={`${new Intl.NumberFormat().format(
+                                    plantGrams
+                                )}g / ${Math.round(
                                     dog.ratios_plant_matter * 100
                                 )}%`}
                             />
@@ -424,15 +443,17 @@ export function DogProfilePage() {
                                 variant="liver"
                                 icon={<Heart />}
                                 label="Liver"
-                                sublabel={`${liverGrams}g / ${Math.round(
-                                    dog.ratios_liver * 100
-                                )}%`}
+                                sublabel={`${new Intl.NumberFormat().format(
+                                    liverGrams
+                                )}g / ${Math.round(dog.ratios_liver * 100)}%`}
                             />
                             <BadgeStack
                                 variant="organ"
                                 icon={<Brain />}
                                 label="Secreting organs"
-                                sublabel={`${organGrams}g / ${Math.round(
+                                sublabel={`${new Intl.NumberFormat().format(
+                                    organGrams
+                                )}g / ${Math.round(
                                     dog.ratios_secreting_organ * 100
                                 )}%`}
                             />

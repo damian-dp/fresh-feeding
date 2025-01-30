@@ -11,6 +11,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -271,6 +272,9 @@ export function RecipeTable({
             id: "dog",
             header: "Dog",
             cell: (recipe) => {
+                const dog = dogs.find((d) => d.dog_id === recipe.dog_id);
+                const avatarUrl = dog?.dog_avatar || false;
+
                 return (
                     <TableCell
                         className="border-r border-border"
@@ -282,6 +286,8 @@ export function RecipeTable({
                             label={dogNameResolver(recipe.dog_id)}
                             sublabel="Created for"
                             flipped={true}
+                            avatar={true}
+                            avatarImage={avatarUrl}
                         />
                     </TableCell>
                 );
@@ -343,9 +349,8 @@ export function RecipeTable({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
-                                className="h-8 w-8"
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -354,22 +359,23 @@ export function RecipeTable({
                             <DropdownMenuItem
                                 onClick={() => handleViewRecipe(recipe)}
                             >
-                                <Eye className="mr-2 h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                                 View
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => handleEditRecipe(recipe)}
                             >
-                                <Pencil className="mr-2 h-4 w-4" />
+                                <Pencil className="h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <DropdownMenuItem
                                         onSelect={(e) => e.preventDefault()}
-                                        className="text-destructive"
+                                        className="text-error-foreground focus:text-error-foreground focus:bg-error focus:border-error-border"
                                     >
-                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <Trash2 className="h-4 w-4" />
                                         Delete
                                     </DropdownMenuItem>
                                 </AlertDialogTrigger>

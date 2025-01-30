@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export function BadgeStack({
     variant,
     icon,
     label,
+    avatar,
+    avatarImage,
     sublabel,
     className,
     flipped = false,
@@ -12,7 +15,7 @@ export function BadgeStack({
     ...props
 }) {
     const labelContent = (
-        <div className="flex flex-col">
+        <div className="flex flex-col -mt-0.5">
             {flipped ? (
                 <>
                     {showSublabel && (
@@ -69,9 +72,18 @@ export function BadgeStack({
 
     return (
         <div className={cn("flex items-center gap-2", className)} {...props}>
-            <Badge variant={variant} size="icon" className="p-0">
-                {icon}
-            </Badge>
+            {avatar ? (
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={avatarImage} alt={label} />
+                    <AvatarFallback className="text-base">
+                        {label[0].toUpperCase()}
+                    </AvatarFallback>
+                </Avatar>
+            ) : (
+                <Badge variant={variant} size="icon" className="p-0">
+                    {icon}
+                </Badge>
+            )}
             {labelContent}
         </div>
     );
