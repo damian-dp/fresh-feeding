@@ -21,6 +21,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
+import Slider from "@/assets/icons/slider";
+import CircleLogout from "@/assets/icons/circle-logout";
 
 export function NavFooter({ account }) {
     const { setShowSettings } = useSettingsDialog();
@@ -41,26 +43,34 @@ export function NavFooter({ account }) {
         <>
             <SidebarGroup>
                 <SidebarMenu>
-                    {account.map((item) => (
-                        <SidebarMenuItem key={item.name}>
-                            <SidebarMenuButton
-                                tooltip={item.name}
-                                onClick={
-                                    item.name === "Account Settings"
-                                        ? () => setShowSettings(true)
-                                        : () => setShowLogoutDialog(true)
-                                }
-                                className={
-                                    item.name !== "Account Settings"
-                                        ? "hover:bg-error hover:text-error-foreground hover:ring-error-border"
-                                        : ""
-                                }
-                            >
-                                <item.icon />
-                                <span>{item.name}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            tooltip="Settings"
+                            onClick={() => setShowSettings(true)}
+                        >
+                            <Slider
+                                width={20}
+                                height={20}
+                                strokewidth={1.5}
+                                secondaryfill="hsl(var(--muted-foreground))"
+                            />
+                            <span>Account Settings</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            tooltip="Log out"
+                            onClick={() => setShowLogoutDialog(true)}
+                            className="hover:bg-error hover:text-error-foreground hover:ring-error-border"
+                        >
+                            <CircleLogout
+                                width={20}
+                                height={20}
+                                strokewidth={1.5}
+                            />
+                            <span>Log out</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
 

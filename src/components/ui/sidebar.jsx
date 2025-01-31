@@ -17,12 +17,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import DogOutline from "@/assets/icons/dog-outline";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_WIDTH_ICON = "3.5rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 const SidebarContext = React.createContext(null);
@@ -246,7 +247,7 @@ const Sidebar = React.forwardRef(
 Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef(
-    ({ className, onClick, ...props }, ref) => {
+    ({ className, icon, onClick, ...props }, ref) => {
         const { toggleSidebar } = useSidebar();
 
         return (
@@ -254,7 +255,7 @@ const SidebarTrigger = React.forwardRef(
                 ref={ref}
                 data-sidebar="trigger"
                 variant="ghost"
-                size="icon"
+                size={icon === "dog" ? "sidebar" : "icon"}
                 className={cn("", className)}
                 onClick={(event) => {
                     onClick?.(event);
@@ -262,7 +263,16 @@ const SidebarTrigger = React.forwardRef(
                 }}
                 {...props}
             >
-                <PanelLeft />
+                {icon === "dog" ? (
+                    <DogOutline
+                        width={20}
+                        height={20}
+                        strokewidth={1.5}
+                        secondaryfill="hsl(var(--muted-foreground))"
+                    />
+                ) : (
+                    <PanelLeft />
+                )}
                 <span className="sr-only">Toggle Sidebar</span>
             </Button>
         );
@@ -465,12 +475,12 @@ const SidebarMenuItem = React.forwardRef(({ className, ...props }, ref) => (
 SidebarMenuItem.displayName = "SidebarMenuItem";
 
 const sidebarMenuButtonVariants = cva(
-    "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-sm p-3 text-left text-sm outline-none transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:ring-1 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:ring-1 data-[active=true]:ring-border data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+    "peer/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-sm p-3 text-left text-sm outline-none transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:ring-1 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:ring-1 data-[active=true]:ring-border data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!pr-2 group-data-[collapsible=icon]:!pl-2.5 [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
     {
         variants: {
             variant: {
                 default:
-                    "hover:bg-sidebar-accent hover:ring-border hover:ring-1 hover:text-sidebar-accent-foreground",
+                    "hover:bg-sidebar-accent hover:ring-border/50 hover:ring-1 hover:text-sidebar-accent-foreground",
                 outline:
                     "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
             },
@@ -629,7 +639,7 @@ const SidebarMenuSub = React.forwardRef(({ className, ...props }, ref) => (
         ref={ref}
         data-sidebar="menu-sub"
         className={cn(
-            "mx-4 mt-2 flex min-w-0 translate-x-px flex-col gap-1.5 border-l border-sidebar-border px-2.5",
+            "ml-5 mt-1 flex min-w-0 translate-x-px flex-col gap-1.5 border-l border-sidebar-border pl-2.5 pr-2",
             "group-data-[collapsible=icon]:hidden",
             className
         )}
@@ -654,7 +664,7 @@ const SidebarMenuSubButton = React.forwardRef(
                 data-size={size}
                 data-active={isActive}
                 className={cn(
-                    "flex h-9 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-sm px-3 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:ring-1 hover:ring-border hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
+                    "flex h-9 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-sm px-3 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:ring-1 hover:ring-border/50 hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
                     "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
                     size === "sm" && "text-xs",
                     size === "md" && "text-sm",

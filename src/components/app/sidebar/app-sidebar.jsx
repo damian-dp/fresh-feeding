@@ -29,6 +29,7 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import ViewAll from "@/assets/icons/view-all";
 
 // This is sample data.
 const data = {
@@ -58,7 +59,7 @@ const data = {
         {
             name: "Dashboard",
             url: "/dashboard",
-            icon: LayoutDashboard,
+            icon: ViewAll,
         },
         {
             name: "Your Recipes",
@@ -109,8 +110,8 @@ export function AppSidebar({ ...props }) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain main={data.main} />
-                {/* <Separator className="hidden border-sidebar-border w-[60%] mx-auto group-data-[collapsible=icon]:block" />
-                <NavResources resources={data.resources} /> */}
+                {/* <Separator className="hidden border-sidebar-border w-[60%] mx-auto group-data-[collapsible=icon]:block" /> */}
+                <NavResources resources={data.resources} />
             </SidebarContent>
             <SidebarFooter>
                 <NavFooter account={data.account} />

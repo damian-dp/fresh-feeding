@@ -9,9 +9,7 @@ import {
     Loader2,
     PartyPopper,
     Pencil,
-    Percent,
     Scale,
-    Target,
     Weight,
 } from "lucide-react";
 import Dog from "@/assets/icons/dog";
@@ -41,7 +39,15 @@ import { EditDogProfileDialog } from "@/components/app/dashboard/edit-dog-profil
 import { RecipeSheet } from "@/components/app/recipes/recipe-sheet";
 import { useRecipes } from "@/components/providers/recipes-provider";
 import { EditDogRatiosDialog } from "@/components/app/dashboard/edit-dog-ratios-dialog";
-
+import DogOutline from "@/assets/icons/dog-outline";
+import Party from "@/assets/icons/party";
+import Target from "@/assets/icons/target";
+import ScaleUnbalanced2 from "@/assets/icons/scale-unbalanced-2";
+import FoodScale from "@/assets/icons/food-scale";
+import Percentage from "@/assets/icons/percentage";
+import Ham from "@/assets/icons/ham";
+import Leaf from "@/assets/icons/leaf";
+import Liver5 from "@/assets/icons/liver-5";
 const formatNumber = (number) => {
     return new Intl.NumberFormat().format(number);
 };
@@ -239,15 +245,8 @@ export function DogProfilePage() {
                                 }`}
                             >
                                 <AvatarImage src={dog.dog_avatar} />
-                                <AvatarFallback>
-                                    <Dog
-                                        className={`text-muted-foreground ${
-                                            dog.dog_cover &&
-                                            dog.dog_cover !== "NULL"
-                                                ? "w-20 h-20"
-                                                : "w-14 h-14"
-                                        }`}
-                                    />
+                                <AvatarFallback className="text-muted-foreground/80 font-medium text-5xl">
+                                    {dog.dog_name?.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
                             <div
@@ -269,13 +268,23 @@ export function DogProfilePage() {
                                         {dog.dog_name}
                                     </p>
                                     <div className="flex flex-row items-center gap-3">
-                                        <Dog className="w-4 h-4" />
+                                        <DogOutline
+                                            width={16}
+                                            height={16}
+                                            strokewidth={1.5}
+                                            secondaryfill="hsl(var(--muted-foreground))"
+                                        />
                                         <p className="text-muted-foreground">
                                             {dog.breed}
                                         </p>
                                     </div>
                                     <div className="flex flex-row items-center gap-3">
-                                        <PartyPopper className="w-4 h-4" />
+                                        <Party
+                                            width={16}
+                                            height={16}
+                                            strokewidth={1.5}
+                                            secondaryfill="hsl(var(--muted-foreground))"
+                                        />
                                         <p className="text-muted-foreground">
                                             {new Date(
                                                 dog.dob
@@ -316,7 +325,12 @@ export function DogProfilePage() {
                     <CardContent className="border-b py-8">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-4">
                             <BadgeStack
-                                icon={<Target />}
+                                icon={
+                                    <Target
+                                        strokewidth={1.5}
+                                        secondaryfill="hsl(var(--muted-foreground))"
+                                    />
+                                }
                                 label={
                                     dog.ratios_intake === 2.5
                                         ? "Maintain weight"
@@ -328,14 +342,21 @@ export function DogProfilePage() {
                                 }
                                 sublabel="Goal"
                                 flipped={true}
+                                className="order-1"
                             />
                             <BadgeStack
-                                icon={<Weight />}
+                                icon={
+                                    <FoodScale
+                                        strokewidth={1.5}
+                                        secondaryfill="hsl(var(--muted-foreground))"
+                                    />
+                                }
                                 label={`${dog.weight_metric}kg`}
                                 sublabel="Current weight"
                                 flipped={true}
+                                className="order-2"
                             />
-                            <div className="flex flex-col col-span-2 justify-between gap-2 h-full row-span-2 text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
+                            <div className="flex flex-col justify-between gap-2 h-full order-5 row-span-2 col-span-2  lg:order-3  text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
                                 {dog.ratios_intake === 2.5 && (
                                     <p className="-mt-[0.2em] -mb-[0.15em]">
                                         To help maintain{" "}
@@ -422,18 +443,30 @@ export function DogProfilePage() {
                                 </p>
                             </div>
                             <BadgeStack
-                                icon={<Scale />}
+                                icon={
+                                    <ScaleUnbalanced2
+                                        strokewidth={1.5}
+                                        secondaryfill="hsl(var(--muted-foreground))"
+                                    />
+                                }
                                 label={`${new Intl.NumberFormat().format(
                                     intakeGrams
                                 )}g`}
                                 sublabel="Daily intake (g)"
                                 flipped={true}
+                                className="order-3 lg:order-4"
                             />
                             <BadgeStack
-                                icon={<Percent />}
+                                icon={
+                                    <Percentage
+                                        strokewidth={1.5}
+                                        secondaryfill="hsl(var(--muted-foreground))"
+                                    />
+                                }
                                 label={`${dog.ratios_intake}%`}
                                 sublabel="Daily intake (%)"
                                 flipped={true}
+                                className="order-4 lg:order-5"
                             />
                         </div>
                     </CardContent>
@@ -441,7 +474,7 @@ export function DogProfilePage() {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-4">
                             <BadgeStack
                                 variant="meat"
-                                icon={<Bone />}
+                                icon={<Ham strokewidth={1.5} />}
                                 label="Meat and bone"
                                 sublabel={`${new Intl.NumberFormat().format(
                                     meatGrams
@@ -451,7 +484,7 @@ export function DogProfilePage() {
                             />
                             <BadgeStack
                                 variant="plant"
-                                icon={<Bone />}
+                                icon={<Leaf strokewidth={1.5} />}
                                 label="Plant matter"
                                 sublabel={`${new Intl.NumberFormat().format(
                                     plantGrams
@@ -461,7 +494,7 @@ export function DogProfilePage() {
                             />
                             <BadgeStack
                                 variant="liver"
-                                icon={<Heart />}
+                                icon={<Liver5 strokewidth={1.5} />}
                                 label="Liver"
                                 sublabel={`${new Intl.NumberFormat().format(
                                     liverGrams

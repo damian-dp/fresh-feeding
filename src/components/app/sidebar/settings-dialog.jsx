@@ -370,7 +370,7 @@ export function SettingsDialog({ open, onOpenChange }) {
             {isDesktop ? (
                 <>
                     <Dialog open={open} onOpenChange={handleOpenChange}>
-                        <DialogContent>
+                        <DialogContent autoFocus={false}>
                             <DialogHeader className="flex flex-row items-center justify-between">
                                 <DialogTitle>Account Settings</DialogTitle>
                                 <DialogDescription className="hidden">
