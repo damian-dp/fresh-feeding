@@ -729,7 +729,7 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                                 You have unsaved changes. Are you sure you want
-                                to discard them?
+                                to discard them? This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

@@ -52,15 +52,15 @@ export function DogProfileCard() {
                 "lg:block"
             )}
         >
-            <CardContent className="pt-6 h-full">
+            <CardContent className="p-0 h-full">
                 <div
                     onClick={() => setShowAddDog(true)}
                     className="flex flex-col items-center cursor-pointer justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                    <div className="rounded-full border-2 border-dashed p-4 mb-4">
+                    <div className="mb-3">
                         <PlusIcon className="w-6 h-6" />
                     </div>
-                    <p className="font-medium">Add another dog</p>
+                    <p className="">Add a dog</p>
                 </div>
             </CardContent>
         </Card>
@@ -173,7 +173,7 @@ export function DogProfileCard() {
                 <Card
                     key={`add-dog-${index}`}
                     className={cn(
-                        "border-dashed rounded-sm",
+                        "border-border/50 rounded-sm",
                         // Hide on mobile
                         "hidden",
                         // On medium screens, only show first card if needed
@@ -184,15 +184,15 @@ export function DogProfileCard() {
                         dogs.length % 2 === 0 && "md:hidden"
                     )}
                 >
-                    <CardContent className="pt-6 h-full">
+                    <CardContent className="p-0 h-full">
                         <div
                             onClick={() => setShowAddDog(true)}
                             className="flex flex-col items-center cursor-pointer justify-center h-full min-h-[160px] text-muted-foreground hover:text-foreground transition-colors"
                         >
-                            <div className="rounded-full border-2 border-dashed p-4 mb-4">
+                            <div className="mb-3">
                                 <PlusIcon className="w-6 h-6" />
                             </div>
-                            <p className="font-medium">Add another dog</p>
+                            <p className="">Add a dog</p>
                         </div>
                     </CardContent>
                 </Card>

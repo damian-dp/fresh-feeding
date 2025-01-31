@@ -312,7 +312,8 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-name`}
-                    className="font-medium sticky left-0 border-r border-border bg-card w-[1px] whitespace-nowrap"
+                    onClick={() => handleViewRecipe(recipe)}
+                    className="font-medium sticky left-0 border-r border-border w-[1px] whitespace-nowrap cursor-pointer"
                 >
                     <p className="font-medium mb-0.5 capitalize">
                         {recipe.recipe_name}
@@ -332,8 +333,9 @@ export function RecipeTable({
 
                 return (
                     <TableCell
-                        className="border-r border-border w-[1px]"
+                        className="border-r border-border w-[1px] cursor-pointer"
                         key={`${recipe.recipe_id}-dog`}
+                        onClick={() => handleViewRecipe(recipe)}
                     >
                         <BadgeStack
                             variant="default"
@@ -354,7 +356,8 @@ export function RecipeTable({
             cell: (recipe) => (
                 <TableCell
                     key={`${recipe.recipe_id}-ingredients`}
-                    className="text-xs text-muted-foreground border-r border-border"
+                    className="text-xs text-muted-foreground border-r border-border cursor-pointer"
+                    onClick={() => handleViewRecipe(recipe)}
                 >
                     <span className="line-clamp-2 leading-[1.15rem]">
                         <span className="text-foreground">Ingredients: </span>
@@ -372,8 +375,10 @@ export function RecipeTable({
 
                 return (
                     <TableCell
-                        className="border-r border-border pl-5 w-[1px]"
+                        className="border-r border-border pl-5 w-[1px] cursor-pointer"
                         key={`${recipe.recipe_id}-nutrition-status`}
+                        onClick={() => handleViewRecipe(recipe)}
+
                     >
                         {nutritionStatus ? (
                             <BadgeStack
@@ -437,12 +442,13 @@ export function RecipeTable({
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>
-                                            Are you sure?
+                                            Delete '{recipe?.recipe_name}'
+                                            recipe?
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will permanently delete this
-                                            recipe and remove all associated
-                                            data.
+                                            This will permanently delete the
+                                            recipe titled '{recipe?.recipe_name}
+                                            '. This action cannot be undone.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -455,9 +461,9 @@ export function RecipeTable({
                                                     recipe.recipe_id
                                                 )
                                             }
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            variant="destructive"
                                         >
-                                            Confirm Delete
+                                            Delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -474,7 +480,7 @@ export function RecipeTable({
             <Table ref={tableRef} className="max-w-full">
                 <TableBody>
                     {displayedRecipes.length === 0 ? (
-                        <TableRow className="hover:bg-card data-[state=selected]:bg-card">
+                        <TableRow className="data-[state=selected]:bg-card">
                             <TableCell
                                 colSpan={columns.length}
                                 className="text-center h-72 my-6 text-muted flex flex-col gap-5 items-center justify-center"

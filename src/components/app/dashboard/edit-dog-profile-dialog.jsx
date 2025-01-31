@@ -663,7 +663,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                                 You have unsaved changes. Are you sure you want
-                                to discard them?
+                                to discard them? This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -689,12 +689,12 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                Delete dog profile?
+                                Delete {dog?.dog_name}'s profile?
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will
-                                permanently delete {dog?.dog_name}'s profile and
-                                all associated data.
+                                This will permanently delete {dog?.dog_name}'s
+                                profile including their recipes and associated
+                                data.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

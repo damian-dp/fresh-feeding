@@ -636,12 +636,11 @@ export function RecipeSheet({
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>
-                                                Are you absolutely sure?
+                                                Delete '{recipe?.recipe_name}' recipe?
                                             </AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This action cannot be undone.
                                                 This will permanently delete
-                                                this recipe.
+                                                the recipe titled '{recipe?.recipe_name}'. This action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -650,7 +649,7 @@ export function RecipeSheet({
                                             </AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={handleDelete}
-                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                variant="destructive"
                                             >
                                                 Delete
                                             </AlertDialogAction>

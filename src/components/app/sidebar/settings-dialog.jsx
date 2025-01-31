@@ -425,7 +425,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
                                         You have unsaved changes. Are you sure
-                                        you want to discard them?
+                                        you want to discard them? This action
+                                        cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -497,7 +498,8 @@ export function SettingsDialog({ open, onOpenChange }) {
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
                                     You have unsaved changes. Are you sure you
-                                    want to discard them?
+                                    want to discard them? This action cannot be
+                                    undone.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
