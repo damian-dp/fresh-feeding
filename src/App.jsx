@@ -33,7 +33,14 @@ function AppContent() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<LandingPage />} />
+                {/* <Route path="/" element={<LandingPage />} /> */}
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+                
+                <Route path="/terms" element={<Navigate to="/dashboard" />} />
+                <Route path="/terms-of-use" element={<Navigate to="/dashboard" />} />
+                <Route path="/privacy" element={<Navigate to="/dashboard" />} />
+
+
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route
