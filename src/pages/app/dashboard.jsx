@@ -19,7 +19,6 @@ import {
     FileTextIcon,
     Loader2,
     PlusIcon,
-    Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,9 @@ import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
 import { useEffect, useState } from "react";
 import { useAddDog } from "@/components/providers/add-dog-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import ShieldCheck from "@/assets/icons/shield-check";
+import Users from "@/assets/icons/users";
+import Page2 from "@/assets/icons/page-2";
 
 export function DashboardPage() {
     const { profile, loading } = useUser();
@@ -112,35 +114,17 @@ export function DashboardPage() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4">
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
-                                <Link to="/ingredients">
-                                    <CardContent className="p-4 px-5">
-                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
-                                            <Apple className="w-8 h-8 text-muted-foreground [&>svg]:shrink-0" />
-                                            <div className="flex flex-col gap-0">
-                                                <p className="font-medium whitespace-nowrap">
-                                                    Ingredient database
-                                                </p>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-sm font-regular text-muted-foreground group-hover:text-foreground group-hover:underline transition-colors">
-                                                        View now
-                                                    </span>
-                                                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Link>
-                            </Card>
-
-                            <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
                                 <Link
                                     to="https://www.freshfoodtribe.com/how-to-start"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
                                     <CardContent className="p-4 px-5">
-                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
-                                            <FileTextIcon className="w-8 h-8 text-muted-foreground" />
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0 [&>svg]:size-8">
+                                            <Page2
+                                                strokeWidth={1.5}
+                                                secondaryfill="hsl(var(--muted-foreground))"
+                                            />
                                             <div className="flex flex-col gap-0">
                                                 <p className="font-medium whitespace-nowrap">
                                                     Fresh feeding guide
@@ -156,7 +140,33 @@ export function DashboardPage() {
                                     </CardContent>
                                 </Link>
                             </Card>
-
+                            <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
+                                <Link
+                                    to="https://www.freshfoodtribe.com/safety"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <CardContent className="p-4 px-5">
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0 [&>svg]:size-8">
+                                            <ShieldCheck
+                                                strokeWidth={2}
+                                                secondaryfill="hsl(var(--muted-foreground))"
+                                            />
+                                            <div className="flex flex-col gap-0">
+                                                <p className="font-medium whitespace-nowrap">
+                                                    Fresh feeding safety
+                                                </p>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-sm font-regular text-muted-foreground group-hover:text-foreground group-hover:underline transition-colors">
+                                                        View now
+                                                    </span>
+                                                    <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Link>
+                            </Card>
                             <Card className="flex-1 rounded-sm hover:bg-background transition-colors duration-300">
                                 <Link
                                     to="https://www.facebook.com/share/g/1F9fy5447T/"
@@ -164,8 +174,11 @@ export function DashboardPage() {
                                     rel="noopener noreferrer"
                                 >
                                     <CardContent className="p-4 px-5">
-                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0">
-                                            <Users className="w-8 h-8 text-muted-foreground" />
+                                        <div className="flex flex-row items-center gap-4 text-sm [&>svg]:shrink-0 [&>svg]:size-8">
+                                            <Users
+                                                strokeWidth={1.5}
+                                                secondaryfill="hsl(var(--muted-foreground))"
+                                            />
                                             <div className="flex flex-col gap-0">
                                                 <p className="font-medium whitespace-nowrap">
                                                     Facebook group

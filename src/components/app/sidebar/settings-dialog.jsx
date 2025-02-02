@@ -369,7 +369,11 @@ export function SettingsDialog({ open, onOpenChange }) {
         <div className="contents">
             {isDesktop ? (
                 <>
-                    <Dialog open={open} onOpenChange={handleOpenChange}>
+                    <Dialog
+                        open={open}
+                        onOpenChange={handleOpenChange}
+                        initialFocus={false}
+                    >
                         <DialogContent autoFocus={false}>
                             <DialogHeader className="flex flex-row items-center justify-between">
                                 <DialogTitle>Account Settings</DialogTitle>

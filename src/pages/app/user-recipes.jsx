@@ -23,6 +23,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 
 export function UserRecipesPage() {
     const [sheetOpen, setSheetOpen] = useState(false);
@@ -37,9 +38,9 @@ export function UserRecipesPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="#">
-                                    Dashboard
-                                </BreadcrumbLink>
+                                <Link to="/dashboard">
+                                    <BreadcrumbLink>Dashboard</BreadcrumbLink>
+                                </Link>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator className="hidden md:block" />
                             <BreadcrumbItem>

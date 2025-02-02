@@ -204,9 +204,9 @@ export function DogProfilePage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="#">
-                                    Dashboard
-                                </BreadcrumbLink>
+                                <Link to="/dashboard">
+                                    <BreadcrumbLink>Dashboard</BreadcrumbLink>
+                                </Link>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator className="hidden md:block" />
                             <BreadcrumbItem className="hidden md:block">
