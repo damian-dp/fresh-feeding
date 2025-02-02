@@ -7,7 +7,12 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function IngredientSelector({ ingredients = [], onSelect }) {
+export function IngredientSelector({
+    ingredients = [],
+    onSelect,
+    selectedIngredient,
+    className,
+}) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
 
@@ -26,13 +31,17 @@ export function IngredientSelector({ ingredients = [], onSelect }) {
 
     return (
         <div className="">
-
             <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <Input
-                    value={search}
+                    value={
+                        search ||
+                        (selectedIngredient
+                            ? selectedIngredient.ingredient_name
+                            : "")
+                    }
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search ingredients..."
-                    className="w-full"
+                    className={cn("w-full", className)}
                     onClick={() => setOpen(true)}
                 />
                 <PopoverTrigger className="w-full -translate-y-4" />
@@ -53,12 +62,20 @@ export function IngredientSelector({ ingredients = [], onSelect }) {
                                     onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => handleSelect(ingredient)}
                                     className={cn(
-                                        "flex items-center px-2 py-1.5 text-sm",
+                                        "flex items-center gap-2 px-2 py-1.5 text-sm",
                                         "hover:bg-accent hover:text-accent-foreground",
-                                        "cursor-pointer text-left"
+                                        "cursor-pointer text-left w-full"
                                     )}
                                 >
-                                    {ingredient.name}
+                                    <span>
+                                        {ingredient.ingredient_name ||
+                                            ingredient.name}
+                                    </span>
+                                    {ingredient.bone_percent && (
+                                        <span className="text-muted-foreground">
+                                            {ingredient.bone_percent}% bone
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>

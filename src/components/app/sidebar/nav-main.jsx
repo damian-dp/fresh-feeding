@@ -71,7 +71,7 @@ export function NavMain({ main }) {
                                 strokewidth={1.5}
                                 secondaryfill="hsl(var(--muted-foreground))"
                             />
-                            <span>Your Recipes</span>
+                            <span>Your recipes</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -86,16 +86,17 @@ export function NavMain({ main }) {
                     defaultOpen
                     className="group/collapsible group-data-[collapsible=icon]:hidden"
                 >
+                    {dogs?.length > 0 && (
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                             <SidebarMenuButton tooltip="Your Dogs">
                                 <DogOutline
                                     width={20}
                                     height={20}
-                                    strokewidth={1.5}
-                                    secondaryfill="hsl(var(--muted-foreground))"
+                                    strokeWidth={1.5}
+                                    secondaryFill="hsl(var(--muted-foreground))"
                                 />
-                                <span className="truncate">Your Dogs</span>
+                                <span className="truncate">Your dogs</span>
                                 <ChevronRight className="absolute right-3 transition-transform duration-200 group-data-[collapsible=icon]:hidden group-data-[state=open]/collapsible:rotate-90" />
                             </SidebarMenuButton>
                         </CollapsibleTrigger>
@@ -106,14 +107,6 @@ export function NavMain({ main }) {
                                         <SidebarMenuSubButton disabled>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                             <span>Loading...</span>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                ) : dogs?.length === 0 ? (
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild>
-                                            <Link to="/dogs/new">
-                                                Add your first dog
-                                            </Link>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                 ) : (
@@ -144,6 +137,7 @@ export function NavMain({ main }) {
                             </SidebarMenuSub>
                         </CollapsibleContent>
                     </SidebarMenuItem>
+                    )}
                 </Collapsible>
             </SidebarMenu>
         </SidebarGroup>
