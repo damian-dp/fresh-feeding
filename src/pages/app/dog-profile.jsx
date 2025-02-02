@@ -245,7 +245,7 @@ export function DogProfilePage() {
                                 }`}
                             >
                                 <AvatarImage src={dog.dog_avatar} />
-                                <AvatarFallback className="text-muted-foreground/80 font-medium text-5xl">
+                                <AvatarFallback className=" text-[2.5rem]">
                                     {dog.dog_name?.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>

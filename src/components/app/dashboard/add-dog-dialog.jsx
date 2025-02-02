@@ -55,6 +55,8 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ImageEditorDialog } from "@/components/app/dashboard/image-editor";
+import DogOutline from "@/assets/icons/dog-outline";
+import { AvatarFallback } from "@/components/ui/avatar";
 
 // Form validation schema
 const formSchema = z.object({
@@ -397,7 +399,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <div className="inline-flex w-12 h-12 z-10 absolute left-1 text-foreground items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                                                                     <Pencil className="size-5" />
                                                                 </div>
-                                                                <div className="relative w-32 h-32 rounded-full text-muted-foreground overflow-hidden bg-muted/40 border border-border flex items-center justify-center">
+                                                                <div className="relative w-32 h-32 rounded-full text-muted-foreground overflow-hidden bg-background border border-border flex items-center justify-center">
                                                                     {avatarPreview ? (
                                                                         <img
                                                                             src={
@@ -415,6 +417,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                                 85
                                                                             }
                                                                             className=""
+                                                                            secondaryfill="hsl(var(--muted))"
                                                                         />
                                                                     )}
                                                                 </div>
@@ -928,7 +931,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                 {step === 2 && (
                                     <>
                                         <div className="flex flex-col items-center gap-6 pt-6 pb-2">
-                                            <div className="relative w-32 h-32 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                            <div className="relative w-32 h-32 rounded-full text-muted-foreground overflow-hidden bg-muted/40 border border-border flex items-center justify-center">
                                                 {avatarPreview || avatarUrl ? (
                                                     <img
                                                         src={
@@ -948,7 +951,13 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                         }}
                                                     />
                                                 ) : (
-                                                    <Dog className="size-16 text-muted-foreground" />
+                                                    <div className="text-[2.5rem] font-medium">
+                                                        {form
+                                                            .getValues(
+                                                                "dog_name"
+                                                            )[0]
+                                                            .toUpperCase()}
+                                                    </div>
                                                 )}
                                             </div>
                                             <div className="flex flex-col gap-1 justify-center items-center">
