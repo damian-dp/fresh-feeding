@@ -369,7 +369,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Date of birth</FormLabel>
-                                <Popover>
+                                <Popover modal={true}>
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button

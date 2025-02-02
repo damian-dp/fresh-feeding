@@ -22,13 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-    ArrowRight,
-    CalendarDays,
-    Check,
-    Loader2,
-    Pencil,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Loader2, Pencil } from "lucide-react";
 import Dog from "@/assets/icons/dog";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -414,8 +408,12 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                         />
                                                                     ) : (
                                                                         <Dog
-                                                                            width={75}
-                                                                            height={85}
+                                                                            width={
+                                                                                75
+                                                                            }
+                                                                            height={
+                                                                                85
+                                                                            }
                                                                             className=""
                                                                         />
                                                                     )}
@@ -532,7 +530,9 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                     Date of
                                                                     birth
                                                                 </FormLabel>
-                                                                <Popover>
+                                                                <Popover
+                                                                    modal={true}
+                                                                >
                                                                     <PopoverTrigger
                                                                         asChild
                                                                     >
@@ -766,7 +766,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                             >
                                                                 <Button
                                                                     type="button"
-                                                                    size="lg"
+                                                                    size="lgPill"
                                                                     variant={
                                                                         field.value ===
                                                                         option.value
