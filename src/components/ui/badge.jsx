@@ -21,6 +21,7 @@ const badgeVariants = cva(
             },
             size: {
                 default: "h-9 px-3 py-1",
+                md: "h-8 px-3 py-1 text-sm",
                 sm: "h-5 px-1.5 text-[0.65rem]",
                 icon: "h-10 w-10 justify-center items-center [&_svg]:size-5",
             },

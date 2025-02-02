@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/components/providers/user-provider";
+import { useAddDog } from "@/components/providers/add-dog-provider";
 import {
     Dialog,
     DialogContent,
@@ -31,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function OnboardingDialog() {
     const { profile, completeOnboarding } = useUser();
+    const { setShowAddDog } = useAddDog();
     const [step, setStep] = useState(0);
     const [isPending, setIsPending] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -44,6 +46,7 @@ export function OnboardingDialog() {
         try {
             setIsPending(true);
             await completeOnboarding();
+            setShowAddDog(true);
         } catch (error) {
             console.error("Error completing onboarding:", error);
         } finally {
@@ -72,7 +75,6 @@ export function OnboardingDialog() {
                     <>
                         Setting up
                         <Loader2 className="animate-spin" />
-
                     </>
                 ) : (
                     <>
@@ -149,12 +151,12 @@ export function OnboardingDialog() {
                                     </div>
 
                                     <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Create your pup’s profile <br />
+                                        Create your pup's profile <br />
                                         and set their goals
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-sm">
                                         Get optimal feeding ratios by providing
-                                        your pup’s details and setting goals
+                                        your pup's details and setting goals
                                         like maintaining, losing, or gaining
                                         weight.
                                     </p>
@@ -200,7 +202,7 @@ export function OnboardingDialog() {
                                         />
                                     </div>
 
-                                    <Badge size="sm" className="-mb-3">
+                                    <Badge size="md" className="-mb-3">
                                         Coming soon
                                     </Badge>
 
@@ -229,7 +231,7 @@ export function OnboardingDialog() {
                                         />
                                     </div>
 
-                                    <Badge size="sm" className="-mb-3">
+                                    <Badge size="md" className="-mb-3">
                                         Coming soon
                                     </Badge>
 

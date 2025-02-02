@@ -88,6 +88,7 @@ export function NavFooter({ account }) {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
+                            variant="destructive"
                             onClick={() => {
                                 handleLogout();
                                 setShowLogoutDialog(false);
