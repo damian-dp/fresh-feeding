@@ -17,6 +17,7 @@ const buttonVariants = cva(
                     "bg-success text-success-foreground hover:bg-success-foreground/5 border border-success-border",
                 outline:
                     "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                plant: "border border-plant-border bg-plant hover:bg-plant/30 text-plant-foreground hover:text-plant-foreground",
                 secondary:
                     "bg-secondary text-secondary-foreground hover:bg-secondary/80",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -27,10 +28,9 @@ const buttonVariants = cva(
             size: {
                 default: "h-10 px-4 py-2 [&_svg]:size-4 [&_svg]:shrink-0",
                 sm: "h-9 rounded-sm px-3",
-                lg: "text-base h-10 rounded-full px-3",
+                lg: "text-base h-12 px-4 [&_svg]:size-5 [&_svg]:shrink-0",
                 icon: "h-10 w-10 [&_svg]:size-4 [&_svg]:shrink-0",
                 sidebar: "h-10 w-10 [&_svg]:size-5 [&_svg]:shrink-0",
-
             },
         },
         defaultVariants: {

@@ -5,7 +5,7 @@ import {
     Navigate,
 } from "react-router-dom";
 import { RootLayout } from "./components/layout/root-layout";
-import { LandingPage } from "./pages/landing-page";
+import { LandingPage } from "./pages/landing/landing-page";
 import { AuthPage } from "@/pages/auth";
 import { DashboardPage } from "./pages/app/dashboard";
 import { ResetPasswordPage } from "@/pages/auth/reset-password";
@@ -28,18 +28,18 @@ import {
     useLoading,
 } from "@/components/providers/loading-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { TermsPage } from "@/pages/landing/terms-page";
+import { PrivacyPage } from "@/pages/landing/privacy-page";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 function AppContent() {
     return (
         <Router>
+            <ScrollToTop />
             <Routes>
-                {/* <Route path="/" element={<LandingPage />} /> */}
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                
-                <Route path="/terms" element={<Navigate to="/dashboard" />} />
-                <Route path="/terms-of-use" element={<Navigate to="/dashboard" />} />
-                <Route path="/privacy" element={<Navigate to="/dashboard" />} />
-
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/terms-of-use" element={<TermsPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPage />} />
 
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
@@ -52,7 +52,6 @@ function AppContent() {
                     element={<UpdatePasswordPage />}
                 />
                 <Route path="/reset-password" element={<AuthRedirect />} />
-
                 <Route
                     element={
                         <ProtectedRoute>
