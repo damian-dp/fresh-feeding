@@ -91,7 +91,10 @@ export function LandingPage() {
                             transition={{ delay: 0.4 }}
                             className=" w-full rounded-lg overflow-hidden border border-border/35 ring-8 ring-white/50 ring-backdrop-blur-sm ring-offset-background bg-background shadow-2xl"
                         >
-                            <img src="/demo-screen.svg" className="w-full" />
+                            <img
+                                src="/landing-demo-screen.svg"
+                                className="w-full"
+                            />
                         </motion.div>
                     </div>
                 </section>
