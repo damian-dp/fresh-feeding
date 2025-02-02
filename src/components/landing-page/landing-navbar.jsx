@@ -19,10 +19,10 @@ export function LandingNavbar() {
                         Fresh Food Feeding
                     </div>
                 </Link>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                     {authLoading ? (
                         <Button disabled variant="ghost">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <Loader2 className="animate-spin" />
                             Loading
                         </Button>
                     ) : isAuthenticated ? (
