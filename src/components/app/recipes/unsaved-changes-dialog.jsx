@@ -14,16 +14,24 @@ export function UnsavedChangesDialog({ open, onOpenChange, onClose }) {
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+                    <AlertDialogTitle>Discard changes?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        You have unsaved changes. Are you sure you want to close
-                        without saving?
+                        You have unsaved changes. Are you sure you want to
+                        discard them? This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={onClose}>
-                        Close Without Saving
+                    <AlertDialogCancel onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        variant="destructive"
+                        onClick={() => {
+                            onClose();
+                            onOpenChange(false);
+                        }}
+                    >
+                        Discard changes
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

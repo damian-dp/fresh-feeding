@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
+import { useParams } from "react-router-dom";
 
 export function RecipeSheet({
     mode = "create",
@@ -52,10 +53,13 @@ export function RecipeSheet({
     const { ingredients, loading: ingredientsLoading } = useIngredients();
     const { addRecipe, updateRecipe, deleteRecipe, recipes, fetchRecipeById } =
         useRecipes();
+    const { dogId } = useParams();
 
     // State management
     const [showAddDog, setShowAddDog] = useState(false);
-    const [selectedDog, setSelectedDog] = useState(recipe?.dog_id || "");
+    const [selectedDog, setSelectedDog] = useState(
+        mode === "create" && dogId ? Number(dogId) : recipe?.dog_id || ""
+    );
     const [recipeName, setRecipeName] = useState(recipe?.recipe_name || "");
     const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -76,51 +80,21 @@ export function RecipeSheet({
     // Update state when recipe changes
     useEffect(() => {
         if (recipe && (mode === "view" || mode === "edit")) {
-            // console.log("Recipe changed in RecipeSheet:", recipe);
             setRecipeName(recipe.recipe_name || "");
             setSelectedDog(recipe.dog_id || "");
-            setRecipeIngredients(recipe.recipe_ingredients || []);
-
-            // Update ingredient sections
-            const meatAndBoneIngredients =
-                recipe.recipe_ingredients?.filter(
-                    (ing) => ing.ingredients?.category_id === 1
-                ) || [];
-            const plantMatterIngredients =
-                recipe.recipe_ingredients?.filter(
-                    (ing) => ing.ingredients?.category_id === 2
-                ) || [];
-            const secretingOrgansIngredients =
-                recipe.recipe_ingredients?.filter(
-                    (ing) => ing.ingredients?.category_id === 4
-                ) || [];
-            const liverIngredients =
-                recipe.recipe_ingredients?.filter(
-                    (ing) => ing.ingredients?.category_id === 3
-                ) || [];
-            const miscIngredients =
-                recipe.recipe_ingredients?.filter(
-                    (ing) => ing.ingredients?.category_id === 5
-                ) || [];
-
-            setMeatAndBone(meatAndBoneIngredients);
-            setPlantMatter(plantMatterIngredients);
-            setSecretingOrgans(secretingOrgansIngredients);
-            setLiver(liverIngredients);
-            setMisc(miscIngredients);
-        } else if (!recipe && mode === "create") {
-            // Reset all state when entering create mode with no recipe
-            setRecipeName("");
-            setSelectedDog("");
-            setRecipeIngredients([]);
-            setMeatAndBone([]);
-            setPlantMatter([]);
-            setSecretingOrgans([]);
-            setLiver([]);
-            setMisc([]);
+            setMeatAndBone(recipe.meat_and_bone || []);
+            setPlantMatter(recipe.plant_matter || []);
+            setSecretingOrgans(recipe.secreting_organs || []);
+            setLiver(recipe.liver || []);
+            setMisc(recipe.misc || []);
             setActiveSection(null);
+        } else if (!recipe && mode === "create") {
+            resetForm();
+            if (dogId) {
+                setSelectedDog(Number(dogId));
+            }
         }
-    }, [recipe, mode]);
+    }, [recipe, mode, dogId]);
 
     // Helper functions
     const getDogName = useCallback(
@@ -144,87 +118,90 @@ export function RecipeSheet({
         setActiveSection(null);
     };
 
+    // Modify the hasFormChanges function to add debugging
     const hasFormChanges = () => {
-        if (mode === "create") {
-            return (
-                recipeName !== "" ||
-                selectedDog !== "" ||
-                meatAndBone.length > 0 ||
-                plantMatter.length > 0 ||
-                secretingOrgans.length > 0 ||
-                liver.length > 0 ||
-                misc.length > 0
-            );
-        }
+        // No changes possible in view mode
+        if (mode === "view") return false;
 
+        // Check for changes based on mode
         if (mode === "edit") {
-            return (
-                recipeName !== recipe?.recipe_name ||
-                selectedDog !== recipe?.dog_id ||
-                JSON.stringify(meatAndBone) !==
-                    JSON.stringify(recipe?.meat_and_bone) ||
-                JSON.stringify(plantMatter) !==
-                    JSON.stringify(recipe?.plant_matter) ||
-                JSON.stringify(secretingOrgans) !==
-                    JSON.stringify(recipe?.secreting_organs) ||
-                JSON.stringify(liver) !== JSON.stringify(recipe?.liver) ||
-                JSON.stringify(misc) !== JSON.stringify(recipe?.misc)
-            );
+            const currentValues = {
+                name: recipeName,
+                dogId: selectedDog,
+                meatAndBone: meatAndBone,
+                plantMatter: plantMatter,
+                secretingOrgans: secretingOrgans,
+                liver: liver,
+                misc: misc,
+            };
+
+            const originalValues = {
+                name: recipe?.recipe_name,
+                dogId: recipe?.dog_id,
+                meatAndBone: recipe?.meat_and_bone || [],
+                plantMatter: recipe?.plant_matter || [],
+                secretingOrgans: recipe?.secreting_organs || [],
+                liver: recipe?.liver || [],
+                misc: recipe?.misc || [],
+            };
+
+            const hasChanges =
+                currentValues.name !== originalValues.name ||
+                currentValues.dogId !== originalValues.dogId ||
+                JSON.stringify(currentValues.meatAndBone) !==
+                    JSON.stringify(originalValues.meatAndBone) ||
+                JSON.stringify(currentValues.plantMatter) !==
+                    JSON.stringify(originalValues.plantMatter) ||
+                JSON.stringify(currentValues.secretingOrgans) !==
+                    JSON.stringify(originalValues.secretingOrgans) ||
+                JSON.stringify(currentValues.liver) !==
+                    JSON.stringify(originalValues.liver) ||
+                JSON.stringify(currentValues.misc) !==
+                    JSON.stringify(originalValues.misc);
+
+            return hasChanges;
         }
 
-        return false;
+        // Create mode
+        return (
+            recipeName !== "" ||
+            selectedDog !== "" ||
+            meatAndBone.length > 0 ||
+            plantMatter.length > 0 ||
+            secretingOrgans.length > 0 ||
+            liver.length > 0 ||
+            misc.length > 0
+        );
     };
 
     const handleClose = (newOpen, options = {}) => {
-        // console.log("RecipeSheet handleClose:", { newOpen, options, mode });
-
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
-            // console.log("Changing mode to:", options.mode);
             onModeChange?.(options.mode);
             onOpenChange?.(true, options);
             return;
         }
 
-        // In edit mode, switch back to view mode instead of closing
-        if (mode === "edit") {
-            // Reset edit mode state
-            setRecipeIngredients(recipe?.recipe_ingredients || []);
-            setRecipeName(recipe?.recipe_name || "");
-            setSelectedDog(recipe?.dog_id || "");
-            setActiveSection(null);
-
-            // Switch back to view mode with current recipe
-            onModeChange?.("view");
-            onOpenChange?.(true, { mode: "view", recipe });
+        // Check for unsaved changes
+        if (!newOpen && hasFormChanges()) {
+            setShowUnsavedChanges(true);
             return;
         }
 
-        // If closing the sheet completely
+        // If closing without changes
         if (!newOpen) {
-            // Check for unsaved changes
-            if (hasFormChanges()) {
-                setShowUnsavedChanges(true);
-                return;
-            }
-
-            // Reset all state when closing
-            setRecipeName("");
-            setSelectedDog("");
-            setRecipeIngredients([]);
-            setMeatAndBone([]);
-            setPlantMatter([]);
-            setSecretingOrgans([]);
-            setLiver([]);
-            setMisc([]);
-            setActiveSection(null);
-
-            if (mode === "create") {
+            if (mode === "edit") {
+                // In edit mode, switch back to view mode
+                onModeChange?.("view");
+                onOpenChange?.(true, { mode: "view", recipe });
+            } else {
+                // In create or view mode, just close the sheet
                 resetForm();
+                onOpenChange?.(false);
             }
+        } else {
+            onOpenChange?.(newOpen);
         }
-
-        onOpenChange?.(newOpen);
     };
 
     // Save functionality
@@ -636,11 +613,14 @@ export function RecipeSheet({
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>
-                                                Delete '{recipe?.recipe_name}' recipe?
+                                                Delete '{recipe?.recipe_name}'
+                                                recipe?
                                             </AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete
-                                                the recipe titled '{recipe?.recipe_name}'. This action cannot be undone.
+                                                This will permanently delete the
+                                                recipe titled '
+                                                {recipe?.recipe_name}'. This
+                                                action cannot be undone.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -712,13 +692,19 @@ export function RecipeSheet({
             </Sheet>
 
             <UnsavedChangesDialog
-                open={showUnsavedChanges && !isSaving}
+                open={showUnsavedChanges}
                 onOpenChange={setShowUnsavedChanges}
                 onClose={() => {
-                    if (mode === "create") {
+                    if (mode === "edit") {
+                        // In edit mode, return to view mode
+                        onModeChange?.("view");
+                        onOpenChange?.(true, { mode: "view", recipe });
+                    } else {
+                        // In create mode, close the sheet
                         resetForm();
+                        onOpenChange?.(false);
                     }
-                    handleClose(false);
+                    setShowUnsavedChanges(false);
                 }}
             />
 
