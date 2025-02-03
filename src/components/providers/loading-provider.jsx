@@ -92,7 +92,7 @@ export function LoadingProvider({ children }) {
                 console.log(
                     "[LoadingProvider] All data loaded, setting isReady"
                 );
-            }, 300);
+            }, 1000);
 
             return () => clearTimeout(timer);
         }

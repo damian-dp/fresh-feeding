@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Dog, Dot, Loader2, Pencil } from "lucide-react";
@@ -13,12 +13,59 @@ import { LandingNavbar } from "@/components/landing-page/landing-navbar";
 import { LandingFooter } from "@/components/landing-page/landing-footer";
 
 export function LandingPage() {
+    const [assetsLoaded, setAssetsLoaded] = useState(false);
     const isLoading = useLoading();
     const { isAuthenticated, loading: authLoading } = useAuth();
     const [activeFeature, setActiveFeature] = useState("Recipes");
 
-    // Only wait for page load
-    if (isLoading) return null;
+    // Preload all images
+    useEffect(() => {
+        const imagesToLoad = [
+            "/logo-mark.svg",
+            "/landing-demo-screen.svg",
+            "/goals/pill-1.svg",
+            "/goals/pill-2.svg",
+            "/goals/pill-3.svg",
+            "/goals/ratios.svg",
+            "/goals/table.svg",
+        ];
+
+        let loadedCount = 0;
+        const totalImages = imagesToLoad.length;
+
+        const preloadImage = (src) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        setAssetsLoaded(true);
+                    }
+                    resolve();
+                };
+                img.onerror = () => {
+                    loadedCount++;
+                    if (loadedCount === totalImages) {
+                        setAssetsLoaded(true);
+                    }
+                    resolve();
+                };
+            });
+        };
+
+        Promise.all(imagesToLoad.map((src) => preloadImage(src))).catch(
+            (error) => {
+                console.error("Error preloading images:", error);
+                setAssetsLoaded(true); // Continue anyway
+            }
+        );
+    }, []);
+
+    // Only show content when everything is loaded
+    if (isLoading || !assetsLoaded) {
+        return <div className="fixed inset-0 bg-background" />;
+    }
 
     return (
         <motion.div
@@ -102,8 +149,8 @@ export function LandingPage() {
                 <section className="py-20 sm:py-28 md:py-32">
                     <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-center mb-10 sm:mb-12 md:mb-14 max-w-sm sm:max-w-[30rem] md:max-w-xl mx-auto">
-                            The tools you need to make raw and fresh
-                            feeding achievable
+                            The tools you need to make raw and fresh feeding
+                            achievable
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[52rem] mx-auto">
                             <motion.div
