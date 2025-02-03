@@ -96,9 +96,7 @@ export function NavMain({ main }) {
                             <CollapsibleTrigger asChild>
                                 <SidebarMenuButton
                                     tooltip="Your Dogs"
-                                    onClick={() => {
-                                        toggleSidebar();
-                                    }}
+    
                                 >
                                     <DogOutline
                                         width={20}

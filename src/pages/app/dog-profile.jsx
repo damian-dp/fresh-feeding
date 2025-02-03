@@ -197,7 +197,7 @@ export function DogProfilePage() {
 
     return (
         <>
-            <header className="flex h-[4.5rem] shrink-0 items-center gap-2 transition-[width,height] ease-linear">
+            <header className="md:flex h-[4.5rem] shrink-0 items-center gap-2 transition-[width,height] ease-linear hidden">
                 <div className="flex items-center gap-2 px-4">
                     <SidebarTrigger className="-ml-1" />
                     <Separator orientation="vertical" className="mr-2 h-4" />
@@ -220,27 +220,27 @@ export function DogProfilePage() {
                     </Breadcrumb>
                 </div>
             </header>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="flex flex-1 flex-col gap-4 p-4 md:pt-0 pt-24">
                 <Card>
                     {dog.dog_cover && dog.dog_cover !== "NULL" && (
                         <img
                             src={dog.dog_cover}
                             alt="Dog cover image"
-                            className="w-full h-72 object-cover rounded-b-lg ring-1 ring-border"
+                            className="w-full h-36 sm:h-48 md:h-72 object-cover rounded-b-lg ring-1 ring-border"
                         />
                     )}
                     <CardContent className="relative py-0">
                         <div
-                            className={`flex flex-row gap-6 ${
+                            className={`flex flex-row items-end sm:items-start gap-5 ${
                                 dog.dog_cover && dog.dog_cover !== "NULL"
-                                    ? "-mt-6 items-end pb-5"
+                                    ? "-mt-4 items-start sm:items-end pb-5"
                                     : "-mt-0 py-7"
                             }`}
                         >
                             <Avatar
-                                className={`w-36 h-36 ring-4 ring-card [&>span]:border-border bg-card rounded-full ${
+                                className={`ring-4 ring-card [&>span]:border-border bg-card rounded-full ${
                                     dog.dog_cover && dog.dog_cover !== "NULL"
-                                        ? ""
+                                        ? "w-24 h-24 sm:w-36 sm:h-36 "
                                         : "w-28 h-28"
                                 }`}
                             >
@@ -250,7 +250,7 @@ export function DogProfilePage() {
                                 </AvatarFallback>
                             </Avatar>
                             <div
-                                className={`flex-1 flex flex-row justify-between ${
+                                className={`flex-1 flex flex-row items-start justify-between ${
                                     dog.dog_cover && dog.dog_cover !== "NULL"
                                         ? ""
                                         : "items-center"
@@ -260,51 +260,59 @@ export function DogProfilePage() {
                                     className={`flex flex-col gap-1 text-sm ${
                                         dog.dog_cover &&
                                         dog.dog_cover !== "NULL"
-                                            ? "pb-5"
+                                            ? "pb-3 sm:pb-5"
                                             : "pb-0"
                                     }`}
                                 >
-                                    <p className="text-[1.375rem] font-medium mb-3">
+                                    <p className="text-[1.375rem] font-medium mb-1 sm:mb-3 capitalize">
                                         {dog.dog_name}
                                     </p>
-                                    <div className="flex flex-row items-center gap-3">
-                                        <DogOutline
-                                            width={16}
-                                            height={16}
-                                            strokewidth={1.5}
-                                            secondaryfill="hsl(var(--muted-foreground))"
-                                        />
-                                        <p className="text-muted-foreground">
-                                            {dog.breed}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-row items-center gap-3">
-                                        <Party
-                                            width={16}
-                                            height={16}
-                                            strokewidth={1.5}
-                                            secondaryfill="hsl(var(--muted-foreground))"
-                                        />
-                                        <p className="text-muted-foreground">
-                                            {new Date(
-                                                dog.dob
-                                            ).toLocaleDateString("en-US", {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            })}
-                                            <span className="mx-2">•</span>
-                                            {calculateAge(dog.dob)}
-                                        </p>
+                                    <div className="flex flex-col gap-1.5">
+                                        <div className="flex flex-row items-center gap-3 [&>svg]:hidden sm:[&>svg]:block">
+                                            <DogOutline
+                                                width={16}
+                                                height={16}
+                                                strokewidth={1.5}
+                                                secondaryfill="hsl(var(--muted-foreground))"
+                                            />
+                                            <p className="text-muted-foreground capitalize ml-0.5 sm:ml-0">
+                                                {dog.breed}
+                                            </p>
+                                        </div>
+                                        <div className="sm:flex flex-row items-center gap-3 hidden">
+                                            <Party
+                                                width={16}
+                                                height={16}
+                                                strokewidth={1.5}
+                                                secondaryfill="hsl(var(--muted-foreground))"
+                                            />
+                                            <p className="text-muted-foreground">
+                                                {new Date(
+                                                    dog.dob
+                                                ).toLocaleDateString("en-US", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                })}
+                                                <span className="hidden sm:inline">
+                                                    <span className="mx-1.5">
+                                                        •
+                                                    </span>
+                                                    {calculateAge(dog.dob)}
+                                                </span>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                                 <Button
                                     variant="outline"
-                                    className="mb-auto"
                                     onClick={() => setShowEditDialog(true)}
                                 >
                                     <Pencil className="w-4 h-4" />
-                                    Edit profile
+                                    Edit{" "}
+                                    <span className="hidden sm:inline">
+                                        profile
+                                    </span>
                                 </Button>
                             </div>
                         </div>
@@ -358,7 +366,7 @@ export function DogProfilePage() {
                             />
                             <div className="flex flex-col justify-between gap-2 h-full order-5 row-span-2 col-span-2  lg:order-3  text-xl font-normal text-muted-foreground/60 leading-relaxed align-top">
                                 {dog.ratios_intake === 2.5 && (
-                                    <p className="-mt-[0.2em] -mb-[0.15em]">
+                                    <p className="sm:-mt-[0.2em] sm:-mb-[0.15em]">
                                         To help maintain{" "}
                                         <span className="text-foreground">
                                             {dog.dog_name}'s
@@ -378,7 +386,7 @@ export function DogProfilePage() {
                                     </p>
                                 )}
                                 {dog.ratios_intake === 3 && (
-                                    <p className="-mt-[0.2em] -mb-[0.15em]">
+                                    <p className="sm:-mt-[0.2em] sm:-mb-[0.15em]">
                                         To help{" "}
                                         <span className="text-foreground">
                                             {dog.dog_name}
@@ -399,7 +407,7 @@ export function DogProfilePage() {
                                     </p>
                                 )}
                                 {dog.ratios_intake === 2 && (
-                                    <p className="-mt-[0.2em] -mb-[0.15em]">
+                                    <p className="sm:-mt-[0.2em] sm:-mb-[0.15em]">
                                         To help{" "}
                                         <span className="text-foreground">
                                             {dog.dog_name}
@@ -422,7 +430,7 @@ export function DogProfilePage() {
                                 {dog.ratios_intake !== 2.5 &&
                                     dog.ratios_intake !== 3 &&
                                     dog.ratios_intake !== 2 && (
-                                        <p className="-mt-[0.2em] -mb-[0.15em]">
+                                        <p className="sm:-mt-[0.2em] sm:-mb-[0.15em]">
                                             To help{" "}
                                             <span className="text-foreground">
                                                 {dog.dog_name}
