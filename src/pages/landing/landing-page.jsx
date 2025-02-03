@@ -29,14 +29,14 @@ export function LandingPage() {
             <LandingNavbar />
             <main className="flex-1">
                 {/* Hero Section */}
-                <section className="pt-20 pb-16">
+                <section className="pt-[4.7rem]">
                     <div className="container max-w-[82rem] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center min-h-[28rem] flex flex-col justify-center pt-24 pb-20">
+                        <div className="text-center md:min-h-[28rem] flex flex-col justify-center py-14 sm:py-20 md:py-24">
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-2xl  md:text-6xl font-medium tracking-tight md:leading-[1.1] mb-8"
+                                className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight sm:leading-[1.1] md:leading-[1.1] lg:leading-[1.1] mb-8"
                             >
                                 Welcome to the fresh <br /> feeding revolution
                             </motion.h1>
@@ -44,7 +44,7 @@ export function LandingPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto"
+                                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-8 max-w-xs sm:max-w-lg md:max-w-xl mx-auto"
                             >
                                 Create balanced, species-appropriate raw food
                                 recipes for your dogs. Get customised ratios,
@@ -89,7 +89,7 @@ export function LandingPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
-                            className=" w-full rounded-lg overflow-hidden border border-border/35 ring-8 ring-white/50 ring-backdrop-blur-sm ring-offset-background bg-background shadow-2xl"
+                            className=" w-full rounded-sm md:rounded-lg overflow-hidden border border-border/35 ring-4 md:ring-8 ring-white/50 ring-backdrop-blur-sm ring-offset-background bg-background shadow-2xl"
                         >
                             <img
                                 src="/landing-demo-screen.svg"
@@ -99,13 +99,13 @@ export function LandingPage() {
                     </div>
                 </section>
 
-                <section className="py-20">
+                <section className="py-20 sm:py-28 md:py-32">
                     <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <h2 className="text-4xl font-medium text-center mb-14">
-                            The tools you need to make raw <br /> and fresh
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-center mb-10 sm:mb-12 md:mb-14 max-w-sm sm:max-w-[30rem] md:max-w-xl mx-auto">
+                            The tools you need to make raw and fresh
                             feeding achievable
                         </h2>
-                        <div className="grid grid-cols-2 gap-3 max-w-[52rem] mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[52rem] mx-auto">
                             <motion.div
                                 key="1"
                                 initial={{ opacity: 0, y: 20 }}
@@ -147,10 +147,10 @@ export function LandingPage() {
                                         </div>
                                     </div>
 
-                                    <h3 className="text-xl font-medium mb-2">
+                                    <h3 className="text-lg sm:text-xl font-medium mb-2">
                                         Manage your dogs profiles
                                     </h3>
-                                    <p className="text-muted-foreground text-[.95rem] leading-[1.6] ">
+                                    <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
                                         Get optimal feeding ratios by providing
                                         your pup's details and setting goals
                                         like maintaining, losing, or gaining
@@ -173,10 +173,10 @@ export function LandingPage() {
                                         <img src="/goals/pill-3.svg" />
                                     </div>
 
-                                    <h3 className="text-xl font-medium mb-2">
+                                    <h3 className="text-lg sm:text-xl font-medium mb-2">
                                         Manage your dogs profiles
                                     </h3>
-                                    <p className="text-muted-foreground text-[.95rem] leading-[1.6] ">
+                                    <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
                                         Get optimal feeding ratios by providing
                                         your pup's details and setting goals
                                         like maintaining, losing, or gaining
@@ -197,10 +197,10 @@ export function LandingPage() {
                                         <img src="/goals/ratios.svg" />
                                     </div>
 
-                                    <h3 className="text-xl font-medium mb-2">
+                                    <h3 className="text-lg sm:text-xl font-medium mb-2">
                                         Manage your dogs profiles
                                     </h3>
-                                    <p className="text-muted-foreground text-[.95rem] leading-[1.6] ">
+                                    <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
                                         Get optimal feeding ratios by providing
                                         your pup's details and setting goals
                                         like maintaining, losing, or gaining
@@ -221,10 +221,10 @@ export function LandingPage() {
                                         <img src="/goals/table.svg" />
                                     </div>
 
-                                    <h3 className="text-xl font-medium mb-2">
+                                    <h3 className="text-lg sm:text-xl font-medium mb-2">
                                         Manage your dogs profiles
                                     </h3>
-                                    <p className="text-muted-foreground text-[.95rem] leading-[1.6] ">
+                                    <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
                                         Get optimal feeding ratios by providing
                                         your pup's details and setting goals
                                         like maintaining, losing, or gaining

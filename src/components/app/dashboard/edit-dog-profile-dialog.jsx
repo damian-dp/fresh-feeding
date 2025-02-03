@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import {
     CalendarDays,
     CheckCheck,
-    Dog,
     ImagePlus,
     Loader2,
     Pencil,
     Trash,
 } from "lucide-react";
+import Dog from "@/assets/icons/dog";
 import {
     Dialog,
     DialogClose,
@@ -67,6 +67,8 @@ import { ImageEditorDialog } from "@/components/app/dashboard/image-editor";
 import { useDogs } from "@/components/providers/dogs-provider";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/auth-provider";
+import DogOutline from "@/assets/icons/dog-outline";
+import PhotoPlus from "@/assets/icons/photo-plus";
 
 // Convert countries object to array format we need
 const countryOptions = Object.entries(countries)
@@ -491,7 +493,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                 <div className="inline-flex w-12 h-12 z-10 absolute left-0 -bottom-1 text-foreground items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                                     <Pencil className="size-5" />
                                 </div>
-                                <div className="relative w-32 h-32 rounded-full overflow-hidden bg-muted/60 flex items-center justify-center">
+                                <div className="relative w-32 h-32 rounded-full overflow-hidden text-[hsl(var(--icon-muted))] bg-muted/40 border border-border flex items-center justify-center">
                                     {avatarPreview ? (
                                         <img
                                             src={avatarPreview}
@@ -499,7 +501,12 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <Dog className="size-16 text-muted-foreground" />
+                                        <Dog
+                                            width={70}
+                                            height={70}
+                                            className=""
+                                            secondaryfill="hsl(var(--muted))"
+                                        />
                                     )}
                                 </div>
                                 <Input
@@ -531,7 +538,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                 <div className="inline-flex w-12 h-12 z-10 absolute left-0 -bottom-1 text-foreground items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                                     <Pencil className="size-5" />
                                 </div>
-                                <div className="relative w-full h-32 rounded-sm overflow-hidden bg-muted/60 flex items-center justify-center">
+                                <div className="relative w-full h-32 rounded-sm overflow-hidden text-[hsl(var(--icon-muted))] bg-muted/40 border border-border flex items-center justify-center">
                                     {coverPreview ? (
                                         <img
                                             src={coverPreview}
@@ -539,7 +546,12 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <ImagePlus className="size-16 text-muted-foreground" />
+                                        <PhotoPlus
+                                            width={75}
+                                            height={85}
+                                            className=""
+                                            secondaryfill="hsl(var(--muted))"
+                                        />
                                     )}
                                 </div>
                                 <Input

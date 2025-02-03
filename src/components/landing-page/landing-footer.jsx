@@ -14,32 +14,39 @@ export function LandingFooter() {
     return (
         <footer className="">
             <div className="w-full mx-auto">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-1 text-muted-foreground">
+                <div className="flex md:flex-row flex-col-reverse items-center justify-between gap-4">
+                    <div className="flex md:flex-row flex-col items-center gap-1 gap-y-4 w-full text-muted-foreground">
                         <img
                             src="/logo-mark.svg"
                             alt="Fresh Food Feeding"
                             className="size-6"
                         />
-                        <span className="text-sm text-muted-foreground pl-2">
-                            © {new Date().getFullYear()} Fresh Food Feeding
-                        </span>
-                        <Dot className="size-5" />
-                        <span className="text-sm text-muted-foreground">
-                            Developed by{" "}
-                            <a
-                                href="https://damianpetrov.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:text-foreground inline-flex items-center transition-colors border-b border-transparent hover:border-b hover:border-foreground pb-[2px] -mb-[2px]"
-                            >
-                                Damian Petrov
-                                <span className="pl-[5px] -mb-[5px]">↗</span>
-                            </a>
-                        </span>
+                        <div className="flex sm:flex-row items-center justify-center gap-1 gap-y-4 w-full md:w-auto">
+                            <span className="hidden sm:block text-sm text-muted-foreground pl-2">
+                                © {new Date().getFullYear()} Fresh Food Feeding
+                            </span>
+                            <span className="block sm:hidden text-sm text-muted-foreground pl-2">
+                                Copyright © {new Date().getFullYear()}
+                            </span>
+                            <Dot className="size-5" />
+                            <span className="text-sm text-muted-foreground">
+                                Built by{" "}
+                                <a
+                                    href="https://damianpetrov.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-foreground inline-flex items-center transition-colors border-b border-transparent hover:border-b hover:border-foreground pb-[2px] -mb-[2px]"
+                                >
+                                    Damian Petrov
+                                    <span className="pl-[5px] -mb-[5px]">
+                                        ↗
+                                    </span>
+                                </a>
+                            </span>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 whitespace-nowrap">
                         <a
                             href="mailto:hello@damianpetrov.com?subject=Support%20Enquiry%20%7C%20freshfeeding.com.au"
                             className={linkClasses}

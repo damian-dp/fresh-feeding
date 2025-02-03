@@ -65,7 +65,7 @@ export function DashboardPage() {
                 </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                <div className="py-14 px-1">
+                <div className="py-12 pt-9 px-1">
                     <h1 className="text-4xl font-medium mb-1">
                         Hi {firstName},
                     </h1>

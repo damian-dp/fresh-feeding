@@ -3,7 +3,7 @@ import React from 'react';
 function PhotoPlus(props) {
 	const fill = props.fill || 'currentColor';
 	const secondaryfill = props.secondaryfill || fill;
-	const strokewidth = props.strokewidth || 1;
+	const strokewidth = props.strokewidth || 1.2;
 	const width = props.width || '1em';
 	const height = props.height || '1em';
 

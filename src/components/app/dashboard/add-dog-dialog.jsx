@@ -399,7 +399,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                 <div className="inline-flex w-12 h-12 z-10 absolute left-1 text-foreground items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                                                                     <Pencil className="size-5" />
                                                                 </div>
-                                                                <div className="relative w-32 h-32 rounded-full text-muted-foreground overflow-hidden bg-background border border-border flex items-center justify-center">
+                                                                <div className="relative w-32 h-32 rounded-full text-[hsl(var(--icon-muted))] overflow-hidden bg-muted/40 border border-border flex items-center justify-center">
                                                                     {avatarPreview ? (
                                                                         <img
                                                                             src={
