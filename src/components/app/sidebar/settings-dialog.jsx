@@ -391,7 +391,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                             <DialogFooter>
                                 <div className="flex flex-row items-center gap-2">
                                     <DialogClose asChild>
-                                        <Button variant="link" tabIndex={-1}>
+                                        <Button variant="ghost" tabIndex={-1}>
                                             Cancel
                                         </Button>
                                     </DialogClose>

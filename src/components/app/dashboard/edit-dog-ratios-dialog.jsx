@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+    AlertTriangle,
     CalendarDays,
     CheckCheck,
     Dog,
@@ -63,6 +64,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Add these default values at the top of the file
 const DEFAULT_RATIOS = {
@@ -362,7 +364,7 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
     const Content = (
         <div className="flex flex-col">
             <div className="flex flex-col gap-6 p-6 border-b border-border">
-                <p className="font-medium">Intake goal</p>
+                {/* <p className="font-medium">Intake goal</p> */}
                 <div className="flex flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
                         <FormField
@@ -534,7 +536,15 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
             </div>
 
             <div className="flex flex-col gap-6 p-6">
-                <p className="font-medium">Ingredient ratios</p>
+            <p className="font-medium">Ingredient ratios</p>
+
+                <Alert variant="warning" className="-mt-1 p-5 [&>svg]:top-7">
+                    <AlertTriangle />
+
+                    <AlertDescription>
+                    Any changes here may put your meals out of balance. Use the goal presets above to change daily intake.
+                    </AlertDescription>
+                </Alert>
                 <div className="flex flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
                         <FormField

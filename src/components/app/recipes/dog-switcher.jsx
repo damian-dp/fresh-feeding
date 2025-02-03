@@ -122,7 +122,7 @@ export function DogSwitcher({
                         )}
                     </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
+                {dogs.length > 0 && <DropdownMenuSeparator />}
                 <DropdownMenuItem onClick={onAddDog} className="gap-2 p-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border">
                         <Plus className="h-4 w-4" />

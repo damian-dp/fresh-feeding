@@ -48,7 +48,7 @@ AlertTitle.displayName = "AlertTitle";
 const AlertDescription = React.forwardRef(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={cn("text-sm font-normal [&_p]:leading-relaxed", className)}
+        className={cn("text-sm font-normal leading-relaxed", className)}
         {...props}
     />
 ));

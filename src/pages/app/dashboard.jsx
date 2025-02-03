@@ -26,7 +26,6 @@ import { Link } from "react-router-dom";
 import { DogProfileCard } from "@/components/app/dashboard/dog-profile-card";
 import { RecipeTable } from "@/components/app/recipes/recipe-table";
 import { Badge } from "@/components/ui/badge";
-import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
 import { useEffect, useState } from "react";
 import { useAddDog } from "@/components/providers/add-dog-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -36,7 +35,7 @@ import Page2 from "@/assets/icons/page-2";
 
 export function DashboardPage() {
     const { profile, loading } = useUser();
-    const { showAddDog, setShowAddDog } = useAddDog();
+    const { setShowAddDog } = useAddDog();
     const [sheetOpen, setSheetOpen] = useState(false);
 
     // Get first name for greeting
@@ -197,7 +196,6 @@ export function DashboardPage() {
                         </CardContent>
                     </Card>
                 </div>
-                <AddDogDialog open={showAddDog} onOpenChange={setShowAddDog} />
             </div>
         </>
     );

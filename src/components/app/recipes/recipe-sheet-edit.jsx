@@ -88,7 +88,7 @@ export function RecipeSheetEdit({
             {/* Ingredients section */}
             <div className="flex flex-col gap-8 p-8">
                 <p className="font-medium">Ingredients</p>
-                <div className="-mt-2">
+                <div className="-mt-1">
                     <NutrientGroupAlert
                         recipeIngredients={Object.values(
                             ingredientSections

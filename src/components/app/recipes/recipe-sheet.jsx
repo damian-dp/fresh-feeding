@@ -16,7 +16,6 @@ import { useIngredients } from "@/components/providers/ingredients-provider";
 import { useRecipes } from "@/components/providers/recipes-provider";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
 import { RecipeSheetView } from "./recipe-sheet-view";
 import { RecipeSheetCreate } from "./recipe-sheet-create";
 import { RecipeSheetEdit } from "./recipe-sheet-edit";
@@ -40,6 +39,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
 import { useParams } from "react-router-dom";
+import { useAddDog } from "@/components/providers/add-dog-provider";
 
 export function RecipeSheet({
     mode = "create",
@@ -54,9 +54,9 @@ export function RecipeSheet({
     const { addRecipe, updateRecipe, deleteRecipe, recipes, fetchRecipeById } =
         useRecipes();
     const { dogId } = useParams();
+    const { openAddDog } = useAddDog();
 
     // State management
-    const [showAddDog, setShowAddDog] = useState(false);
     const [selectedDog, setSelectedDog] = useState(
         mode === "create" && dogId ? Number(dogId) : recipe?.dog_id || ""
     );
@@ -513,6 +513,13 @@ export function RecipeSheet({
         },
     };
 
+    // Use it in your component where you need to handle the success case
+    const handleAddDog = () => {
+        openAddDog((newDog) => {
+            setSelectedDog(newDog.dog_id);
+        });
+    };
+
     // Render content based on mode
     const renderContent = () => {
         switch (mode) {
@@ -523,7 +530,7 @@ export function RecipeSheet({
                         setRecipeName={setRecipeName}
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
-                        setShowAddDog={setShowAddDog}
+                        setShowAddDog={handleAddDog}
                         ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
@@ -546,7 +553,7 @@ export function RecipeSheet({
                         setRecipeName={setRecipeName}
                         dogs={dogs}
                         setSelectedDog={setSelectedDog}
-                        setShowAddDog={setShowAddDog}
+                        setShowAddDog={handleAddDog}
                         ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
@@ -696,24 +703,13 @@ export function RecipeSheet({
                 onOpenChange={setShowUnsavedChanges}
                 onClose={() => {
                     if (mode === "edit") {
-                        // In edit mode, return to view mode
                         onModeChange?.("view");
                         onOpenChange?.(true, { mode: "view", recipe });
                     } else {
-                        // In create mode, close the sheet
                         resetForm();
                         onOpenChange?.(false);
                     }
                     setShowUnsavedChanges(false);
-                }}
-            />
-
-            <AddDogDialog
-                open={showAddDog}
-                onOpenChange={setShowAddDog}
-                onSuccess={(newDog) => {
-                    setSelectedDog(newDog.dog_id);
-                    setShowAddDog(false);
                 }}
             />
         </>
