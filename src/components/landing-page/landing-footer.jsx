@@ -19,13 +19,11 @@ export function LandingFooter() {
                         <img
                             src="/logo-mark.svg"
                             alt="Fresh Food Feeding"
-                            className="size-6"
+                            className="size-6 block md:hidden"
                         />
                         <div className="flex sm:flex-row items-center justify-center gap-1 gap-y-4 w-full md:w-auto">
-                            <span className="hidden sm:block text-sm text-muted-foreground pl-2">
-                                © {new Date().getFullYear()} Fresh Food Feeding
-                            </span>
-                            <span className="block sm:hidden text-sm text-muted-foreground pl-2">
+   
+                            <span className="text-sm text-muted-foreground pl-2">
                                 Copyright © {new Date().getFullYear()}
                             </span>
                             <Dot className="size-5" />
@@ -37,7 +35,7 @@ export function LandingFooter() {
                                     rel="noopener noreferrer"
                                     className="hover:text-foreground inline-flex items-center transition-colors border-b border-transparent hover:border-b hover:border-foreground pb-[2px] -mb-[2px]"
                                 >
-                                    Damian Petrov
+                                    Damian
                                     <span className="pl-[5px] -mb-[5px]">
                                         ↗
                                     </span>

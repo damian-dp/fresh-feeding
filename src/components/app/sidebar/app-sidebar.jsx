@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import ViewAll from "@/assets/icons/view-all";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // This is sample data.
 const data = {
@@ -93,8 +94,8 @@ const data = {
 
 export function AppSidebar({ ...props }) {
     return (
-        <Sidebar variant="floating" collapsible="icon" {...props}>
-            <SidebarHeader>
+        <Sidebar variant="floating" collapsible="icon" {...props} side={useIsMobile ? "bottom" : "left"}>
+            <SidebarHeader className="hidden md:block">
                 <div className="flex flex-row items-center gap-3 p-3 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
                     <img
                         src="/logo-mark.svg"

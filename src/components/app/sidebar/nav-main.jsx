@@ -3,7 +3,6 @@
 import { ChevronRight, DogIcon, Loader2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useDogs } from "@/components/providers/dogs-provider";
-
 import {
     Collapsible,
     CollapsibleContent,
@@ -29,7 +28,7 @@ export function NavMain({ main }) {
     const { isMobile } = useSidebar();
     const { dogs, loading } = useDogs();
     const { pathname } = useLocation();
-
+    const { toggleSidebar } = useSidebar();
     return (
         <SidebarGroup>
             <SidebarMenu>
@@ -42,6 +41,9 @@ export function NavMain({ main }) {
                                 ? "bg-sidebar-accent ring-1 ring-border/50"
                                 : ""
                         }
+                        onClick={() => {
+                            toggleSidebar();
+                        }}
                     >
                         <Link to="/dashboard">
                             <ViewAll
@@ -63,6 +65,9 @@ export function NavMain({ main }) {
                                 ? "bg-sidebar-accent ring-1 ring-border/50"
                                 : ""
                         }
+                        onClick={() => {
+                            toggleSidebar();
+                        }}
                     >
                         <Link to="/recipes">
                             <Diet
@@ -87,56 +92,64 @@ export function NavMain({ main }) {
                     className="group/collapsible group-data-[collapsible=icon]:hidden"
                 >
                     {dogs?.length > 0 && (
-                    <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                            <SidebarMenuButton tooltip="Your Dogs">
-                                <DogOutline
-                                    width={20}
-                                    height={20}
-                                    strokeWidth={1.5}
-                                    secondaryFill="hsl(var(--muted-foreground))"
-                                />
-                                <span className="truncate">Your dogs</span>
-                                <ChevronRight className="absolute right-3 transition-transform duration-200 group-data-[collapsible=icon]:hidden group-data-[state=open]/collapsible:rotate-90" />
-                            </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                            <SidebarMenuSub>
-                                {loading ? (
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton disabled>
-                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            <span>Loading...</span>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                ) : (
-                                    <>
-                                        {dogs.map((dog) => (
-                                            <SidebarMenuSubItem
-                                                key={dog.dog_id}
-                                            >
-                                                <SidebarMenuSubButton
-                                                    asChild
-                                                    className={
-                                                        pathname ===
-                                                        `/dogs/${dog.dog_id}`
-                                                            ? "bg-sidebar-accent ring-1 ring-border/50"
-                                                            : ""
-                                                    }
+                        <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                                <SidebarMenuButton
+                                    tooltip="Your Dogs"
+                                    onClick={() => {
+                                        toggleSidebar();
+                                    }}
+                                >
+                                    <DogOutline
+                                        width={20}
+                                        height={20}
+                                        strokeWidth={1.5}
+                                        secondaryFill="hsl(var(--muted-foreground))"
+                                    />
+                                    <span className="truncate">Your dogs</span>
+                                    <ChevronRight className="absolute right-3 transition-transform duration-200 group-data-[collapsible=icon]:hidden group-data-[state=open]/collapsible:rotate-90" />
+                                </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <SidebarMenuSub>
+                                    {loading ? (
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton disabled>
+                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                <span>Loading...</span>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    ) : (
+                                        <>
+                                            {dogs.map((dog) => (
+                                                <SidebarMenuSubItem
+                                                    key={dog.dog_id}
                                                 >
-                                                    <Link
-                                                        to={`/dogs/${dog.dog_id}`}
+                                                    <SidebarMenuSubButton
+                                                        asChild
+                                                        className={
+                                                            pathname ===
+                                                            `/dogs/${dog.dog_id}`
+                                                                ? "bg-sidebar-accent ring-1 ring-border/50"
+                                                                : ""
+                                                        }
+                                                        onClick={() => {
+                                                            toggleSidebar();
+                                                        }}
                                                     >
-                                                        {dog.dog_name}
-                                                    </Link>
-                                                </SidebarMenuSubButton>
-                                            </SidebarMenuSubItem>
-                                        ))}
-                                    </>
-                                )}
-                            </SidebarMenuSub>
-                        </CollapsibleContent>
-                    </SidebarMenuItem>
+                                                        <Link
+                                                            to={`/dogs/${dog.dog_id}`}
+                                                        >
+                                                            {dog.dog_name}
+                                                        </Link>
+                                                    </SidebarMenuSubButton>
+                                                </SidebarMenuSubItem>
+                                            ))}
+                                        </>
+                                    )}
+                                </SidebarMenuSub>
+                            </CollapsibleContent>
+                        </SidebarMenuItem>
                     )}
                 </Collapsible>
             </SidebarMenu>

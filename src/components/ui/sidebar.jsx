@@ -18,6 +18,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import DogOutline from "@/assets/icons/dog-outline";
+import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -185,7 +186,7 @@ const Sidebar = React.forwardRef(
                     <SheetContent
                         data-sidebar="sidebar"
                         data-mobile="true"
-                        className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+                        className="w-full bg-sidebar rounded-t-3xl md:rounded-0 p-2 text-sidebar-foreground [&>button]:hidden"
                         style={{
                             "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
                         }}
@@ -222,7 +223,7 @@ const Sidebar = React.forwardRef(
                 <div
                     className={cn(
                         "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
-                        side === "left"
+                        side === "left" || "bottom"
                             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
                             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
                         // Adjust the padding for floating and inset variants.
@@ -247,14 +248,14 @@ const Sidebar = React.forwardRef(
 Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef(
-    ({ className, icon, onClick, ...props }, ref) => {
+    ({ className, icon, variant, onClick, ...props }, ref) => {
         const { toggleSidebar } = useSidebar();
 
         return (
             <Button
                 ref={ref}
                 data-sidebar="trigger"
-                variant="ghost"
+                variant={!variant ? "ghost" : variant}
                 size={icon === "dog" ? "sidebar" : "icon"}
                 className={cn("", className)}
                 onClick={(event) => {
@@ -270,6 +271,8 @@ const SidebarTrigger = React.forwardRef(
                         strokewidth={1.5}
                         secondaryfill="hsl(var(--muted-foreground))"
                     />
+                ) : icon === "menu" ? (
+                    <HamburgerMenuIcon />
                 ) : (
                     <PanelLeft />
                 )}
@@ -378,7 +381,7 @@ const SidebarContent = React.forwardRef(({ className, ...props }, ref) => {
             ref={ref}
             data-sidebar="content"
             className={cn(
-                "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
+                "flex min-h-[calc(60dvh)] rounded-t-2xl md:rounded-0 md:min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
                 className
             )}
             {...props}

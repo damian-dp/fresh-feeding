@@ -11,6 +11,7 @@ import { SettingsDialogProvider } from "@/components/providers/settings-dialog-p
 import { CountriesProvider } from "@/components/providers/countries-provider";
 import { LandingFooter } from "../landing-page/landing-footer";
 import { AddDogDialog } from "@/components/app/dashboard/add-dog-dialog";
+import { MobileNav } from "../app/sidebar/mobile-nav";
 
 // Create a wrapper component to use the hook
 function AddDogWrapper() {
@@ -32,6 +33,8 @@ export function RootLayout() {
                     <SettingsDialogProvider>
                         <SidebarProvider>
                             <AppSidebar />
+                            <MobileNav />
+
                             <SidebarInset className="max-w-7xl mx-auto w-full min-h-screen">
                                 <div className="flex flex-col w-full min-h-screen">
                                     <Outlet />
