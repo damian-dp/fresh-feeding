@@ -1112,7 +1112,7 @@ export function AddDogDialog({ open, onOpenChange }) {
     return (
         <>
             <Sheet open={open} onOpenChange={handleOpenChange}>
-                <SheetContent className="bg-card h-full overflow-y-hidden max-h-dvh">
+                <SheetContent className="bg-card">
                     <SheetHeader className="">
                         <SheetTitle>Add a new dog</SheetTitle>
                         <SheetDescription className="hidden">
