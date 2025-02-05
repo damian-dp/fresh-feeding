@@ -8,12 +8,14 @@ export function UserProvider({ children }) {
     const { session, isAuthenticated } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 if (!isAuthenticated || !session?.user?.id) {
                     setProfile(null);
+                    setIsAdmin(false);
                     return;
                 }
 
@@ -34,9 +36,11 @@ export function UserProvider({ children }) {
                         "there",
                     new_user: data.new_user ?? true,
                 });
+                setIsAdmin(data.is_admin ?? false);
             } catch (error) {
                 console.error("Error loading profile:", error);
                 setProfile(null);
+                setIsAdmin(false);
             } finally {
                 setLoading(false);
             }
@@ -64,6 +68,7 @@ export function UserProvider({ children }) {
                             session.user.user_metadata?.full_name ||
                             "there",
                     });
+                    setIsAdmin(payload.new.is_admin ?? false);
                 }
             )
             .subscribe();
@@ -104,6 +109,7 @@ export function UserProvider({ children }) {
     const value = {
         profile,
         loading,
+        isAdmin,
         updateProfile,
         completeOnboarding,
     };

@@ -33,6 +33,7 @@ export function IngredientSelector({
         <div className="h-14">
             <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <Input
+                    autoFocus
                     value={
                         search ||
                         (selectedIngredient
@@ -43,6 +44,7 @@ export function IngredientSelector({
                     placeholder="Search ingredients..."
                     className={cn("w-full", className)}
                     onClick={() => setOpen(true)}
+                    onFocus={() => setOpen(true)}
                 />
                 <PopoverTrigger className="w-full -translate-y-4" />
                 <PopoverContent

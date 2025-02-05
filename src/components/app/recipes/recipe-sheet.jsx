@@ -127,60 +127,34 @@ export function RecipeSheet({
         setActiveSection(null);
     };
 
-    // Modify the hasFormChanges function to add debugging
-    const hasFormChanges = () => {
-        // No changes possible in view mode
+    // Track form changes
+    const hasChanges = () => {
+        // Never show discard dialog in view mode
         if (mode === "view") return false;
 
-        // Check for changes based on mode
+        // Check if recipe name changed
+        if (recipeName !== recipe?.recipe_name) return true;
+
+        // Check if selected dog changed
+        if (selectedDog !== recipe?.dog_id) return true;
+
+        // Check if ingredients changed
         if (mode === "edit") {
-            const currentValues = {
-                name: recipeName,
-                dogId: selectedDog,
-                meatAndBone: meatAndBone,
-                plantMatter: plantMatter,
-                secretingOrgans: secretingOrgans,
-                liver: liver,
-                misc: misc,
-            };
+            const originalIngredients = recipe?.recipe_ingredients || [];
+            const currentIngredients = recipeIngredients;
 
-            const originalValues = {
-                name: recipe?.recipe_name,
-                dogId: recipe?.dog_id,
-                meatAndBone: recipe?.meat_and_bone || [],
-                plantMatter: recipe?.plant_matter || [],
-                secretingOrgans: recipe?.secreting_organs || [],
-                liver: recipe?.liver || [],
-                misc: recipe?.misc || [],
-            };
+            if (originalIngredients.length !== currentIngredients.length)
+                return true;
 
-            const hasChanges =
-                currentValues.name !== originalValues.name ||
-                currentValues.dogId !== originalValues.dogId ||
-                JSON.stringify(currentValues.meatAndBone) !==
-                    JSON.stringify(originalValues.meatAndBone) ||
-                JSON.stringify(currentValues.plantMatter) !==
-                    JSON.stringify(originalValues.plantMatter) ||
-                JSON.stringify(currentValues.secretingOrgans) !==
-                    JSON.stringify(originalValues.secretingOrgans) ||
-                JSON.stringify(currentValues.liver) !==
-                    JSON.stringify(originalValues.liver) ||
-                JSON.stringify(currentValues.misc) !==
-                    JSON.stringify(originalValues.misc);
-
-            return hasChanges;
+            // Compare ingredients
+            return (
+                JSON.stringify(originalIngredients.sort()) !==
+                JSON.stringify(currentIngredients.sort())
+            );
         }
 
-        // Create mode
-        return (
-            recipeName !== "" ||
-            selectedDog !== "" ||
-            meatAndBone.length > 0 ||
-            plantMatter.length > 0 ||
-            secretingOrgans.length > 0 ||
-            liver.length > 0 ||
-            misc.length > 0
-        );
+        // In create mode, check if any ingredients were added
+        return recipeIngredients.length > 0 || recipeName !== "";
     };
 
     // Add this function to properly categorize ingredients
@@ -213,7 +187,7 @@ export function RecipeSheet({
         }, {});
     };
 
-    // Modify the handleClose function
+    // Handle dialog close with unsaved changes
     const handleClose = (newOpen, options = {}) => {
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
@@ -235,7 +209,7 @@ export function RecipeSheet({
         }
 
         // Check for unsaved changes
-        if (!newOpen && hasFormChanges()) {
+        if (!newOpen && hasChanges()) {
             setShowUnsavedChanges(true);
             return;
         }
@@ -255,6 +229,14 @@ export function RecipeSheet({
             onOpenChange?.(newOpen);
         }
     };
+
+    // Handle save button state
+    const canSave = useCallback(() => {
+        if (mode === "view") return false;
+        if (isSaving) return false;
+        if (!recipeName || !selectedDog) return false;
+        return hasChanges();
+    }, [mode, isSaving, recipeName, selectedDog, hasChanges]);
 
     // Save functionality
     const handleSave = async () => {

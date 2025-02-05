@@ -95,4 +95,18 @@ export const authService = {
             throw error;
         }
     },
+
+    signOut: async () => {
+        try {
+            // Just clear the local session
+            await supabase.auth.signOut();
+            window.location.href = "/";
+            return true;
+        } catch (error) {
+            console.error("Sign out error:", error);
+            // Even if there's an error, we'll clear local storage
+            window.location.href = "/";
+            return true;
+        }
+    },
 };

@@ -23,19 +23,20 @@ import {
 } from "@/components/ui/sidebar";
 import Slider from "@/assets/icons/slider";
 import CircleLogout from "@/assets/icons/circle-logout";
+import { useNavigate } from "react-router-dom";
+import { authService } from "@/lib/stores/auth-store";
 
 export function NavFooter({ account }) {
     const { setShowSettings } = useSettingsDialog();
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const navigate = useNavigate();
 
     const handleLogout = async () => {
         try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-            toast.success("Logged out successfully");
+            await authService.signOut();
         } catch (error) {
             console.error("Error logging out:", error);
-            toast.error("Error logging out");
+            toast.error("Failed to log out. Please try again.");
         }
     };
 

@@ -129,19 +129,44 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             weight_metric: dog?.weight_metric || 0,
             weight_imperial: dog?.weight_imperial || 0,
         },
+        resetOptions: {
+            keepDirtyValues: false,
+            keepErrors: false,
+        },
     });
 
     // Track form changes
-    const isDirty =
-        form.formState.isDirty || avatarFile !== null || coverFile !== null;
+    const hasChanges = () => {
+        // Check if any form values changed
+        const formValues = form.getValues();
+        const hasFormChanges =
+            formValues.dog_name !== dog?.dog_name ||
+            formValues.breed !== dog?.breed ||
+            formValues.weight_metric !== dog?.weight_metric ||
+            formValues.weight_imperial !== dog?.weight_imperial ||
+            (formValues.dob &&
+                dog?.dob &&
+                new Date(formValues.dob).getTime() !==
+                    new Date(dog.dob).getTime());
+
+        // Check if files changed
+        const hasFileChanges = avatarFile !== null || coverFile !== null;
+
+        return hasFormChanges || hasFileChanges;
+    };
 
     // Handle dialog close with unsaved changes
-    const handleOpenChange = (open) => {
-        if (!open && isDirty) {
+    const handleOpenChange = (isOpen) => {
+        if (!isOpen && hasChanges()) {
             setShowDiscardDialog(true);
-        } else {
-            onOpenChange(open);
+            return;
         }
+
+        if (!isOpen) {
+            resetForm();
+        }
+
+        onOpenChange(isOpen);
     };
 
     // Handle discard confirmation
@@ -155,9 +180,9 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
         onOpenChange(false);
     };
 
-    // Reset form when dialog opens with new dog data
+    // Reset form when dog data changes
     useEffect(() => {
-        if (open && dog) {
+        if (dog) {
             form.reset({
                 dog_name: dog.dog_name || "",
                 breed: dog.breed || "",
@@ -170,7 +195,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             setAvatarFile(null);
             setCoverFile(null);
         }
-    }, [open, dog, form.reset]);
+    }, [dog, form.reset]);
 
     // Handle weight conversion
     const handleWeightChange = (value, unit) => {
@@ -666,7 +691,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                 <Button
                                     variant="outline"
                                     onClick={form.handleSubmit(onSubmit)}
-                                    disabled={isPending || !isDirty}
+                                    disabled={isPending || !hasChanges()}
                                 >
                                     {isPending ? (
                                         <>
@@ -845,7 +870,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                     <Button
                                         variant="outline"
                                         onClick={form.handleSubmit(onSubmit)}
-                                        disabled={isPending || !isDirty}
+                                        disabled={isPending || !hasChanges()}
                                     >
                                         {isPending ? (
                                             <>

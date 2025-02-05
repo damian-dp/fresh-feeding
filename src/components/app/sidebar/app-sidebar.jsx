@@ -31,6 +31,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import ViewAll from "@/assets/icons/view-all";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NavAdmin } from "./nav-admin";
+import { useUser } from "@/components/providers/user-provider";
 
 // This is sample data.
 const data = {
@@ -93,8 +95,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }) {
+    const { isAdmin } = useUser();
+
     return (
-        <Sidebar variant="floating" collapsible="icon" {...props} side={useIsMobile ? "bottom" : "left"}>
+        <Sidebar
+            variant="floating"
+            collapsible="icon"
+            {...props}
+            side={useIsMobile ? "bottom" : "left"}
+        >
             <SidebarHeader className="hidden md:block">
                 <div className="flex flex-row items-center gap-3 p-3 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
                     <img
@@ -113,6 +122,8 @@ export function AppSidebar({ ...props }) {
                 <NavMain main={data.main} />
                 {/* <Separator className="hidden border-sidebar-border w-[60%] mx-auto group-data-[collapsible=icon]:block" /> */}
                 <NavResources resources={data.resources} />
+
+                {isAdmin && <NavAdmin />}
             </SidebarContent>
             <SidebarFooter>
                 <NavFooter account={data.account} />

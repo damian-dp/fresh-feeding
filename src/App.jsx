@@ -31,6 +31,8 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TermsPage } from "@/pages/landing/terms-page";
 import { PrivacyPage } from "@/pages/landing/privacy-page";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { AdminDashPage } from "./pages/admin/admin-dash";
+import { AdminRoute } from "./components/auth/admin-route";
 
 function AppContent() {
     return (
@@ -52,6 +54,7 @@ function AppContent() {
                     element={<UpdatePasswordPage />}
                 />
                 <Route path="/reset-password" element={<AuthRedirect />} />
+
                 <Route
                     element={
                         <ProtectedRoute>
@@ -67,6 +70,16 @@ function AppContent() {
                         element={<IngredientDatabasePage />}
                     />
                     <Route path="/suppliers" element={<h1>Suppliers</h1>} />
+                    <Route
+                        path="/admin-dashboard"
+                        element={
+                            <AdminRoute>
+                                <RootLayout>
+                                    <AdminDashPage />
+                                </RootLayout>
+                            </AdminRoute>
+                        }
+                    />
                 </Route>
             </Routes>
             <Toaster position="bottom-right" richColors />

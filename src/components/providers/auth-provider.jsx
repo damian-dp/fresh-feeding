@@ -62,6 +62,11 @@ export function AuthProvider({ children }) {
             // });
             setSession(currentSession);
             setLoading(false);
+
+            // If user signs out, redirect to landing page
+            if (_event === "SIGNED_OUT") {
+                window.location.href = "/";
+            }
         });
 
         return () => subscription.unsubscribe();
