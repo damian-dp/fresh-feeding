@@ -1113,28 +1113,30 @@ export function AddDogDialog({ open, onOpenChange }) {
         <>
             <Sheet open={open} onOpenChange={handleOpenChange}>
                 <SheetContent className="bg-card">
-                    <SheetHeader className="">
-                        <SheetTitle>Add a new dog</SheetTitle>
-                        <SheetDescription className="hidden">
-                            Add your dog's details to get personalized feeding
-                            recommendations
-                        </SheetDescription>
-                        <SheetClose asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="rounded-full [&_svg]:size-5 w-11 h-11"
-                            >
-                                <X className="" />
-                            </Button>
-                        </SheetClose>
-                    </SheetHeader>
-                    <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
-                        {Content}
-                    </ScrollArea>
-                    <SheetFooter className="px-6 flex-row">
-                        {FooterContent}
-                    </SheetFooter>
+                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
+                        <SheetHeader className="">
+                            <SheetTitle>Add a new dog</SheetTitle>
+                            <SheetDescription className="hidden">
+                                Add your dog's details to get personalized
+                                feeding recommendations
+                            </SheetDescription>
+                            <SheetClose asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                >
+                                    <X className="" />
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                        <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
+                            {Content}
+                        </ScrollArea>
+                        <SheetFooter className="px-6 flex-row">
+                            {FooterContent}
+                        </SheetFooter>
+                    </div>
                 </SheetContent>
             </Sheet>
             <AlertDialog
