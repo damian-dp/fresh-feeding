@@ -49,7 +49,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, parse, isValid, format as formatDate } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
@@ -80,6 +80,8 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseDate } from "chrono-node";
+import { cn } from "@/lib/utils";
 
 // Convert countries object to array format we need
 const countryOptions = Object.entries(countries)
@@ -380,38 +382,74 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                         control={form.control}
                         name="dob"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="w-full">
                                 <FormLabel>Date of birth</FormLabel>
-                                <Popover modal={true}>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full justify-start text-left font-normal"
-                                            >
-                                                <CalendarDays className="size-4" />
-                                                {field.value ? (
-                                                    format(field.value, "PP")
-                                                ) : (
-                                                    <span>Pick a date</span>
-                                                )}
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            disabled={(date) =>
-                                                date > new Date() ||
-                                                date < new Date("1990-01-01")
+                                <Input
+                                    placeholder="DD/MM/YYYY"
+                                    value={
+                                        field.value instanceof Date
+                                            ? formatDate(field.value, "PP")
+                                            : field.value || ""
+                                    }
+                                    onChange={(e) => {
+                                        const input = e.target.value;
+                                        field.onChange(input);
+                                    }}
+                                    onBlur={(e) => {
+                                        const value = e.target.value;
+                                        if (!value) return;
+
+                                        // Try parsing as natural language first
+                                        const naturalDate = parseDate(value);
+                                        if (
+                                            naturalDate &&
+                                            isValid(naturalDate)
+                                        ) {
+                                            field.onChange(naturalDate);
+                                            clearFieldError("dob");
+                                            return;
+                                        }
+
+                                        // Try common date formats
+                                        const formats = [
+                                            "dd/MM/yyyy",
+                                            "MM/dd/yyyy",
+                                            "yyyy-MM-dd",
+                                            "d/M/yyyy",
+                                            "M/d/yyyy",
+                                        ];
+
+                                        for (const dateFormat of formats) {
+                                            const parsedDate = parse(
+                                                value,
+                                                dateFormat,
+                                                new Date()
+                                            );
+                                            if (isValid(parsedDate)) {
+                                                field.onChange(parsedDate);
+                                                clearFieldError("dob");
+                                                return;
                                             }
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
+                                        }
+
+                                        // If we couldn't parse it, show error
+                                        form.setError("dob", {
+                                            type: "manual",
+                                            message:
+                                                "Please enter a valid date",
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-full",
+                                        form.formState.errors.dob &&
+                                            "border-destructive focus-visible:ring-destructive"
+                                    )}
+                                />
+                                {form.formState.errors.dob && (
+                                    <FormMessage>
+                                        {form.formState.errors.dob.message}
+                                    </FormMessage>
+                                )}
                             </FormItem>
                         )}
                     />
