@@ -100,6 +100,7 @@ export function RecipeSheetEdit({
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
+                            autoFocus={true}
                             title="Meat and bone"
                             items={ingredientSections.meat_and_bone.getItems()}
                             onRemoveItem={(id) =>
@@ -121,6 +122,7 @@ export function RecipeSheetEdit({
                     {/* Plant Matter Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
+                            autoFocus={true}
                             title="Plant matter"
                             items={ingredientSections.plant_matter.getItems()}
                             onRemoveItem={(id) =>
@@ -142,6 +144,7 @@ export function RecipeSheetEdit({
                     {/* Secreting Organs Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
+                            autoFocus={true}
                             title="Secreting organs"
                             items={ingredientSections.secreting_organs.getItems()}
                             onRemoveItem={(id) =>
@@ -163,6 +166,7 @@ export function RecipeSheetEdit({
                     {/* Liver Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
+                            autoFocus={true}
                             title="Liver"
                             items={ingredientSections.liver.getItems()}
                             onRemoveItem={(id) =>
@@ -181,6 +185,7 @@ export function RecipeSheetEdit({
 
                     <div className="flex flex-col gap-6 md:col-span-2">
                         <IngredientSection
+                            autoFocus={true}
                             title="Other ingredients"
                             items={ingredientSections.misc.getItems()}
                             onRemoveItem={(id) =>

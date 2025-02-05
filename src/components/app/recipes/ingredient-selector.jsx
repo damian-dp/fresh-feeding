@@ -12,6 +12,7 @@ export function IngredientSelector({
     onSelect,
     selectedIngredient,
     className,
+    autoFocus = false,
 }) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
@@ -33,7 +34,7 @@ export function IngredientSelector({
         <div className="h-14">
             <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <Input
-                    autoFocus
+                    autoFocus={autoFocus}
                     value={
                         search ||
                         (selectedIngredient

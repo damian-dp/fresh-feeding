@@ -79,6 +79,7 @@ export function IngredientSection({
     onToggleActive,
     ingredients,
     isLoading,
+    autoFocus = false,
 }) {
     return (
         <div
@@ -161,6 +162,7 @@ export function IngredientSection({
                             <LoadingState />
                         ) : (
                             <IngredientSelector
+                                autoFocus={autoFocus}
                                 ingredients={ingredients}
                                 onSelect={(ingredient) =>
                                     onAddItem(ingredient, category)

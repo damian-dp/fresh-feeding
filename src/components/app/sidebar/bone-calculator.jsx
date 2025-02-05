@@ -112,6 +112,7 @@ export function BoneCalculator({ open, onOpenChange }) {
                                 </div>
                             ) : (
                                 <IngredientSelector
+                                    autoFocus={false}
                                     ingredients={boneIngredients.map((ing) => ({
                                         id: ing.ingredient_id,
                                         ingredient_id: ing.ingredient_id,

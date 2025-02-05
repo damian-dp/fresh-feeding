@@ -64,6 +64,7 @@ export function RecipeSheetCreate({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 p-8 border-b border-border">
                 {Object.entries(ingredientSections).map(([key, section]) => (
                     <IngredientSection
+                        autoFocus={true}
                         key={key}
                         title={section.title}
                         items={section.getItems()}
