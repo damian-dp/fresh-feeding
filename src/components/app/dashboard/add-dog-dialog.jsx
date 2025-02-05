@@ -1112,8 +1112,8 @@ export function AddDogDialog({ open, onOpenChange }) {
     return (
         <>
             <Sheet open={open} onOpenChange={handleOpenChange}>
-                <SheetContent className="bg-card">
-                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
+                <SheetContent className="bg-card max-h-[100svh]">
+                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-svh">
                         <SheetHeader className="">
                             <SheetTitle>Add a new dog</SheetTitle>
                             <SheetDescription className="hidden">
@@ -1130,7 +1130,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                 </Button>
                             </SheetClose>
                         </SheetHeader>
-                        <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
+                        <ScrollArea className="h-[calc(100svh-152px)] md:h-[calc(100svh-168px)]">
                             {Content}
                         </ScrollArea>
                         <SheetFooter className="px-6 flex-row">
