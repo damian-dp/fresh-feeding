@@ -584,7 +584,7 @@ export function RecipeSheet({
         <>
             <Sheet open={open} onOpenChange={handleClose}>
                 <SheetContent className="sm:p-2">
-                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
+                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-svh">
                         <SheetHeader>
                             <SheetTitle>
                                 {mode === "create"
@@ -610,7 +610,7 @@ export function RecipeSheet({
                                 </Button>
                             </SheetClose>
                         </SheetHeader>
-                        <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
+                        <ScrollArea className="h-[calc(100svh-152px)] md:h-[calc(100svh-168px)]">
                             {renderContent()}
                         </ScrollArea>
                         <SheetFooter
