@@ -53,10 +53,19 @@ export function BoneCalculator({ open, onOpenChange }) {
     const calculateBoneRequirements = () => {
         if (!dogDetails || !selectedIngredient?.bone_percent) return null;
 
-        const dailyIntakeGrams = dogDetails.ratios_intake * 1000; // Convert kg to g
+        const dailyIntakeGrams =
+            (dogDetails.ratios_intake / 100) *
+            (dogDetails.weight_metric * 1000); // Convert kg to g
         const boneRequirementGrams = dailyIntakeGrams * dogDetails.ratios_bone;
         const ingredientRequiredGrams =
             (boneRequirementGrams / selectedIngredient.bone_percent) * 100;
+
+        console.log("Daily intake:", dailyIntakeGrams);
+        console.log("Bone requirement:", boneRequirementGrams);
+        console.log("Ingredient required:", ingredientRequiredGrams);
+
+        console.log("dog intake" + dogDetails.ratios_intake);
+        console.log("dog weight" + dogDetails.weight_metric);
 
         return {
             dailyIntake: Math.round(dailyIntakeGrams),
