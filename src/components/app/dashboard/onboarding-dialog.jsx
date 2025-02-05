@@ -117,17 +117,12 @@ export function OnboardingDialog() {
                         {step === 0 && (
                             <>
                                 <div className="flex flex-col gap-6 items-center justify-center pt-2">
-                                    <div className="bg-organ text-organ-foreground border-2 border-organ-border rounded-full p-12 mb-8 [&>svg]:-translate-y-0.5">
-                                        <FoodDog
-                                            width={130}
-                                            height={130}
-                                            secondaryfill="hsl(var(--organ-border))"
-                                        />
+                                    <div className="bg-organ text-organ-foreground border-2 border-organ-border rounded-full p-10 md:p-12 mb-8 [&>svg]:size-24 md:[&>svg]:size-32 [&>svg]:-translate-y-0.5">
+                                        <FoodDog secondaryfill="hsl(var(--organ-border))" />
                                     </div>
 
-                                    <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Welcome to the fresh <br />
-                                        feeding revolution
+                                    <h2 className="text-[1.8rem] font-medium text-center max-w-[20rem] leading-[1.2]">
+                                        Welcome to the fresh feeding revolution
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-sm">
                                         Empowering dog parents to create
@@ -142,7 +137,7 @@ export function OnboardingDialog() {
                         {step === 1 && (
                             <>
                                 <div className="flex flex-col gap-6 items-center justify-center pt-2">
-                                    <div className="bg-plant text-plant-foreground border-2 border-plant-border rounded-full p-12 mb-8 [&>svg]:translate-y-1">
+                                    <div className="bg-plant text-plant-foreground border-2 border-plant-border rounded-full [&>svg]:translate-y-1 p-10 md:p-12 mb-8 [&>svg]:size-24 md:[&>svg]:size-32">
                                         <TargetFull
                                             width={130}
                                             height={130}
@@ -150,9 +145,9 @@ export function OnboardingDialog() {
                                         />
                                     </div>
 
-                                    <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Create your pup's profile <br />
-                                        and set their goals
+                                    <h2 className="text-[1.8rem] font-medium text-center max-w-[20rem] leading-[1.2]">
+                                        Create your pup's profile and set their
+                                        goals
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-sm">
                                         Get optimal feeding ratios by providing
@@ -168,7 +163,7 @@ export function OnboardingDialog() {
                         {step === 2 && (
                             <>
                                 <div className="flex flex-col gap-6 items-center justify-center pt-2">
-                                    <div className="bg-meat text-meat-foreground/70 border-2 border-meat-border rounded-full p-12 mb-8 [&>svg]:translate-x-1">
+                                    <div className="bg-meat text-meat-foreground/70 border-2 border-meat-border rounded-full [&>svg]:translate-x-1 p-10 md:p-12 mb-8 [&>svg]:size-24 md:[&>svg]:size-32">
                                         <RecipeCreate
                                             width={130}
                                             height={130}
@@ -176,9 +171,9 @@ export function OnboardingDialog() {
                                         />
                                     </div>
 
-                                    <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Create, edit and share recipes <br />
-                                        with nutritional insights
+                                    <h2 className="text-[1.8rem] font-medium text-center max-w-[20rem] leading-[1.2]">
+                                        Create, edit and share recipes with
+                                        nutritional insights
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-[27rem]">
                                         Craft recipes tailored to your dogs, get
@@ -194,7 +189,7 @@ export function OnboardingDialog() {
                         {step === 3 && (
                             <>
                                 <div className="flex flex-col gap-6 items-center justify-center pt-2">
-                                    <div className="bg-plant text-plant-foreground/60 border-2 border-plant-border rounded-full p-12 mb-8 [&>svg]:-translate-x-1">
+                                    <div className="bg-plant text-plant-foreground/60 border-2 border-plant-border rounded-full [&>svg]:-translate-x-1 p-10 md:p-12 mb-8 [&>svg]:size-24 md:[&>svg]:size-32">
                                         <DietFood
                                             width={130}
                                             height={130}
@@ -206,9 +201,9 @@ export function OnboardingDialog() {
                                         Coming soon
                                     </Badge>
 
-                                    <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Explore nutritionist-curated <br />
-                                        ingredients and recipes
+                                    <h2 className="text-[1.8rem] font-medium text-center max-w-[20rem] leading-[1.2]">
+                                        Explore nutritionist-curated ingredients
+                                        and recipes
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-[27rem]">
                                         Search our extensive ingredient database
@@ -223,7 +218,7 @@ export function OnboardingDialog() {
                         {step === 4 && (
                             <>
                                 <div className="flex flex-col gap-6 items-center justify-center pt-2">
-                                    <div className="bg-organ text-organ-foreground/60 border-2 border-organ-border rounded-full p-12 mb-8 [&>svg]:-translate-x-0">
+                                    <div className="bg-organ text-organ-foreground/60 border-2 border-organ-border rounded-full [&>svg]:-translate-x-0 p-10 md:p-12 mb-8 [&>svg]:size-24 md:[&>svg]:size-32">
                                         <Discount
                                             width={130}
                                             height={130}
@@ -235,9 +230,8 @@ export function OnboardingDialog() {
                                         Coming soon
                                     </Badge>
 
-                                    <h2 className="text-[2rem] font-medium text-center leading-[1.2]">
-                                        Find suppliers and <br />
-                                        exclusive discounts
+                                    <h2 className="text-[1.8rem] font-medium text-center max-w-[20rem] leading-[1.2]">
+                                        Find suppliers and exclusive discounts
                                     </h2>
                                     <p className="text-center text-sm leading-relaxed font-normal text-muted-foreground max-w-[22rem]">
                                         Access fresh feeding suppliers around
@@ -261,33 +255,17 @@ export function OnboardingDialog() {
         }
     }, [step]);
 
-    if (isDesktop) {
-        return (
-            <Dialog open={open}>
-                <DialogContent className="max-w-[38rem] py-16 px-8">
-                    <DialogHeader className="hidden">
-                        <DialogTitle>Welcome</DialogTitle>
-                        <DialogDescription>
-                            Let's get you started with Fresh Food Feeding
-                        </DialogDescription>
-                    </DialogHeader>
-                    {Content}
-                </DialogContent>
-            </Dialog>
-        );
-    }
-
     return (
-        <Drawer open={open}>
-            <DrawerContent>
-                <DrawerHeader>
-                    <DrawerTitle>Welcome</DrawerTitle>
-                    <DrawerDescription>
+        <Dialog open={open}>
+            <DialogContent className="sm:max-w-[90%] md:max-w-[38rem] py-16 px-8">
+                <DialogHeader className="hidden">
+                    <DialogTitle>Welcome</DialogTitle>
+                    <DialogDescription>
                         Let's get you started with Fresh Food Feeding
-                    </DrawerDescription>
-                </DrawerHeader>
+                    </DialogDescription>
+                </DialogHeader>
                 {Content}
-            </DrawerContent>
-        </Drawer>
+            </DialogContent>
+        </Dialog>
     );
 }
