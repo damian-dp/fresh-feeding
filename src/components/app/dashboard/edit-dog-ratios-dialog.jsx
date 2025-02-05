@@ -787,86 +787,81 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
             >
                 <SheetContent
                     autoFocus={false}
-                    className="focus:outline-none bg-card"
+                    className="focus:outline-none gap-0 bg-card flex flex-col h-full p-0"
                 >
-                    <SheetHeader>
-                        <SheetTitle>Edit dog ratios</SheetTitle>
-                        <SheetDescription className="hidden">
-                            Update your dog's nutritional ratios
-                        </SheetDescription>
-                        <SheetClose asChild>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="rounded-full [&_svg]:size-5 w-11 h-11"
-                            >
-                                <X className="" />
-                            </Button>
-                        </SheetClose>
-                    </SheetHeader>
-                    <ScrollArea className="h-[calc(100dvh-152px)] md:h-[calc(100dvh-168px)]">
+                    <div className="">
+                        <SheetHeader>
+                            <SheetTitle>Edit dog ratios</SheetTitle>
+                            <SheetDescription className="hidden">
+                                Update your dog's nutritional ratios
+                            </SheetDescription>
+                            <SheetClose asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                >
+                                    <X className="" />
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                    </div>
+
+                    <ScrollArea className="flex-1">
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
-                                className="p-4"
+                                className="flex flex-col gap-6"
                             >
                                 {Content}
                             </form>
                         </Form>
                     </ScrollArea>
-                    <SheetFooter className="flex flex-row justify-between w-full">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => {
-                                form.setValue(
-                                    "ratios_muscle_meat",
-                                    DEFAULT_RATIOS.ratios_muscle_meat,
-                                    { shouldDirty: true }
-                                );
-                                form.setValue(
-                                    "ratios_bone",
-                                    DEFAULT_RATIOS.ratios_bone,
-                                    { shouldDirty: true }
-                                );
-                                form.setValue(
-                                    "ratios_plant_matter",
-                                    DEFAULT_RATIOS.ratios_plant_matter,
-                                    { shouldDirty: true }
-                                );
-                                form.setValue(
-                                    "ratios_liver",
-                                    DEFAULT_RATIOS.ratios_liver,
-                                    { shouldDirty: true }
-                                );
-                                form.setValue(
-                                    "ratios_secreting_organ",
-                                    DEFAULT_RATIOS.ratios_secreting_organ,
-                                    { shouldDirty: true }
-                                );
-                                form.trigger();
-                            }}
-                        >
-                            Reset to default
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={form.handleSubmit(onSubmit)}
-                            disabled={isPending || !isDirty}
-                        >
-                            {isPending ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCheck className="mr-2 h-4 w-4" />
-                                    Save
-                                </>
-                            )}
-                        </Button>
-                    </SheetFooter>
+
+                    <div className="">
+                        <SheetFooter className="flex flex-row justify-between items-center">
+                            <span
+                                className={cn(
+                                    "font-normal",
+                                    getTotalPercentage(form.getValues()) >
+                                        100 ||
+                                        getTotalPercentage(form.getValues()) <
+                                            100
+                                        ? "text-destructive"
+                                        : "text-muted-foreground"
+                                )}
+                            >
+                                Total: {getTotalPercentage(form.getValues())}%
+                            </span>
+
+                            <div className="flex flex-row items-center gap-1">
+                                <Button
+                                    className="hidden sm:block"
+                                    variant="ghost"
+                                    onClick={() => handleOpenChange(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={form.handleSubmit(onSubmit)}
+                                    disabled={isPending || !isDirty}
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saving
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCheck className="mr-2 h-4 w-4" />
+                                            Save
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </SheetFooter>
+                    </div>
                 </SheetContent>
             </Sheet>
 

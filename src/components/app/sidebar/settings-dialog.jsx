@@ -59,6 +59,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export function SettingsDialog({ open, onOpenChange }) {
     const isDesktop = useMediaQuery("(min-width: 768px)", {
@@ -250,7 +251,11 @@ export function SettingsDialog({ open, onOpenChange }) {
     };
 
     const Content = (
-        <form id="settings-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+            id="settings-form"
+            onSubmit={handleSubmit}
+            className="space-y-8 py-6"
+        >
             <div className="space-y-6 px-6">
                 <p className="font-medium">Personal details</p>
                 <div className="flex flex-col sm:flex-row gap-6">
@@ -319,7 +324,12 @@ export function SettingsDialog({ open, onOpenChange }) {
                 <p className="font-medium">App preferences</p>
                 <div className="flex flex-col sm:flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
-                        <Label htmlFor="measurement">Measurement system</Label>
+                        <Label
+                            htmlFor="measurement"
+                            className="flex flex-row items-center gap-2"
+                        >
+                            Unit system <Badge size="sm">Coming soon</Badge>
+                        </Label>
                         <Select
                             disabled={true}
                             value={unitMetric ? "metric" : "imperial"}
@@ -397,7 +407,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                                     </AvatarFallback>
                                 </Avatar>
                             </DialogHeader>
-                            <div className="py-6">{Content}</div>
+                            <div className="">{Content}</div>
                             <DialogFooter>
                                 <div className="flex flex-row items-center gap-2">
                                     <DialogClose asChild>
@@ -465,41 +475,58 @@ export function SettingsDialog({ open, onOpenChange }) {
                         onOpenChange={handleOpenChange}
                         initialFocus={false}
                     >
-                        <SheetContent className="bg-card max-h-[100svh]">
-                            <SheetHeader>
-                                <SheetTitle>Account Settings</SheetTitle>
-                                <SheetDescription className="hidden">
-                                    Update your account preferences.
-                                </SheetDescription>
-                            </SheetHeader>
-                            <ScrollArea className="h-[calc(100svh-152px)] md:h-[calc(100svh-168px)] py-6">
+                        <SheetContent className="focus:outline-none gap-0 bg-card flex flex-col h-full p-0">
+                            <div className="">
+                                <SheetHeader>
+                                    <SheetTitle>Account Settings</SheetTitle>
+                                    <SheetDescription className="hidden">
+                                        Update your account preferences.
+                                    </SheetDescription>
+                                    <SheetClose asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                        >
+                                            <X className="" />
+                                        </Button>
+                                    </SheetClose>
+                                </SheetHeader>
+                            </div>
+                            <ScrollArea className="flex-1 py-0">
                                 {Content}
                             </ScrollArea>
-                            <SheetFooter className="px-6 flex-row">
-                                <div className="flex flex-row items-center gap-2">
-                                    <SheetClose asChild>
-                                        <Button variant="link">Cancel</Button>
-                                    </SheetClose>
-                                    <Button
-                                        variant="outline"
-                                        form="settings-form"
-                                        type="submit"
-                                        disabled={saving || !hasUnsavedChanges}
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Saving
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCheck className="mr-2 h-4 w-4" />
-                                                Save
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </SheetFooter>
+                            <div className="">
+                                <SheetFooter className="px-6 flex-row">
+                                    <div className="flex flex-row items-center gap-1">
+                                        <SheetClose asChild>
+                                            <Button variant="link">
+                                                Cancel
+                                            </Button>
+                                        </SheetClose>
+                                        <Button
+                                            variant="outline"
+                                            form="settings-form"
+                                            type="submit"
+                                            disabled={
+                                                saving || !hasUnsavedChanges
+                                            }
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Saving
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCheck className="mr-2 h-4 w-4" />
+                                                    Save
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </SheetFooter>
+                            </div>
                         </SheetContent>
                     </Sheet>
 

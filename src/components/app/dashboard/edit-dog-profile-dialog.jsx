@@ -6,6 +6,7 @@ import {
     Loader2,
     Pencil,
     Trash,
+    X,
 } from "lucide-react";
 import Dog from "@/assets/icons/dog";
 import {
@@ -69,6 +70,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/auth-provider";
 import DogOutline from "@/assets/icons/dog-outline";
 import PhotoPlus from "@/assets/icons/photo-plus";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Convert countries object to array format we need
 const countryOptions = Object.entries(countries)
@@ -332,7 +343,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
     }
 
     const Content = (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-6 px-6">
                 <div className="grid gap-4 md:grid-cols-2">
                     <FormField
@@ -476,7 +487,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
 
             <Separator />
 
-            <div className="flex flex-row gap-10 px-8 py-2">
+            <div className="flex flex-col items-center sm:items-start sm:flex-row gap-10 px-8 py-2">
                 <FormItem>
                     <FormControl>
                         <div className="flex items-center gap-4">
@@ -738,56 +749,84 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
 
     return (
         <>
-            <Drawer
+            <Sheet
                 open={open}
                 onOpenChange={handleOpenChange}
                 initialFocus={false}
             >
-                <DrawerContent autoFocus={false} className="focus:outline-none">
-                    <DrawerHeader>
-                        <DrawerTitle>Edit dog profile</DrawerTitle>
-                        <DrawerDescription>
-                            Update your dog's profile information
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="p-4"
-                        >
-                            {Content}
-                        </form>
-                    </Form>
-                    <DrawerFooter>
-                        <div className="flex flex-row items-center gap-2">
-                            <Button
-                                variant="destructive"
-                                onClick={() => setShowDeleteDialog(true)}
+                <SheetContent
+                    autoFocus={false}
+                    className="focus:outline-none gap-0 bg-card flex flex-col h-full p-0"
+                >
+                    <div className="">
+                        <SheetHeader>
+                            <SheetTitle>Edit dog profile</SheetTitle>
+                            <SheetDescription className="hidden">
+                                Update your dog's profile information
+                            </SheetDescription>
+                            <SheetClose asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                >
+                                    <X className="" />
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                    </div>
+
+                    <ScrollArea className="flex-1">
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="py-6"
                             >
-                                <Trash className="h-4 w-4" />
-                                Delete
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={form.handleSubmit(onSubmit)}
-                                disabled={isPending || !isDirty}
-                            >
-                                {isPending ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCheck className="mr-2 h-4 w-4" />
-                                        Save
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+                                {Content}
+                            </form>
+                        </Form>
+                    </ScrollArea>
+                    <div className="">
+                        <SheetFooter>
+                            <div className="flex w-full flex-row items-center justify-between gap-2">
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setShowDeleteDialog(true)}
+                                >
+                                    <Trash className="h-4 w-4" />
+                                    Delete
+                                </Button>
+                                <div className="flex flex-row items-center gap-1">
+                                    <Button
+                                        className="hidden sm:block"
+                                        variant="ghost"
+                                        onClick={() => handleOpenChange(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={form.handleSubmit(onSubmit)}
+                                        disabled={isPending || !isDirty}
+                                    >
+                                        {isPending ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Saving
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCheck className="mr-2 h-4 w-4" />
+                                                Save
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </SheetFooter>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             <ImageEditorDialog
                 file={selectedFile}

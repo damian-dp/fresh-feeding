@@ -356,7 +356,7 @@ export function AddDogDialog({ open, onOpenChange }) {
 
     const Content = (
         <Form {...form}>
-            <div className="overflow-hidden">
+            <div className="">
                 <motion.div
                     layout
                     animate={{ height: contentHeight }}
@@ -387,10 +387,10 @@ export function AddDogDialog({ open, onOpenChange }) {
                             }}
                             className="w-full absolute left-0 right-0"
                         >
-                            <div className="space-y-12 py-12 px-6 step-content flex flex-col w-full items-center justify-center">
+                            <div className="space-y-6 md:space-y-12 py-5 md:py-12 px-6 step-content flex flex-col w-full items-center justify-center">
                                 {step === 0 && (
                                     <>
-                                        <div className="">
+                                        <div className="hidden md:block">
                                             <h2 className="text-3xl font-medium">
                                                 Add a new dog
                                             </h2>
@@ -457,12 +457,12 @@ export function AddDogDialog({ open, onOpenChange }) {
                                         />
 
                                         <div className="flex flex-col gap-6 w-full px-6">
-                                            <div className="flex flex-row gap-6 w-full">
+                                            <div className="flex flex-col sm:flex-row gap-6 w-full">
                                                 <FormField
                                                     control={form.control}
                                                     name="dog_name"
                                                     render={({ field }) => (
-                                                        <FormItem>
+                                                        <FormItem className="w-full">
                                                             <FormLabel>
                                                                 Name
                                                             </FormLabel>
@@ -503,7 +503,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                     control={form.control}
                                                     name="breed"
                                                     render={({ field }) => (
-                                                        <FormItem>
+                                                        <FormItem className="w-full">
                                                             <FormLabel>
                                                                 Breed
                                                             </FormLabel>
@@ -542,7 +542,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                             </div>
 
                                             <div className="flex flex-row gap-6 w-full">
-                                                <div className="flex flex-row gap-6 w-full">
+                                                <div className="flex flex-col sm:flex-row gap-6 w-full">
                                                     <FormField
                                                         control={form.control}
                                                         name="dob"
@@ -1165,8 +1165,11 @@ export function AddDogDialog({ open, onOpenChange }) {
     return (
         <>
             <Sheet open={open} onOpenChange={handleOpenChange}>
-                <SheetContent className="bg-card max-h-[100dvh]">
-                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
+                <SheetContent
+                    autoFocus={false}
+                    className="focus:outline-none gap-0 bg-card flex flex-col h-full p-0"
+                >
+                    <div className="">
                         <SheetHeader className="">
                             <SheetTitle>Add a new dog</SheetTitle>
                             <SheetDescription className="hidden">
@@ -1183,10 +1186,11 @@ export function AddDogDialog({ open, onOpenChange }) {
                                 </Button>
                             </SheetClose>
                         </SheetHeader>
-                        <ScrollArea className="h-[calc(100dvh-152px)] md:h-[calc(100dvh-168px)]">
-                            {Content}
-                        </ScrollArea>
-                        <SheetFooter className="px-6 flex-row">
+                    </div>
+
+                    <ScrollArea className="flex-1">{Content}</ScrollArea>
+                    <div className="">
+                        <SheetFooter className="flex px-6 flex-row">
                             {FooterContent}
                         </SheetFooter>
                     </div>

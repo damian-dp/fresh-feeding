@@ -675,126 +675,133 @@ export function RecipeSheet({
     return (
         <>
             <Sheet open={open} onOpenChange={handleClose}>
-                <SheetContent className="sm:p-2">
-                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-svh">
-                        <SheetHeader>
-                            <SheetTitle>
-                                {mode === "create"
-                                    ? "Create recipe"
-                                    : mode === "edit"
-                                    ? "Edit recipe"
-                                    : recipe?.recipe_name}
-                            </SheetTitle>
-                            <SheetDescription className="hidden">
-                                {mode === "create"
-                                    ? "Create a new recipe for your dog"
-                                    : mode === "edit"
-                                    ? "Make changes to your recipe"
-                                    : "View recipe details"}
-                            </SheetDescription>
-                            <SheetClose asChild>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="rounded-full [&_svg]:size-5 w-11 h-11"
-                                >
-                                    <X className="" />
-                                </Button>
-                            </SheetClose>
-                        </SheetHeader>
-                        <ScrollArea className="h-[calc(100svh-152px)] md:h-[calc(100svh-168px)]">
+                <SheetContent className="md:p-2">
+                    <div className="md:rounded-lg bg-card flex flex-col h-full p-0">
+                        <div className="">
+                            <SheetHeader>
+                                <SheetTitle>
+                                    {mode === "create"
+                                        ? "Create recipe"
+                                        : mode === "edit"
+                                        ? "Edit recipe"
+                                        : recipe?.recipe_name}
+                                </SheetTitle>
+                                <SheetDescription className="hidden">
+                                    {mode === "create"
+                                        ? "Create a new recipe for your dog"
+                                        : mode === "edit"
+                                        ? "Make changes to your recipe"
+                                        : "View recipe details"}
+                                </SheetDescription>
+                                <SheetClose asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                    >
+                                        <X className="" />
+                                    </Button>
+                                </SheetClose>
+                            </SheetHeader>
+                        </div>
+                        <ScrollArea className="flex-1">
                             {renderContent()}
                         </ScrollArea>
-                        <SheetFooter
-                            className={`px-6 flex-row ${
-                                mode === "edit" ? "justify-between" : ""
-                            }`}
-                        >
-                            {mode === "edit" && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive">
-                                            <Trash className="" />
-                                            Delete recipe
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>
-                                                Delete '{recipe?.recipe_name}'
-                                                recipe?
-                                            </AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This will permanently delete the
-                                                recipe titled '
-                                                {recipe?.recipe_name}'. This
-                                                action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>
-                                                Cancel
-                                            </AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={handleDelete}
-                                                variant="destructive"
-                                            >
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                            <div className="flex flex-row gap-2">
-                                <SheetClose>
-                                    <div className="hover:bg-accent h-10 px-4 py-2 hover:text-accent-foreground inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
-                                        {mode === "view" ? "Close" : "Cancel"}
-                                    </div>
-                                </SheetClose>
-                                {mode !== "view" && (
-                                    <Button
-                                        type="submit"
-                                        variant="outline"
-                                        onClick={handleSave}
-                                        disabled={
-                                            !recipeName ||
-                                            !selectedDog ||
-                                            isSaving
-                                        }
-                                    >
-                                        {isSaving && (
-                                            <Loader2 className="animate-spin" />
-                                        )}
-                                        {mode === "create" && !isSaving && (
-                                            <Plus className="" />
-                                        )}
-                                        {mode === "edit" && !isSaving && (
-                                            <CheckCheck className="" />
-                                        )}
+                        <div className="">
+                            <SheetFooter
+                                className={`px-6 flex flex-row ${
+                                    mode === "edit" ? "justify-between" : ""
+                                }`}
+                            >
+                                {mode === "edit" && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive">
+                                                <Trash className="" />
+                                                Delete recipe
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>
+                                                    Delete '
+                                                    {recipe?.recipe_name}'
+                                                    recipe?
+                                                </AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete
+                                                    the recipe titled '
+                                                    {recipe?.recipe_name}'. This
+                                                    action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>
+                                                    Cancel
+                                                </AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={handleDelete}
+                                                    variant="destructive"
+                                                >
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                                <div className="flex flex-row gap-2">
+                                    <SheetClose>
+                                        <div className="hover:bg-accent h-10 px-4 py-2 hover:text-accent-foreground inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+                                            {mode === "view"
+                                                ? "Close"
+                                                : "Cancel"}
+                                        </div>
+                                    </SheetClose>
+                                    {mode !== "view" && (
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            onClick={handleSave}
+                                            disabled={
+                                                !recipeName ||
+                                                !selectedDog ||
+                                                isSaving
+                                            }
+                                        >
+                                            {isSaving && (
+                                                <Loader2 className="animate-spin" />
+                                            )}
+                                            {mode === "create" && !isSaving && (
+                                                <Plus className="" />
+                                            )}
+                                            {mode === "edit" && !isSaving && (
+                                                <CheckCheck className="" />
+                                            )}
 
-                                        {mode === "create"
-                                            ? "Create recipe"
-                                            : "Save changes"}
-                                    </Button>
-                                )}
-                                {mode === "view" && (
-                                    <Button
-                                        type="submit"
-                                        variant="outline"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleClose(true, {
-                                                mode: "edit",
-                                                recipe: recipe,
-                                            });
-                                        }}
-                                    >
-                                        <Pencil className="" />
-                                        Edit recipe
-                                    </Button>
-                                )}
-                            </div>
-                        </SheetFooter>
+                                            {mode === "create"
+                                                ? "Create recipe"
+                                                : "Save changes"}
+                                        </Button>
+                                    )}
+                                    {mode === "view" && (
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleClose(true, {
+                                                    mode: "edit",
+                                                    recipe: recipe,
+                                                });
+                                            }}
+                                        >
+                                            <Pencil className="" />
+                                            Edit recipe
+                                        </Button>
+                                    )}
+                                </div>
+                            </SheetFooter>
+                        </div>
                     </div>
                 </SheetContent>
             </Sheet>
