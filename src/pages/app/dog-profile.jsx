@@ -231,10 +231,10 @@ export function DogProfilePage() {
                     )}
                     <CardContent className="relative py-0">
                         <div
-                            className={`flex flex-row items-end sm:items-start gap-5 ${
+                            className={`flex flex-row gap-5 ${
                                 dog.dog_cover && dog.dog_cover !== "NULL"
-                                    ? "-mt-4 items-start sm:items-end pb-5"
-                                    : "-mt-0 py-7"
+                                    ? "-mt-4 items-end pb-5"
+                                    : "-mt-0 py-6"
                             }`}
                         >
                             <Avatar
@@ -250,10 +250,10 @@ export function DogProfilePage() {
                                 </AvatarFallback>
                             </Avatar>
                             <div
-                                className={`flex-1 flex flex-row items-start justify-between ${
+                                className={`flex-1 flex flex-row justify-between ${
                                     dog.dog_cover && dog.dog_cover !== "NULL"
                                         ? ""
-                                        : "items-center"
+                                        : "items-start h-full"
                                 }`}
                             >
                                 <div
@@ -261,7 +261,7 @@ export function DogProfilePage() {
                                         dog.dog_cover &&
                                         dog.dog_cover !== "NULL"
                                             ? "pb-3 sm:pb-5"
-                                            : "pb-0"
+                                            : "p-0 my-8 sm:my-3"
                                     }`}
                                 >
                                     <p className="text-[1.375rem] font-medium mb-1 sm:mb-3 capitalize">
