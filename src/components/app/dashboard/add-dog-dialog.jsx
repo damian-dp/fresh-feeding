@@ -74,6 +74,8 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parse, isValid, format as formatDate } from "date-fns";
+import { parseDate } from "chrono-node";
 
 // Form validation schema
 const formSchema = z.object({
@@ -550,76 +552,127 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                     Date of
                                                                     birth
                                                                 </FormLabel>
-                                                                <Popover
-                                                                    modal={true}
-                                                                >
-                                                                    <PopoverTrigger
-                                                                        asChild
-                                                                    >
-                                                                        <Button
-                                                                            variant={
-                                                                                "outline"
-                                                                            }
-                                                                            className={cn(
-                                                                                "w-full justify-start text-left font-normal transition-colors duration-300",
-                                                                                !field.value &&
-                                                                                    "text-muted-foreground",
-                                                                                form
-                                                                                    .formState
-                                                                                    .errors
-                                                                                    .dob &&
-                                                                                    "border-destructive hover:bg-destructive/10 hover:text-destructive bg-destructive/10 text-destructive"
-                                                                            )}
-                                                                        >
-                                                                            <CalendarDays className="mr-2 size-4" />
-                                                                            {field.value ? (
-                                                                                format(
-                                                                                    field.value,
-                                                                                    "PP"
-                                                                                )
-                                                                            ) : (
-                                                                                <span>
-                                                                                    Pick
-                                                                                    a
-                                                                                    date
-                                                                                </span>
-                                                                            )}
-                                                                        </Button>
-                                                                    </PopoverTrigger>
-                                                                    <PopoverContent className="w-auto p-0">
-                                                                        <Calendar
-                                                                            mode="single"
-                                                                            selected={
-                                                                                field.value
-                                                                            }
-                                                                            onSelect={(
-                                                                                date
-                                                                            ) => {
-                                                                                field.onChange(
-                                                                                    date
+                                                                <Input
+                                                                    placeholder="DD/MM/YYYY"
+                                                                    value={
+                                                                        field.value instanceof
+                                                                        Date
+                                                                            ? formatDate(
+                                                                                  field.value,
+                                                                                  "PP"
+                                                                              )
+                                                                            : field.value ||
+                                                                              ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        const input =
+                                                                            e
+                                                                                .target
+                                                                                .value;
+                                                                        field.onChange(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        );
+                                                                    }}
+                                                                    onBlur={(
+                                                                        e
+                                                                    ) => {
+                                                                        const value =
+                                                                            e
+                                                                                .target
+                                                                                .value;
+                                                                        if (
+                                                                            !value
+                                                                        )
+                                                                            return;
+
+                                                                        // Try parsing as natural language first
+                                                                        const naturalDate =
+                                                                            parseDate(
+                                                                                value
+                                                                            );
+                                                                        if (
+                                                                            naturalDate &&
+                                                                            isValid(
+                                                                                naturalDate
+                                                                            )
+                                                                        ) {
+                                                                            field.onChange(
+                                                                                naturalDate
+                                                                            );
+                                                                            clearFieldError(
+                                                                                "dob"
+                                                                            );
+                                                                            return;
+                                                                        }
+
+                                                                        // Try common date formats
+                                                                        const formats =
+                                                                            [
+                                                                                "dd/MM/yyyy",
+                                                                                "MM/dd/yyyy",
+                                                                                "yyyy-MM-dd",
+                                                                                "d/M/yyyy",
+                                                                                "M/d/yyyy",
+                                                                            ];
+
+                                                                        for (const dateFormat of formats) {
+                                                                            const parsedDate =
+                                                                                parse(
+                                                                                    value,
+                                                                                    dateFormat,
+                                                                                    new Date()
                                                                                 );
-                                                                                if (
-                                                                                    date
-                                                                                ) {
-                                                                                    clearFieldError(
-                                                                                        "dob"
-                                                                                    );
-                                                                                }
-                                                                            }}
-                                                                            initialFocus
-                                                                            disabled={(
-                                                                                date
-                                                                            ) =>
-                                                                                date >
-                                                                                    new Date() ||
-                                                                                date <
-                                                                                    new Date(
-                                                                                        "1990-01-01"
-                                                                                    )
+                                                                            if (
+                                                                                isValid(
+                                                                                    parsedDate
+                                                                                )
+                                                                            ) {
+                                                                                field.onChange(
+                                                                                    parsedDate
+                                                                                );
+                                                                                clearFieldError(
+                                                                                    "dob"
+                                                                                );
+                                                                                return;
                                                                             }
-                                                                        />
-                                                                    </PopoverContent>
-                                                                </Popover>
+                                                                        }
+
+                                                                        // If we couldn't parse it, show error
+                                                                        form.setError(
+                                                                            "dob",
+                                                                            {
+                                                                                type: "manual",
+                                                                                message:
+                                                                                    "Please enter a valid date",
+                                                                            }
+                                                                        );
+                                                                    }}
+                                                                    className={cn(
+                                                                        "w-full",
+                                                                        form
+                                                                            .formState
+                                                                            .errors
+                                                                            .dob &&
+                                                                            "border-destructive focus-visible:ring-destructive"
+                                                                    )}
+                                                                />
+                                                                {form.formState
+                                                                    .errors
+                                                                    .dob && (
+                                                                    <FormMessage>
+                                                                        {
+                                                                            form
+                                                                                .formState
+                                                                                .errors
+                                                                                .dob
+                                                                                .message
+                                                                        }
+                                                                    </FormMessage>
+                                                                )}
                                                             </FormItem>
                                                         )}
                                                     />
