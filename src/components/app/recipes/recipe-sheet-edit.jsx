@@ -44,11 +44,11 @@ export function RecipeSheetEdit({
     const handleIngredientAdd = (ingredient, category) => {
         // Create the recipe_ingredients structure with proper category_id
         const newIngredient = {
-            ingredient_id: ingredient.id,
+            ingredient_id: ingredient.ingredient_id || ingredient.id,
             ingredients: {
-                ingredient_id: ingredient.id,
-                ingredient_name: ingredient.name,
-                category_id: ingredient.category,
+                ingredient_id: ingredient.ingredient_id || ingredient.id,
+                ingredient_name: ingredient.ingredient_name || ingredient.name,
+                category_id: ingredient.category_id || ingredient.category,
                 ...ingredient,
             },
             quantity: 0,

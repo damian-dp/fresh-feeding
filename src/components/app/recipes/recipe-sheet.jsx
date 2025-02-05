@@ -80,13 +80,22 @@ export function RecipeSheet({
     // Update state when recipe changes
     useEffect(() => {
         if (recipe && (mode === "view" || mode === "edit")) {
+            console.log("Mode changed to:", mode);
+            console.log("Recipe ingredients:", recipe.recipe_ingredients);
             setRecipeName(recipe.recipe_name || "");
             setSelectedDog(recipe.dog_id || "");
-            setMeatAndBone(recipe.meat_and_bone || []);
-            setPlantMatter(recipe.plant_matter || []);
-            setSecretingOrgans(recipe.secreting_organs || []);
-            setLiver(recipe.liver || []);
-            setMisc(recipe.misc || []);
+            if (mode === "edit" && recipe.recipe_ingredients) {
+                setRecipeIngredients(recipe.recipe_ingredients);
+                // Categorize ingredients immediately when entering edit mode
+                const categorized = categorizeIngredients(
+                    recipe.recipe_ingredients
+                );
+                setMeatAndBone(categorized.meat_and_bone || []);
+                setPlantMatter(categorized.plant_matter || []);
+                setSecretingOrgans(categorized.secreting_organs || []);
+                setLiver(categorized.liver || []);
+                setMisc(categorized.misc || []);
+            }
             setActiveSection(null);
         } else if (!recipe && mode === "create") {
             resetForm();
@@ -174,9 +183,52 @@ export function RecipeSheet({
         );
     };
 
+    // Add this function to properly categorize ingredients
+    const categorizeIngredients = (ingredients) => {
+        if (!ingredients) return {};
+
+        return ingredients.reduce((acc, ing) => {
+            const category = ing.ingredients?.category_id;
+            switch (category) {
+                case 1:
+                    acc.meat_and_bone = [...(acc.meat_and_bone || []), ing];
+                    break;
+                case 2:
+                    acc.plant_matter = [...(acc.plant_matter || []), ing];
+                    break;
+                case 3:
+                    acc.liver = [...(acc.liver || []), ing];
+                    break;
+                case 4:
+                    acc.secreting_organs = [
+                        ...(acc.secreting_organs || []),
+                        ing,
+                    ];
+                    break;
+                case 5:
+                    acc.misc = [...(acc.misc || []), ing];
+                    break;
+            }
+            return acc;
+        }, {});
+    };
+
+    // Modify the handleClose function
     const handleClose = (newOpen, options = {}) => {
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
+            // When switching to edit mode, categorize the ingredients
+            if (options.mode === "edit" && recipe?.recipe_ingredients) {
+                const categorized = categorizeIngredients(
+                    recipe.recipe_ingredients
+                );
+                setMeatAndBone(categorized.meat_and_bone || []);
+                setPlantMatter(categorized.plant_matter || []);
+                setSecretingOrgans(categorized.secreting_organs || []);
+                setLiver(categorized.liver || []);
+                setMisc(categorized.misc || []);
+                setRecipeIngredients(recipe.recipe_ingredients);
+            }
             onModeChange?.(options.mode);
             onOpenChange?.(true, options);
             return;
@@ -357,7 +409,13 @@ export function RecipeSheet({
     // Add this function to handle ingredient additions
     const handleAddIngredient = (ingredient, category) => {
         if (mode === "edit") {
-            setRecipeIngredients((prev) => [...prev, ingredient]);
+            // Ensure the ingredient has the correct structure for edit mode
+            const editIngredient = {
+                ingredient_id: ingredient.ingredient_id,
+                ingredients: ingredient.ingredients,
+                quantity: ingredient.quantity || 0,
+            };
+            setRecipeIngredients((prev) => [...prev, editIngredient]);
         }
 
         // Map category to the correct state setter
@@ -484,32 +542,66 @@ export function RecipeSheet({
             title: "Muscle Meat & Bone",
             emptyStateText: "Add muscle meat and bone ingredients",
             category: 1,
-            getItems: () => (mode === "edit" ? meatAndBone : meatAndBone),
+            getItems: () => {
+                if (mode === "edit") {
+                    return recipeIngredients.filter(
+                        (ing) => ing.ingredients?.category_id === 1
+                    );
+                }
+                return meatAndBone;
+            },
         },
         plant_matter: {
             title: "Plant Matter",
             emptyStateText: "Add plant matter ingredients",
             category: 2,
-            getItems: () => (mode === "edit" ? plantMatter : plantMatter),
+            getItems: () => {
+                if (mode === "edit") {
+                    return recipeIngredients.filter(
+                        (ing) => ing.ingredients?.category_id === 2
+                    );
+                }
+                return plantMatter;
+            },
         },
         liver: {
             title: "Liver",
             emptyStateText: "Add liver ingredients",
             category: 3,
-            getItems: () => (mode === "edit" ? liver : liver),
+            getItems: () => {
+                if (mode === "edit") {
+                    return recipeIngredients.filter(
+                        (ing) => ing.ingredients?.category_id === 3
+                    );
+                }
+                return liver;
+            },
         },
         secreting_organs: {
             title: "Secreting Organs",
             emptyStateText: "Add secreting organ ingredients",
             category: 4,
-            getItems: () =>
-                mode === "edit" ? secretingOrgans : secretingOrgans,
+            getItems: () => {
+                if (mode === "edit") {
+                    return recipeIngredients.filter(
+                        (ing) => ing.ingredients?.category_id === 4
+                    );
+                }
+                return secretingOrgans;
+            },
         },
         misc: {
             title: "Misc",
             emptyStateText: "Add miscellaneous ingredients",
             category: 5,
-            getItems: () => (mode === "edit" ? misc : misc),
+            getItems: () => {
+                if (mode === "edit") {
+                    return recipeIngredients.filter(
+                        (ing) => ing.ingredients?.category_id === 5
+                    );
+                }
+                return misc;
+            },
         },
     };
 
