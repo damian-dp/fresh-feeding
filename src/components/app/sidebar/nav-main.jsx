@@ -41,9 +41,13 @@ export function NavMain({ main }) {
                                 ? "bg-sidebar-accent ring-1 ring-border/50"
                                 : ""
                         }
-                        onClick={() => {
-                            toggleSidebar();
-                        }}
+                        onClick={
+                            isMobile
+                                ? () => {
+                                      toggleSidebar();
+                                  }
+                                : undefined
+                        }
                     >
                         <Link to="/dashboard">
                             <ViewAll
@@ -65,9 +69,13 @@ export function NavMain({ main }) {
                                 ? "bg-sidebar-accent ring-1 ring-border/50"
                                 : ""
                         }
-                        onClick={() => {
-                            toggleSidebar();
-                        }}
+                        onClick={
+                            isMobile
+                                ? () => {
+                                      toggleSidebar();
+                                  }
+                                : undefined
+                        }
                     >
                         <Link to="/recipes">
                             <Diet
@@ -94,10 +102,7 @@ export function NavMain({ main }) {
                     {dogs?.length > 0 && (
                         <SidebarMenuItem>
                             <CollapsibleTrigger asChild>
-                                <SidebarMenuButton
-                                    tooltip="Your Dogs"
-    
-                                >
+                                <SidebarMenuButton tooltip="Your Dogs">
                                     <DogOutline
                                         width={20}
                                         height={20}
@@ -131,9 +136,13 @@ export function NavMain({ main }) {
                                                                 ? "bg-sidebar-accent ring-1 ring-border/50"
                                                                 : ""
                                                         }
-                                                        onClick={() => {
-                                                            toggleSidebar();
-                                                        }}
+                                                        onClick={
+                                                            isMobile
+                                                                ? () => {
+                                                                      toggleSidebar();
+                                                                  }
+                                                                : undefined
+                                                        }
                                                     >
                                                         <Link
                                                             to={`/dogs/${dog.dog_id}`}

@@ -160,7 +160,7 @@ export function LandingPage() {
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7">
+                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7 h-full">
                                     <div className="flex items-center justify-center w-full h-72">
                                         <div className="relative z-20 inline-flex py-0 pl-4 h-auto w-auto bg-transparent border-none items-end">
                                             <div className="inline-flex w-12 h-12 z-10 absolute left-0 text-foreground items-center justify-center rounded-full  border border-border bg-background ">
@@ -198,10 +198,9 @@ export function LandingPage() {
                                         Manage your dogs profiles
                                     </h3>
                                     <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
-                                        Get optimal feeding ratios by providing
-                                        your pup's details and setting goals
-                                        like maintaining, losing, or gaining
-                                        weight.
+                                        Add multiple dogs, track details, and
+                                        keep notes for each pup while managing
+                                        their recipes.
                                     </p>
                                 </div>
                             </motion.div>
@@ -213,7 +212,7 @@ export function LandingPage() {
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.6 }}
                             >
-                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7">
+                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7 h-full">
                                     <div className="flex flex-col gap-4 scale-90 items-center justify-center w-full h-72">
                                         <img src="/goals/pill-2.svg" />
                                         <img src="/goals/pill-1.svg" />
@@ -221,13 +220,12 @@ export function LandingPage() {
                                     </div>
 
                                     <h3 className="text-lg sm:text-xl font-medium mb-2">
-                                        Manage your dogs profiles
+                                        Set your dogs goals
                                     </h3>
                                     <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
-                                        Get optimal feeding ratios by providing
-                                        your pup's details and setting goals
-                                        like maintaining, losing, or gaining
-                                        weight.
+                                        Adjust feeding ratios based on your
+                                        dog’s needs, maintain, lose, or gain
+                                        weight for optimal health.
                                     </p>
                                 </div>
                             </motion.div>
@@ -239,19 +237,18 @@ export function LandingPage() {
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.4 }}
                             >
-                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7">
+                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7 h-full">
                                     <div className="flex flex-col gap-4 scale-[.85] items-center justify-center w-full h-72">
                                         <img src="/goals/ratios.svg" />
                                     </div>
 
                                     <h3 className="text-lg sm:text-xl font-medium mb-2">
-                                        Manage your dogs profiles
+                                        Get ingredient breakdowns
                                     </h3>
                                     <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
-                                        Get optimal feeding ratios by providing
-                                        your pup's details and setting goals
-                                        like maintaining, losing, or gaining
-                                        weight.
+                                        Calculate plant, meat, bone, and organ
+                                        quantities based on batch size for
+                                        precise meal prep.
                                     </p>
                                 </div>
                             </motion.div>
@@ -263,19 +260,18 @@ export function LandingPage() {
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.6 }}
                             >
-                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7">
+                                <div className="bg-card rounded-lg border border-border p-8 pt-4 pb-7 h-full">
                                     <div className="flex flex-col gap-4 scale-[.95] pt-6 items-center justify-center w-full h-72">
                                         <img src="/goals/table.svg" />
                                     </div>
 
                                     <h3 className="text-lg sm:text-xl font-medium mb-2">
-                                        Manage your dogs profiles
+                                        Create and analyse recipes
                                     </h3>
                                     <p className="text-muted-foreground text-sm sm:text-[.95rem] leading-[1.6] sm:leading-[1.6] ">
-                                        Get optimal feeding ratios by providing
-                                        your pup's details and setting goals
-                                        like maintaining, losing, or gaining
-                                        weight.
+                                        Make custom recipes for each dog and
+                                        check nutritional analysis to ensure a
+                                        balanced diet.
                                     </p>
                                 </div>
                             </motion.div>

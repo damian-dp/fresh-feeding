@@ -143,18 +143,18 @@ export function BoneCalculator({ open, onOpenChange }) {
                                 transition={{ duration: 0.2, ease: "easeOut" }}
                                 className=""
                             >
-                                <div className="py-4 px-5 font-normal bg-muted/10 border border-border rounded-sm flex flex-col gap-2 text-muted-foreground">
+                                <div className="py-4 px-5 font-normal bg-muted/8 border border-border rounded-sm flex flex-col gap-2 text-muted-foreground/90">
                                     <p className="text-xl leading-[1.8]">
-                                        <span className="font-medium text-foreground">
+                                        <span className="text-foreground">
                                             {dogDetails.dog_name}{" "}
                                         </span>
                                         needs{" "}
-                                        <span className="font-medium text-foreground">
+                                        <span className="text-foreground">
                                             {requirements.dailyIntake.toLocaleString()}
                                             g
                                         </span>{" "}
                                         of food per day, including{" "}
-                                        <span className="font-medium text-foreground">
+                                        <span className="text-foreground">
                                             {requirements.boneRequirement.toLocaleString()}
                                             g
                                         </span>{" "}
@@ -163,12 +163,12 @@ export function BoneCalculator({ open, onOpenChange }) {
                                     <p className="text-xl leading-[1.8]">
                                         To meet this requirement, feed
                                         approximately{" "}
-                                        <span className="font-medium text-foreground">
+                                        <span className=" text-foreground">
                                             {requirements.ingredientRequired.toLocaleString()}
                                             g
                                         </span>{" "}
                                         of{" "}
-                                        <span className="font-medium text-foreground">
+                                        <span className="text-foreground">
                                             {selectedIngredient.ingredient_name ||
                                                 selectedIngredient.name}
                                         </span>
