@@ -7,6 +7,7 @@ import {
     Loader2,
     Pencil,
     Trash,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -65,6 +66,16 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Add these default values at the top of the file
 const DEFAULT_RATIOS = {
@@ -536,13 +547,14 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
             </div>
 
             <div className="flex flex-col gap-6 p-6">
-            <p className="font-medium">Ingredient ratios</p>
+                <p className="font-medium">Ingredient ratios</p>
 
                 <Alert variant="warning" className="-mt-1 p-5 [&>svg]:top-7">
                     <AlertTriangle />
 
                     <AlertDescription>
-                    Any changes here may put your meals out of balance. Use the goal presets above to change daily intake.
+                        Any changes here may put your meals out of balance. Use
+                        the goal presets above to change daily intake.
                     </AlertDescription>
                 </Alert>
                 <div className="flex flex-row gap-6">
@@ -626,23 +638,28 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                                 onClick={() => {
                                     form.setValue(
                                         "ratios_muscle_meat",
-                                        DEFAULT_RATIOS.ratios_muscle_meat
+                                        DEFAULT_RATIOS.ratios_muscle_meat,
+                                        { shouldDirty: true }
                                     );
                                     form.setValue(
                                         "ratios_bone",
-                                        DEFAULT_RATIOS.ratios_bone
+                                        DEFAULT_RATIOS.ratios_bone,
+                                        { shouldDirty: true }
                                     );
                                     form.setValue(
                                         "ratios_plant_matter",
-                                        DEFAULT_RATIOS.ratios_plant_matter
+                                        DEFAULT_RATIOS.ratios_plant_matter,
+                                        { shouldDirty: true }
                                     );
                                     form.setValue(
                                         "ratios_liver",
-                                        DEFAULT_RATIOS.ratios_liver
+                                        DEFAULT_RATIOS.ratios_liver,
+                                        { shouldDirty: true }
                                     );
                                     form.setValue(
                                         "ratios_secreting_organ",
-                                        DEFAULT_RATIOS.ratios_secreting_organ
+                                        DEFAULT_RATIOS.ratios_secreting_organ,
+                                        { shouldDirty: true }
                                     );
                                     // Trigger form validation after setting values
                                     form.trigger();
@@ -763,50 +780,69 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
 
     return (
         <>
-            <Drawer
+            <Sheet
                 open={open}
                 onOpenChange={handleOpenChange}
                 initialFocus={false}
             >
-                <DrawerContent autoFocus={false} className="focus:outline-none">
-                    <DrawerHeader>
-                        <DrawerTitle>Edit dog ratios</DrawerTitle>
-                        <DrawerDescription>
+                <SheetContent
+                    autoFocus={false}
+                    className="focus:outline-none bg-card"
+                >
+                    <SheetHeader>
+                        <SheetTitle>Edit dog ratios</SheetTitle>
+                        <SheetDescription className="hidden">
                             Update your dog's nutritional ratios
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="p-4"
-                        >
-                            {Content}
-                        </form>
-                    </Form>
-                    <DrawerFooter className="flex flex-row justify-between">
+                        </SheetDescription>
+                        <SheetClose asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="rounded-full [&_svg]:size-5 w-11 h-11"
+                            >
+                                <X className="" />
+                            </Button>
+                        </SheetClose>
+                    </SheetHeader>
+                    <ScrollArea className="h-[calc(100dvh-152px)] md:h-[calc(100dvh-168px)]">
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="p-4"
+                            >
+                                {Content}
+                            </form>
+                        </Form>
+                    </ScrollArea>
+                    <SheetFooter className="flex flex-row justify-between w-full">
                         <Button
                             type="button"
                             variant="secondary"
                             onClick={() => {
                                 form.setValue(
                                     "ratios_muscle_meat",
-                                    DEFAULT_RATIOS.ratios_muscle_meat
+                                    DEFAULT_RATIOS.ratios_muscle_meat,
+                                    { shouldDirty: true }
                                 );
                                 form.setValue(
                                     "ratios_bone",
-                                    DEFAULT_RATIOS.ratios_bone
+                                    DEFAULT_RATIOS.ratios_bone,
+                                    { shouldDirty: true }
                                 );
                                 form.setValue(
                                     "ratios_plant_matter",
-                                    DEFAULT_RATIOS.ratios_plant_matter
+                                    DEFAULT_RATIOS.ratios_plant_matter,
+                                    { shouldDirty: true }
                                 );
                                 form.setValue(
                                     "ratios_liver",
-                                    DEFAULT_RATIOS.ratios_liver
+                                    DEFAULT_RATIOS.ratios_liver,
+                                    { shouldDirty: true }
                                 );
                                 form.setValue(
                                     "ratios_secreting_organ",
-                                    DEFAULT_RATIOS.ratios_secreting_organ
+                                    DEFAULT_RATIOS.ratios_secreting_organ,
+                                    { shouldDirty: true }
                                 );
                                 form.trigger();
                             }}
@@ -830,9 +866,9 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                                 </>
                             )}
                         </Button>
-                    </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
 
             <AlertDialog
                 open={showDiscardDialog}
