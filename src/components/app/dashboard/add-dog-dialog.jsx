@@ -22,7 +22,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CalendarDays, Check, Loader2, Pencil } from "lucide-react";
+import {
+    ArrowRight,
+    CalendarDays,
+    Check,
+    Loader2,
+    Pencil,
+    X,
+} from "lucide-react";
 import Dog from "@/assets/icons/dog";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -57,6 +64,16 @@ import {
 import { ImageEditorDialog } from "@/components/app/dashboard/image-editor";
 import DogOutline from "@/assets/icons/dog-outline";
 import { AvatarFallback } from "@/components/ui/avatar";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Form validation schema
 const formSchema = z.object({
@@ -1094,19 +1111,32 @@ export function AddDogDialog({ open, onOpenChange }) {
 
     return (
         <>
-            <Drawer open={open} onOpenChange={handleOpenChange}>
-                <DrawerContent>
-                    <DrawerHeader className="hidden">
-                        <DrawerTitle>Add a new dog</DrawerTitle>
-                        <DrawerDescription>
+            <Sheet open={open} onOpenChange={handleOpenChange}>
+                <SheetContent className="bg-card h-full overflow-y-hidden max-h-dvh">
+                    <SheetHeader className="">
+                        <SheetTitle>Add a new dog</SheetTitle>
+                        <SheetDescription className="hidden">
                             Add your dog's details to get personalized feeding
                             recommendations
-                        </DrawerDescription>
-                    </DrawerHeader>
-                    {Content}
-                    <DrawerFooter>{FooterContent}</DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+                        </SheetDescription>
+                        <SheetClose asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="rounded-full [&_svg]:size-5 w-11 h-11"
+                            >
+                                <X className="" />
+                            </Button>
+                        </SheetClose>
+                    </SheetHeader>
+                    <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
+                        {Content}
+                    </ScrollArea>
+                    <SheetFooter className="px-6 flex-row">
+                        {FooterContent}
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
             <AlertDialog
                 open={showDiscardDialog}
                 onOpenChange={setShowDiscardDialog}
