@@ -30,7 +30,7 @@ export function IngredientSelector({
     };
 
     return (
-        <div className="">
+        <div className="h-14">
             <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <Input
                     value={

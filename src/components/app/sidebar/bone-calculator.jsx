@@ -88,7 +88,7 @@ export function BoneCalculator({ open, onOpenChange }) {
                 </DialogHeader>
 
                 <div className="p-6">
-                    <div className="flex flex-row gap-4 w-full">
+                    <div className="flex flex-col gap-x-4 gap-y-8 sm:flex-row w-full">
                         <div className="flex flex-col gap-4 w-full">
                             <Label>Name</Label>
                             <DogSwitcher
@@ -99,7 +99,7 @@ export function BoneCalculator({ open, onOpenChange }) {
                             />
                         </div>
 
-                        <div className="flex flex-col gap-4 w-full h-14">
+                        <div className="flex flex-col gap-4 w-full h-auto">
                             <Label>Select bone ingredient</Label>
 
                             {ingredientsLoading ? (
@@ -189,7 +189,7 @@ export function BoneCalculator({ open, onOpenChange }) {
                     </AnimatePresence>
                 </div>
                 <DialogFooter>
-                    <div className="flex flex-row items-center gap-2">
+                    <div className="flex flex-row items-center justify-end gap-2">
                         <DialogClose asChild>
                             <Button variant="ghost" tabIndex={-1}>
                                 Close
