@@ -49,6 +49,16 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useDebounce } from "@/hooks/use-debounce";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function SettingsDialog({ open, onOpenChange }) {
     const isDesktop = useMediaQuery("(min-width: 768px)", {
@@ -243,7 +253,7 @@ export function SettingsDialog({ open, onOpenChange }) {
         <form id="settings-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-6 px-6">
                 <p className="font-medium">Personal details</p>
-                <div className="flex flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="name">Name</Label>
                         <Input
@@ -263,7 +273,7 @@ export function SettingsDialog({ open, onOpenChange }) {
                         />
                     </div>
                 </div>
-                <div className="flex flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="country">Country</Label>
                         <Select
@@ -307,7 +317,7 @@ export function SettingsDialog({ open, onOpenChange }) {
             <Separator />
             <div className="space-y-6 px-6">
                 <p className="font-medium">App preferences</p>
-                <div className="flex flex-row gap-6">
+                <div className="flex flex-col sm:flex-row gap-6">
                     <div className="flex flex-col gap-4 w-full">
                         <Label htmlFor="measurement">Measurement system</Label>
                         <Select
@@ -450,24 +460,26 @@ export function SettingsDialog({ open, onOpenChange }) {
                 </>
             ) : (
                 <>
-                    <Drawer
+                    <Sheet
                         open={open}
                         onOpenChange={handleOpenChange}
                         initialFocus={false}
                     >
-                        <DrawerContent>
-                            <DrawerHeader>
-                                <DrawerTitle>Account Settings</DrawerTitle>
-                                <DrawerDescription>
+                        <SheetContent className="bg-card max-h-[100svh]">
+                            <SheetHeader>
+                                <SheetTitle>Account Settings</SheetTitle>
+                                <SheetDescription className="hidden">
                                     Update your account preferences.
-                                </DrawerDescription>
-                            </DrawerHeader>
-                            <div className="p-4">{Content}</div>
-                            <DrawerFooter>
+                                </SheetDescription>
+                            </SheetHeader>
+                            <ScrollArea className="h-[calc(100svh-152px)] md:h-[calc(100svh-168px)] py-6">
+                                {Content}
+                            </ScrollArea>
+                            <SheetFooter className="px-6 flex-row">
                                 <div className="flex flex-row items-center gap-2">
-                                    <DrawerClose asChild>
+                                    <SheetClose asChild>
                                         <Button variant="link">Cancel</Button>
-                                    </DrawerClose>
+                                    </SheetClose>
                                     <Button
                                         variant="outline"
                                         form="settings-form"
@@ -487,9 +499,9 @@ export function SettingsDialog({ open, onOpenChange }) {
                                         )}
                                     </Button>
                                 </div>
-                            </DrawerFooter>
-                        </DrawerContent>
-                    </Drawer>
+                            </SheetFooter>
+                        </SheetContent>
+                    </Sheet>
 
                     <AlertDialog
                         open={showDiscardDialog}
