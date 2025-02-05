@@ -46,14 +46,9 @@ function AppContent() {
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route
-                    path="/auth/reset-password"
-                    element={<ResetPasswordPage />}
-                />
-                <Route
                     path="/auth/update-password"
                     element={<UpdatePasswordPage />}
                 />
-                <Route path="/reset-password" element={<AuthRedirect />} />
 
                 <Route
                     element={

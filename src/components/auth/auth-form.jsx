@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { authService } from "@/lib/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ export function AuthForm() {
                 const { error } = await supabase.auth.resetPasswordForEmail(
                     email,
                     {
-                        redirectTo: `${window.location.origin}/reset-password`,
+                        redirectTo: `${window.location.origin}/auth/update-password`,
                     }
                 );
 
@@ -280,34 +280,36 @@ export function AuthForm() {
 
                     <form
                         onSubmit={handleSubmit}
-                        className="space-y-4 w-full flex flex-col items-center"
+                        className={`w-full flex flex-col items-center ${
+                            isSignUp ? "space-y-8" : "space-y-4"
+                        }`}
                     >
-                        <AnimatePresence>
-                            {isSignUp && !isForgotPassword && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="w-full"
-                                >
-                                    <div className="space-y-2 w-full">
-                                        <Input
-                                            id="name"
-                                            value={name}
-                                            onChange={(e) =>
-                                                setName(e.target.value)
-                                            }
-                                            required={isSignUp}
-                                            placeholder="Name"
-                                            className="h-12 px-4 text-base"
-                                        />
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
                         <div className="space-y-4 w-full">
+                            <AnimatePresence>
+                                {isSignUp && !isForgotPassword && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="w-full"
+                                    >
+                                        <div className="space-y-2 w-full">
+                                            <Input
+                                                id="name"
+                                                value={name}
+                                                onChange={(e) =>
+                                                    setName(e.target.value)
+                                                }
+                                                required={isSignUp}
+                                                placeholder="Name"
+                                                className="h-12 px-4 text-base"
+                                            />
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
                             <Input
                                 id="email"
                                 type="email"
@@ -359,7 +361,7 @@ export function AuthForm() {
                             type="submit"
                             className={cn(
                                 "w-full h-12 text-base transition-all duration-200",
-                                isLoading && "w-12 px-0"
+                                isLoading && "w-12 px-0 rounded-full"
                             )}
                             disabled={isLoading}
                         >
@@ -382,7 +384,7 @@ export function AuthForm() {
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="flex flex-col w-full space-y-4 p-0 mt-6">
+                <CardFooter className="flex flex-col w-full space-y-4 p-0 mt-4">
                     <Button
                         variant="ghost"
                         className="text-sm font-normal hover:bg-transparent hover:text-primary"
@@ -404,21 +406,21 @@ export function AuthForm() {
             <div>
                 <p className="text-center text-xs text-muted-foreground leading-relaxed">
                     By continuing, you agree to Fresh Feeding's{" "}
-                    <a
-                        href="/terms"
+                    <Link
+                        to="/terms-of-use"
                         className="underline hover:text-primary transition-colors"
                     >
                         Terms of Service
-                    </a>
+                    </Link>
                 </p>
                 <p className="text-center text-xs text-muted-foreground leading-relaxed">
                     and{" "}
-                    <a
-                        href="/privacy"
+                    <Link
+                        to="/privacy-policy"
                         className="underline hover:text-primary transition-colors"
                     >
                         Privacy Policy
-                    </a>
+                    </Link>
                 </p>
             </div>
         </div>

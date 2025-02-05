@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
-import { Toaster } from "sonner";
 
 export function ResetPasswordPage() {
     const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { AuthForm } from "@/components/auth/auth-form";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 
 export function AuthPage() {
     const location = useLocation();

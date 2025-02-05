@@ -1,58 +1,66 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
-import { Toaster } from "sonner";
+import { toast } from "sonner";
 
 export function UpdatePasswordPage() {
     const navigate = useNavigate();
-    const location = useLocation();
     const [isLoading, setIsLoading] = useState(true);
+    const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
     useEffect(() => {
-        // console.log("UpdatePasswordPage: Location", {
-        //     pathname: location.pathname,
-        //     hash: location.hash,
-        // });
-
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
-            // console.log(
-            //     "UpdatePasswordPage: Auth event",
-            //     event,
-            //     session?.user?.email
-            // );
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log("Auth state changed:", event, session);
 
             if (event === "PASSWORD_RECOVERY") {
+                console.log("Password recovery event detected");
+                setIsRecoveryMode(true);
                 setIsLoading(false);
-            } else if (event === "SIGNED_IN") {
-                if (location.hash.includes("type=recovery")) {
-                    setIsLoading(false);
-                } else {
-                    navigate("/auth", {
-                        state: {
-                            message:
-                                "Please sign out before resetting password.",
-                            isSuccess: false,
-                        },
-                        replace: true,
-                    });
-                }
-            } else if (event === "SIGNED_OUT") {
-                if (!location.hash.includes("type=recovery")) {
-                    navigate("/auth", { replace: true });
-                }
+            } else if (event === "SIGNED_IN" && !isRecoveryMode) {
+                console.log("User is already signed in");
+                navigate("/auth", {
+                    state: {
+                        message: "Please sign out before resetting password.",
+                        isSuccess: false,
+                    },
+                    replace: true,
+                });
+            } else if (event === "INITIAL_SESSION" && isRecoveryMode) {
+                console.log("Initial session in recovery mode");
+                // Do nothing, let the user update their password
+            } else if (!isRecoveryMode) {
+                console.log("Redirecting to auth page");
+                navigate("/auth", {
+                    state: {
+                        message:
+                            "Invalid reset password link. Please try again.",
+                        isSuccess: false,
+                    },
+                    replace: true,
+                });
             }
         });
 
-        // Check for recovery token in URL
-        if (location.hash.includes("type=recovery")) {
-            setIsLoading(false);
-        }
+        // Check if we're already in a recovery session
+        const checkSession = async () => {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+            if (session?.user?.aud === "authenticated") {
+                setIsRecoveryMode(true);
+                setIsLoading(false);
+            }
+        };
 
-        return () => subscription.unsubscribe();
-    }, [navigate, location]);
+        checkSession();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [navigate, isRecoveryMode]);
 
     if (isLoading) {
         return (

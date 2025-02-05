@@ -6,6 +6,9 @@ import { useAuth } from "@/components/providers/auth-provider";
 export function LandingNavbar() {
     const { isAuthenticated, loading: authLoading } = useAuth();
 
+    // Only show loading state on initial load, not during auth state changes
+    const showLoading = authLoading && isAuthenticated === null;
+
     return (
         <header className="fixed md:top-3 w-full z-50 top-2 px-2 md:px-3">
             <nav className="container max-w-5xl border border-border bg-card/80 rounded-[24px] backdrop-blur-lg supports-[backdrop-filter]:bg-card/80  mx-auto  flex p-3  items-center justify-between">
@@ -22,7 +25,7 @@ export function LandingNavbar() {
                     </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                    {authLoading ? (
+                    {showLoading ? (
                         <Button disabled variant="ghost">
                             <Loader2 className="animate-spin" />
                             Loading
@@ -45,4 +48,4 @@ export function LandingNavbar() {
             </nav>
         </header>
     );
-} 
+}

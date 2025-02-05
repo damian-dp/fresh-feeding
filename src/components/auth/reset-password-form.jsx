@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
     Card,
     CardContent,
@@ -23,13 +24,21 @@ const fadeAnimation = {
 
 export function ResetPasswordForm() {
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate passwords
         if (password.length < 6) {
             toast.error("Password must be at least 6 characters long");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            toast.error("Passwords do not match");
             return;
         }
 
@@ -38,7 +47,6 @@ export function ResetPasswordForm() {
         try {
             console.log("Updating password...");
 
-            // Update the password directly
             const { error } = await supabase.auth.updateUser({
                 password: password,
             });
@@ -47,83 +55,140 @@ export function ResetPasswordForm() {
 
             console.log("Password updated successfully");
 
-            // Sign out after successful update
-            await supabase.auth.signOut();
+            // Instead of signing out, get the current session
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
 
-            navigate("/auth", {
-                state: {
-                    message:
-                        "Password updated successfully! Please sign in with your new password.",
-                    isSuccess: true,
-                },
-                replace: true,
-            });
+            if (session) {
+                toast.success("Password updated successfully!");
+                // Navigate to dashboard since we're already authenticated
+                navigate("/dashboard", { replace: true });
+            } else {
+                // If somehow we don't have a session, redirect to auth
+                navigate("/auth", {
+                    state: {
+                        message:
+                            "Password updated successfully! Please sign in with your new password.",
+                        isSuccess: true,
+                    },
+                    replace: true,
+                });
+            }
         } catch (error) {
             console.error("Password update error:", error);
             setIsLoading(false);
-            toast.error(error.message);
+            toast.error(error.message || "Failed to update password");
         }
     };
 
     return (
-        <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-            <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl">Reset password</CardTitle>
-                <CardDescription>
-                    Enter your new password below to reset your account password
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Input
-                            type="password"
-                            placeholder="New password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                            Must be at least 6 characters long
-                        </span>
-                    </div>
+        <div className="w-full max-w-[426px] mx-auto space-y-6">
+            <Card className="flex flex-col items-center w-full border bg-card p-10">
+                <CardHeader className="w-full space-y-1 p-0 mb-10 border-0 h-auto">
+                    <CardTitle className="text-2xl text-center font-medium mb-2">
+                        Reset password
+                    </CardTitle>
+                    <CardDescription className="text-center text-base">
+                        Enter your new password below
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 w-full flex flex-col items-center">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-8 w-full flex flex-col items-center"
+                    >
+                        <div className="space-y-4 w-full">
+                            <div className="space-y-2">
+                                <Input
+                                    type="password"
+                                    placeholder="New password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                    required
+                                    minLength={6}
+                                    className="h-12 px-4 text-base"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Input
+                                    type="password"
+                                    placeholder="Confirm new password"
+                                    value={confirmPassword}
+                                    onChange={(e) =>
+                                        setConfirmPassword(e.target.value)
+                                    }
+                                    required
+                                    minLength={6}
+                                    className="h-12 px-4 text-base"
+                                />
+                                {confirmPassword &&
+                                    password !== confirmPassword && (
+                                        <span className="text-xs text-destructive">
+                                            Passwords do not match
+                                        </span>
+                                    )}
+                            </div>
+                        </div>
+                        <Button
+                            type="submit"
+                            className={cn(
+                                "w-full h-12 text-base transition-all duration-200",
+                                isLoading && "w-12 px-0 rounded-full"
+                            )}
+                            disabled={isLoading || password !== confirmPassword}
+                        >
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={isLoading ? "loading" : "idle"}
+                                    {...fadeAnimation}
+                                >
+                                    {isLoading ? (
+                                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    ) : (
+                                        "Update password"
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
+                        </Button>
+                    </form>
+                </CardContent>
+                <CardFooter className="flex flex-col w-full space-y-4 p-0 mt-4">
                     <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
+                        variant="ghost"
+                        className="text-sm font-normal hover:bg-transparent hover:text-primary"
+                        onClick={() => navigate("/auth")}
                     >
                         <AnimatePresence mode="wait">
-                            <motion.div
-                                key={isLoading ? "loading" : "idle"}
-                                {...fadeAnimation}
-                            >
-                                {isLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                        Updating password...
-                                    </div>
-                                ) : (
-                                    "Update password"
-                                )}
-                            </motion.div>
+                            <motion.span key="back" {...fadeAnimation}>
+                                Back to sign in
+                            </motion.span>
                         </AnimatePresence>
                     </Button>
-                </form>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4 p-0 mt-6">
-                <Button
-                    variant="ghost"
-                    className="text-sm font-normal hover:bg-transparent hover:text-primary"
-                    onClick={() => navigate("/auth")}
-                >
-                    <AnimatePresence mode="wait">
-                        <motion.span key="back" {...fadeAnimation}>
-                            Back to sign in
-                        </motion.span>
-                    </AnimatePresence>
-                </Button>
-            </CardFooter>
-        </Card>
+                </CardFooter>
+            </Card>
+            <div>
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                    By continuing, you agree to Fresh Feeding's{" "}
+                    <Link
+                        to="/terms-of-use"
+                        className="underline hover:text-primary transition-colors"
+                    >
+                        Terms of Service
+                    </Link>
+                </p>
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                    and{" "}
+                    <Link
+                        to="/privacy-policy"
+                        className="underline hover:text-primary transition-colors"
+                    >
+                        Privacy Policy
+                    </Link>
+                </p>
+            </div>
+        </div>
     );
 }
