@@ -14,7 +14,7 @@ export function MobileNav() {
     return (
         <header className="fixed md:top-3 w-full z-50 top-2 px-2 md:px-3">
             <nav className="container max-w-5xl border border-border bg-card/80 rounded-[24px] backdrop-blur-lg supports-[backdrop-filter]:bg-card/80  mx-auto  flex p-3  items-center justify-between">
-                <Link to="/" className="">
+                <Link to="/dashboard" className="">
                     <div className="flex items-center font-semibold gap-2 leading-none text-nowrap tracking-[-0.015em] text-[1.2rem] px-2">
                         <img
                             src="/logo-mark.svg"

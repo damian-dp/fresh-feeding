@@ -181,7 +181,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
 
     return (
         <>
-            <div className="p-8 flex flex-row justify-between w-full border-b border-border">
+            <div className="p-8 grid grid-cols-2 [530px]:flex [530px]:flex-row gap-14 [530px]:gap-6 justify-between w-full border-b border-border">
                 <BadgeStack
                     variant="default"
                     icon={<DogIcon />}
@@ -231,6 +231,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                     })()}
                     sublabel="Goal"
                     flipped={true}
+                    className="hidden [530px]:flex"
                 />
             </div>
             <BatchCalculator
@@ -247,7 +248,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
 
             <div className="flex flex-col gap-8 p-8 border-b border-border">
                 <p className="font-medium">Ingredients</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gap-y-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
                         <BadgeStack
@@ -535,7 +536,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                     </div>
 
                     {/* Miscellaneous Section */}
-                    <div className="flex flex-col gap-6 col-span-2">
+                    <div className="flex flex-col gap-6 md:col-span-2">
                         <BadgeStack
                             icon={<Pill />}
                             label="Other ingredients"

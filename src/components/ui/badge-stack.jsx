@@ -71,16 +71,16 @@ export function BadgeStack({
     );
 
     return (
-        <div className={cn("flex items-center gap-2", className)} {...props}>
+        <div className={cn("flex items-center gap-2 flex-shrink-0", className)} {...props}>
             {avatar ? (
-                <Avatar className="h-10 w-10">
+                <Avatar className="h-10 w-10 shrink-0">
                     <AvatarImage src={avatarImage} alt={label} />
                     <AvatarFallback className="text-base">
                         {label[0].toUpperCase()}
                     </AvatarFallback>
                 </Avatar>
             ) : (
-                <Badge variant={variant} size="icon" className="p-0">
+                <Badge variant={variant} size="icon" className="p-0 shrink-0">
                     {icon}
                 </Badge>
             )}

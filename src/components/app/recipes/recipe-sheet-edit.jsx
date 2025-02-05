@@ -62,7 +62,7 @@ export function RecipeSheetEdit({
     return (
         <>
             {/* Form section */}
-            <div className="flex flex-row gap-4 p-6 border-b border-border">
+            <div className="flex flex-col md:flex-row gap-4 p-6 border-b border-border">
                 <div className="space-y-2 w-full">
                     <Label htmlFor="recipe-name">Recipe Name</Label>
                     <Input
@@ -96,7 +96,7 @@ export function RecipeSheetEdit({
                         mode="edit"
                     />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 gap-y-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
@@ -179,7 +179,7 @@ export function RecipeSheetEdit({
                         />
                     </div>
 
-                    <div className="flex flex-col gap-6 col-span-2">
+                    <div className="flex flex-col gap-6 md:col-span-2">
                         <IngredientSection
                             title="Other ingredients"
                             items={ingredientSections.misc.getItems()}

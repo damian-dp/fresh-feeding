@@ -83,7 +83,7 @@ export function IngredientSection({
     return (
         <div
             className={`flex flex-col gap-6 ${
-                category === "misc" ? "col-span-2" : ""
+                category === "misc" ? "md:col-span-2" : ""
             }`}
         >
             <div className="flex items-center justify-between">

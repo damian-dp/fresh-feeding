@@ -37,7 +37,7 @@ export function RecipeSheetCreate({
     return (
         <>
             {/* Form section - moved from recipe-form.jsx */}
-            <div className="flex flex-row gap-6 p-8 border-b border-border">
+            <div className="flex flex-col md:flex-row gap-6 p-8 border-b border-border">
                 <div className="flex flex-col gap-4 w-full">
                     <Label htmlFor="recipe-name">Recipe title</Label>
                     <Input
@@ -61,7 +61,7 @@ export function RecipeSheetCreate({
             </div>
 
             {/* Ingredients section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-y-16 p-8 border-b border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 p-8 border-b border-border">
                 {Object.entries(ingredientSections).map(([key, section]) => (
                     <IngredientSection
                         key={key}

@@ -113,7 +113,7 @@ export function BatchCalculator({
     return (
         <div className="flex flex-col gap-6 p-8 pb-10 border-b border-border">
             <p className="font-medium">Batch calculator</p>
-            <div className="grid grid-cols-2 gap-8 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full">
                 <BatchInputs
                     batchSize={batchSize ?? ""}
                     numberOfDays={numberOfDays ?? ""}

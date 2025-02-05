@@ -9,7 +9,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { CheckCheck, Loader2, Pencil, Plus, Trash } from "lucide-react";
+import { CheckCheck, Loader2, Pencil, Plus, Trash, X } from "lucide-react";
 import { useUser } from "@/components/providers/user-provider";
 import { useDogs } from "@/components/providers/dogs-provider";
 import { useIngredients } from "@/components/providers/ingredients-provider";
@@ -583,8 +583,8 @@ export function RecipeSheet({
     return (
         <>
             <Sheet open={open} onOpenChange={handleClose}>
-                <SheetContent className="p-2">
-                    <div className="rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
+                <SheetContent className="sm:p-2">
+                    <div className="sm:rounded-lg bg-card h-full overflow-y-hidden max-h-dvh">
                         <SheetHeader>
                             <SheetTitle>
                                 {mode === "create"
@@ -600,8 +600,17 @@ export function RecipeSheet({
                                     ? "Make changes to your recipe"
                                     : "View recipe details"}
                             </SheetDescription>
+                            <SheetClose asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full [&_svg]:size-5 w-11 h-11"
+                                >
+                                    <X className="" />
+                                </Button>
+                            </SheetClose>
                         </SheetHeader>
-                        <ScrollArea className="h-[calc(100vh-168px)]">
+                        <ScrollArea className="h-[calc(100vh-152px)] md:h-[calc(100vh-168px)]">
                             {renderContent()}
                         </ScrollArea>
                         <SheetFooter
