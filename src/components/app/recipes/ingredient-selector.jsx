@@ -46,6 +46,7 @@ export function IngredientSelector({
                     className={cn("w-full", className)}
                     onClick={() => setOpen(true)}
                     onFocus={() => setOpen(true)}
+                    onBlur={() => setOpen(false)}
                 />
                 <PopoverTrigger className="w-full -translate-y-4" />
                 <PopoverContent
