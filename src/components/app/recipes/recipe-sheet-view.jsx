@@ -393,6 +393,76 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                         </div>
                     </div>
 
+                    {/* Liver Section */}
+                    <div className="flex flex-col gap-6">
+                        <BadgeStack
+                            variant="liver"
+                            icon={<Heart />}
+                            label="Liver"
+                            sublabel={(() => {
+                                const dog = dogs.find(
+                                    (d) => d.dog_id === localRecipe.dog_id
+                                );
+                                if (!dog) return "Unknown";
+                                const grams = getCategoryGrams(
+                                    dog,
+                                    dog.ratios_liver
+                                );
+                                return (
+                                    <>
+                                        {grams}g{" "}
+                                        <span className="text-muted-foreground">
+                                            /{" "}
+                                            {Math.round(dog.ratios_liver * 100)}
+                                            %
+                                        </span>
+                                    </>
+                                );
+                            })()}
+                        />
+                        <div
+                            className={
+                                getIngredientsByCategory(
+                                    localRecipe.recipe_ingredients,
+                                    3
+                                ).length > 0
+                                    ? "border-t"
+                                    : ""
+                            }
+                        >
+                            {getIngredientsByCategory(
+                                localRecipe.recipe_ingredients,
+                                3
+                            ).map((item) => (
+                                <div
+                                    key={item.ingredient_id}
+                                    className="flex items-center justify-between border-b py-4"
+                                >
+                                    <span>
+                                        {item.ingredients?.ingredient_name}
+                                    </span>
+                                    {/* <span className="text-muted-foreground">
+                                        {Math.round(
+                                            item.quantity * (batchSize * 1000)
+                                        )}
+                                        g
+                                    </span> */}
+                                </div>
+                            ))}
+
+                            {getIngredientsByCategory(
+                                localRecipe.recipe_ingredients,
+                                3
+                            ).length === 0 && (
+                                <div className="flex flex-col h-52 items-center justify-center rounded-md border border-border p-8 text-center animate-in fade-in-50">
+                                    <p className="text-sm text-muted-foreground">
+                                        No ingredients added to this category.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Secreting Organs Section */}
                     <div className="flex flex-col gap-6">
                         <BadgeStack
@@ -455,76 +525,6 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                             {getIngredientsByCategory(
                                 localRecipe.recipe_ingredients,
                                 4
-                            ).length === 0 && (
-                                <div className="flex flex-col h-52 items-center justify-center rounded-md border border-border p-8 text-center animate-in fade-in-50">
-                                    <p className="text-sm text-muted-foreground">
-                                        No ingredients added to this category.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Liver Section */}
-                    <div className="flex flex-col gap-6">
-                        <BadgeStack
-                            variant="liver"
-                            icon={<Heart />}
-                            label="Liver"
-                            sublabel={(() => {
-                                const dog = dogs.find(
-                                    (d) => d.dog_id === localRecipe.dog_id
-                                );
-                                if (!dog) return "Unknown";
-                                const grams = getCategoryGrams(
-                                    dog,
-                                    dog.ratios_liver
-                                );
-                                return (
-                                    <>
-                                        {grams}g{" "}
-                                        <span className="text-muted-foreground">
-                                            /{" "}
-                                            {Math.round(dog.ratios_liver * 100)}
-                                            %
-                                        </span>
-                                    </>
-                                );
-                            })()}
-                        />
-                        <div
-                            className={
-                                getIngredientsByCategory(
-                                    localRecipe.recipe_ingredients,
-                                    3
-                                ).length > 0
-                                    ? "border-t"
-                                    : ""
-                            }
-                        >
-                            {getIngredientsByCategory(
-                                localRecipe.recipe_ingredients,
-                                3
-                            ).map((item) => (
-                                <div
-                                    key={item.ingredient_id}
-                                    className="flex items-center justify-between border-b py-4"
-                                >
-                                    <span>
-                                        {item.ingredients?.ingredient_name}
-                                    </span>
-                                    {/* <span className="text-muted-foreground">
-                                        {Math.round(
-                                            item.quantity * (batchSize * 1000)
-                                        )}
-                                        g
-                                    </span> */}
-                                </div>
-                            ))}
-
-                            {getIngredientsByCategory(
-                                localRecipe.recipe_ingredients,
-                                3
                             ).length === 0 && (
                                 <div className="flex flex-col h-52 items-center justify-center rounded-md border border-border p-8 text-center animate-in fade-in-50">
                                     <p className="text-sm text-muted-foreground">

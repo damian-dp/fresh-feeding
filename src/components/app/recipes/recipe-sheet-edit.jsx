@@ -141,6 +141,26 @@ export function RecipeSheetEdit({
                         />
                     </div>
 
+                    {/* Liver Section */}
+                    <div className="flex flex-col gap-6">
+                        <IngredientSection
+                            autoFocus={true}
+                            title="Liver"
+                            items={ingredientSections.liver.getItems()}
+                            onRemoveItem={(id) =>
+                                handleRemoveIngredient(id, "liver")
+                            }
+                            onAddItem={handleIngredientAdd}
+                            category="liver"
+                            emptyStateText="Add liver ingredients"
+                            mode="edit"
+                            isActive={activeSection === "liver"}
+                            onToggleActive={setActiveSection}
+                            ingredients={getIngredientsByCategory("liver")}
+                            isLoading={ingredientsLoading}
+                        />
+                    </div>
+
                     {/* Secreting Organs Section */}
                     <div className="flex flex-col gap-6">
                         <IngredientSection
@@ -159,26 +179,6 @@ export function RecipeSheetEdit({
                             ingredients={getIngredientsByCategory(
                                 "secreting_organs"
                             )}
-                            isLoading={ingredientsLoading}
-                        />
-                    </div>
-
-                    {/* Liver Section */}
-                    <div className="flex flex-col gap-6">
-                        <IngredientSection
-                            autoFocus={true}
-                            title="Liver"
-                            items={ingredientSections.liver.getItems()}
-                            onRemoveItem={(id) =>
-                                handleRemoveIngredient(id, "liver")
-                            }
-                            onAddItem={handleIngredientAdd}
-                            category="liver"
-                            emptyStateText="Add liver ingredients"
-                            mode="edit"
-                            isActive={activeSection === "liver"}
-                            onToggleActive={setActiveSection}
-                            ingredients={getIngredientsByCategory("liver")}
                             isLoading={ingredientsLoading}
                         />
                     </div>
