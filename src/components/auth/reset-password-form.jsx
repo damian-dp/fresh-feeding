@@ -200,7 +200,7 @@ export function ResetPasswordForm() {
                 // Navigate to dashboard after showing success message
                 setTimeout(() => {
                     navigate("/dashboard", { replace: true });
-                }, 5000);
+                }, 8000);
             } else {
                 // If somehow we don't have a session, redirect to auth
                 setFormAlert({
@@ -212,7 +212,7 @@ export function ResetPasswordForm() {
                     navigate("/sign-in", {
                         replace: true,
                     });
-                }, 5000);
+                }, 8000);
             }
         } catch (error) {
             console.error("Password update error:", error);

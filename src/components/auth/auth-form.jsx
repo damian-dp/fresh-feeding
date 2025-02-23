@@ -73,6 +73,7 @@ function AlertController({
                 "Please check your email for the verification link or request a new one.",
             button: {
                 text: "Resend verification email",
+                loadingText: "Sending...",
                 onClick: handleResendVerification,
                 disabled: isResendingVerification,
                 loading: isResendingVerification,
@@ -89,23 +90,23 @@ function AlertController({
     return (
         <div className="fixed bottom-4 left-4 z-50">
             <Card className="w-[280px] shadow-lg border-dashed">
-                <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
+                <CardHeader className="p-5 flex flex-row items-center justify-between space-y-0">
                     <div className="space-y-0">
-                        <CardTitle className="text-sm">Alert Tester</CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardTitle className="text-base">Alert Tester</CardTitle>
+                        <CardDescription className="text-sm">
                             Dev tools
                         </CardDescription>
                     </div>
                     <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
+                        variant="outline"
+                        size="icon"
+                        className=""
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="" />
                         ) : (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="" />
                         )}
                     </Button>
                 </CardHeader>
@@ -122,30 +123,30 @@ function AlertController({
                                     <Button
                                         key={name}
                                         variant="outline"
-                                        size="sm"
+                                        size=""
                                         onClick={() => onTrigger(alert)}
-                                        className="justify-start h-8"
+                                        className="justify-start"
                                     >
                                         {alert.type === "error" && (
-                                            <AlertTriangle className="h-3 w-3 text-destructive mr-2" />
+                                            <AlertTriangle className="text-destructive" />
                                         )}
                                         {alert.type === "success" && (
-                                            <CheckCircle2 className="h-3 w-3 text-success mr-2" />
+                                            <CheckCircle2 className="text-success-foreground" />
                                         )}
                                         {alert.type === "warning" && (
-                                            <AlertTriangle className="h-3 w-3 text-warning mr-2" />
+                                            <AlertTriangle className="text-warning-foreground" />
                                         )}
-                                        <span className="text-xs">{name}</span>
+                                        <span className="">{name}</span>
                                     </Button>
                                 ))}
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="destructive"
+                                    size=""
                                     onClick={() => onTrigger(null)}
-                                    className="h-8"
+                                    className="justify-start bg-destructive/10"
                                 >
-                                    <X className="h-3 w-3 mr-2" />
-                                    <span className="text-xs">Clear</span>
+                                    <X className="" />
+                                    <span className="">Clear</span>
                                 </Button>
                             </CardContent>
                         </motion.div>
@@ -166,7 +167,6 @@ export function AuthForm() {
     const [loadingProvider, setLoadingProvider] = useState(null);
     const [isResendingVerification, setIsResendingVerification] =
         useState(false);
-    const [showVerificationAlert, setShowVerificationAlert] = useState(false);
     const [formAlert, setFormAlert] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -186,42 +186,50 @@ export function AuthForm() {
         }
     }, [location.pathname]);
 
-    // Reset verification alert when changing modes or when user starts typing
     useEffect(() => {
-        setShowVerificationAlert(false);
-        setFormAlert(null);
-    }, [isSignUp, isForgotPassword]);
-
-    useEffect(() => {
-        // Check for verification state from navigation
-        if (location.state?.showVerification) {
-            setShowVerificationAlert(true);
-            setEmail(location.state.email || "");
+        if (location.state?.formAlert) {
+            setFormAlert(location.state.formAlert);
+            // Clear the navigation state
+            window.history.replaceState({}, document.title);
         }
     }, [location.state]);
 
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
-        setShowVerificationAlert(false);
         setFormAlert(null);
     };
 
     const handlePasswordChange = (e) => {
         setPassword(e.target.value);
-        setShowVerificationAlert(false);
         setFormAlert(null);
     };
 
     const handleResendVerification = async () => {
+        console.log("Starting verification resend...");
         setIsResendingVerification(true);
+
+        // Update the alert immediately to show loading state
+        setFormAlert((prev) => ({
+            ...prev,
+            button: {
+                ...prev.button,
+                loading: true,
+                disabled: true,
+                text: prev.button.text,
+                loadingText: prev.button.loadingText,
+            },
+        }));
+
         try {
             await authService.resendVerification(email);
+            console.log("Verification email sent successfully");
             setFormAlert({
                 type: "success",
                 title: "Verification email sent",
                 message: "Please check your email for the verification link.",
             });
         } catch (err) {
+            console.error("Failed to send verification:", err);
             setFormAlert({
                 type: "error",
                 title: "Failed to send verification email",
@@ -259,7 +267,7 @@ export function AuthForm() {
                 setTimeout(() => {
                     setIsForgotPassword(false);
                     setEmail("");
-                }, 5000);
+                }, 8000);
             } else {
                 const result = isSignUp
                     ? await authService.signUp(email, password, name)
@@ -273,7 +281,7 @@ export function AuthForm() {
                             message:
                                 "Check your email for the confirmation link!",
                         });
-                        setTimeout(() => setIsSignUp(false), 5000);
+                        setTimeout(() => setIsSignUp(false), 8000);
                     } else {
                         // Check if email is verified before redirecting
                         if (result.user?.email_confirmed_at) {
@@ -281,7 +289,19 @@ export function AuthForm() {
                                 navigate("/dashboard", { replace: true });
                             }, 100);
                         } else {
-                            setShowVerificationAlert(true);
+                            setFormAlert({
+                                type: "warning",
+                                title: "Email not verified",
+                                message:
+                                    "Please check your email for the verification link or request a new one.",
+                                button: {
+                                    text: "Resend verification email",
+                                    loadingText: "Sending...",
+                                    onClick: handleResendVerification,
+                                    disabled: isResendingVerification,
+                                    loading: isResendingVerification,
+                                },
+                            });
                         }
                     }
                 }
@@ -295,7 +315,19 @@ export function AuthForm() {
                     message: "Invalid email or password",
                 });
             } else if (error.message === "Email not confirmed") {
-                setShowVerificationAlert(true);
+                setFormAlert({
+                    type: "warning",
+                    title: "Email not verified",
+                    message:
+                        "Please check your email for the verification link or request a new one.",
+                    button: {
+                        text: "Resend verification email",
+                        loadingText: "Sending...",
+                        onClick: handleResendVerification,
+                        disabled: isResendingVerification,
+                        loading: isResendingVerification,
+                    },
+                });
             } else {
                 setFormAlert({
                     type: "error",
@@ -492,6 +524,8 @@ export function AuthForm() {
                                 <Alert variant={formAlert.type}>
                                     {formAlert.type === "error" ? (
                                         <AlertTriangle className="" />
+                                    ) : formAlert.type === "warning" ? (
+                                        <AlertTriangle className="" />
                                     ) : (
                                         <CheckCircle2 className="" />
                                     )}
@@ -501,9 +535,9 @@ export function AuthForm() {
                                         </AlertTitle>
                                         <AlertDescription>
                                             {formAlert.message}
-                                            {formAlert.button ? (
+                                            {formAlert.button && (
                                                 <Button
-                                                    variant="warning"
+                                                    variant={formAlert.type}
                                                     className="w-full mt-5"
                                                     size=""
                                                     onClick={
@@ -511,16 +545,24 @@ export function AuthForm() {
                                                     }
                                                     disabled={
                                                         formAlert.button
-                                                            .disabled
+                                                            .disabled ||
+                                                        formAlert.button.loading
                                                     }
                                                 >
-                                                    {formAlert.button
-                                                        .loading ? (
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    ) : null}
-                                                    {formAlert.button.text}
+                                                    {formAlert.button.loading ||
+                                                    isResendingVerification ? (
+                                                        <>
+                                                            <Loader2 className="animate-spin" />
+                                                            {
+                                                                formAlert.button
+                                                                    .loadingText
+                                                            }
+                                                        </>
+                                                    ) : (
+                                                        formAlert.button.text
+                                                    )}
                                                 </Button>
-                                            ) : null}
+                                            )}
                                         </AlertDescription>
                                     </div>
                                 </Alert>
@@ -675,14 +717,7 @@ export function AuthForm() {
             {/* Add AlertController only in development */}
             {import.meta.env.DEV && (
                 <AlertController
-                    onTrigger={(alert) => {
-                        setFormAlert(alert);
-                        if (alert?.type === "warning") {
-                            setShowVerificationAlert(true);
-                        } else {
-                            setShowVerificationAlert(false);
-                        }
-                    }}
+                    onTrigger={setFormAlert}
                     handleResendVerification={handleResendVerification}
                     isResendingVerification={isResendingVerification}
                 />

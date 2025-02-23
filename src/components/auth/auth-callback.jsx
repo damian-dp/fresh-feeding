@@ -8,11 +8,6 @@ export function AuthCallback() {
     const location = useLocation();
 
     useEffect(() => {
-        // Skip if we're already on the auth page
-        if (location.pathname === "/auth") {
-            return;
-        }
-
         let mounted = true;
 
         const handleAuthCallback = async () => {
@@ -27,7 +22,7 @@ export function AuthCallback() {
                 const queryParams = new URLSearchParams(queryString);
                 const hashParams = new URLSearchParams(hashString);
 
-                // Check for expired link first
+                // Check for error parameters
                 const errorDescription =
                     hashParams.get("error_description") ||
                     queryParams.get("error_description");
@@ -37,16 +32,29 @@ export function AuthCallback() {
                     hashParams.get("error_code") ||
                     queryParams.get("error_code");
 
-                if (error === "access_denied" && errorCode === "otp_expired") {
-                    console.log(
-                        "[Auth Callback] Link expired, redirecting to auth"
-                    );
-                    navigate("/auth", {
+                // Get token from either hash or query params
+                const token =
+                    queryParams.get("token") || hashParams.get("token");
+                const type = queryParams.get("type") || hashParams.get("type");
+
+                // If we have an error or invalid/expired token
+                if (error || errorCode || (token && type === "signup")) {
+                    console.log("[Auth Callback] Error detected:", {
+                        error,
+                        errorCode,
+                        errorDescription,
+                    });
+
+                    // Navigate to sign in with error state
+                    navigate("/sign-in", {
                         replace: true,
                         state: {
-                            showVerification: true,
-                            isExpired: true,
-                            email: null,
+                            formAlert: {
+                                type: "error",
+                                title: "Link expired",
+                                message:
+                                    "This verification link has expired. Please sign in to request a new one.",
+                            },
                         },
                     });
                     return;
@@ -62,7 +70,6 @@ export function AuthCallback() {
                         const refreshToken =
                             hashParams.get("refresh_token") ||
                             queryParams.get("refresh_token");
-                        console.log("[Auth Callback] Setting session...");
 
                         // First verify the session is valid
                         const {
@@ -70,25 +77,13 @@ export function AuthCallback() {
                             error: userError,
                         } = await supabase.auth.getUser(accessToken);
 
-                        if (userError) {
-                            console.error(
-                                "[Auth Callback] Invalid access token:",
-                                userError
+                        if (userError || !user) {
+                            throw new Error(
+                                userError?.message || "Invalid user token"
                             );
-                            throw userError;
                         }
 
-                        if (!user) {
-                            console.error(
-                                "[Auth Callback] No user found with token"
-                            );
-                            throw new Error("Invalid user token");
-                        }
-
-                        console.log(
-                            "[Auth Callback] Valid user token, setting session"
-                        );
-
+                        // Set the session
                         const {
                             data: { session },
                             error: sessionError,
@@ -97,20 +92,12 @@ export function AuthCallback() {
                             refresh_token: refreshToken,
                         });
 
-                        if (sessionError) {
-                            console.error(
-                                "[Auth Callback] Session error:",
-                                sessionError
+                        if (sessionError || !session) {
+                            throw new Error(
+                                sessionError?.message ||
+                                    "Failed to create session"
                             );
-                            throw sessionError;
                         }
-
-                        if (!session) {
-                            console.error("[Auth Callback] No session created");
-                            throw new Error("Failed to create session");
-                        }
-
-                        console.log("[Auth Callback] Session set successfully");
 
                         // Small delay to ensure session is properly set
                         await new Promise((resolve) =>
@@ -118,74 +105,51 @@ export function AuthCallback() {
                         );
 
                         if (mounted) {
-                            console.log(
-                                "[Auth Callback] Redirecting to dashboard"
-                            );
                             window.location.replace("/dashboard");
                         }
                         return;
                     } catch (error) {
                         console.error("[Auth Callback] Session error:", error);
-                        if (mounted) {
-                            navigate("/auth", {
-                                replace: true,
-                                state: {
-                                    showVerification: true,
-                                    isExpired: true,
-                                    email: null,
+                        navigate("/sign-in", {
+                            replace: true,
+                            state: {
+                                formAlert: {
+                                    type: "error",
+                                    title: "Authentication failed",
+                                    message:
+                                        "Failed to verify your email. Please try signing in or request a new verification link.",
                                 },
-                            });
-                        }
-                        return;
-                    }
-                }
-
-                // Handle old-style token verification
-                const token =
-                    queryParams.get("token") || hashParams.get("token");
-                if (token) {
-                    console.log("[Auth Callback] Found verification token");
-                    const { data: verifyData, error: verifyError } =
-                        await supabase.auth.verifyOtp({
-                            token_hash: token,
-                            type: "signup",
+                            },
                         });
-
-                    if (verifyError) throw verifyError;
-                    if (verifyData?.session) {
-                        console.log(
-                            "[Auth Callback] OTP verified successfully, redirecting to dashboard"
-                        );
-                        if (mounted) {
-                            window.location.replace("/dashboard");
-                        }
                         return;
                     }
                 }
 
-                // If we get here, show expired message
-                if (mounted) {
-                    navigate("/auth", {
-                        replace: true,
-                        state: {
-                            showVerification: true,
-                            isExpired: true,
-                            email: null,
+                // If we get here without any successful auth, show expired message
+                navigate("/sign-in", {
+                    replace: true,
+                    state: {
+                        formAlert: {
+                            type: "error",
+                            title: "Link expired",
+                            message:
+                                "This verification link has expired. Please sign in to request a new one.",
                         },
-                    });
-                }
+                    },
+                });
             } catch (error) {
                 console.error("[Auth Callback] Error:", error);
-                if (mounted) {
-                    navigate("/auth", {
-                        replace: true,
-                        state: {
-                            showVerification: true,
-                            isExpired: true,
-                            email: null,
+                navigate("/sign-in", {
+                    replace: true,
+                    state: {
+                        formAlert: {
+                            type: "error",
+                            title: "Authentication failed",
+                            message:
+                                "An unexpected error occurred. Please try signing in again.",
                         },
-                    });
-                }
+                    },
+                });
             }
         };
 
@@ -194,12 +158,7 @@ export function AuthCallback() {
         return () => {
             mounted = false;
         };
-    }, [navigate, location.pathname]);
-
-    // Only show loading spinner on callback route
-    if (location.pathname === "/auth") {
-        return null;
-    }
+    }, [navigate]);
 
     return <LoadingScreen />;
 }
