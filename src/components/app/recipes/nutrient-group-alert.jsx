@@ -549,10 +549,14 @@ export function NutrientGroupAlert({
                     <Alert variant="success">
                         <CheckCircle2 className="" />
                         <div className="flex flex-col gap-2">
-                            <AlertTitle>Your recipe is balanced</AlertTitle>
+                            <AlertTitle>
+                                Your recipe is likely balanced
+                            </AlertTitle>
                             <AlertDescription>
-                                All required nutrients and ingredient categories
-                                are present.
+                                All nutrients and ingredient categories are
+                                present. This resource is intended as a guide
+                                and may not be perfectly balanced. Use your
+                                judgment and common sense when applying it.
                             </AlertDescription>
                         </div>
                     </Alert>

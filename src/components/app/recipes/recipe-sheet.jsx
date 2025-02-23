@@ -336,7 +336,11 @@ export function RecipeSheet({
                 ...misc,
             ];
 
-            const isBalanced = await isRecipeBalanced(allIngredients);
+            // Get the full nutrient state to check balance
+            const nutrientCheckResult = await checkRecipeBalance(
+                allIngredients
+            );
+            const isBalanced = nutrientCheckResult.isBalanced;
 
             const recipeData = {
                 recipe_name: recipeName,
