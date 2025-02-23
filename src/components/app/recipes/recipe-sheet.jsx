@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
     Sheet,
     SheetClose,
@@ -84,6 +84,9 @@ export function RecipeSheet({
 
     // Add this state to track initial load
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    // Add this state to track updating
+    const [isUpdating, setIsUpdating] = useState(false);
 
     // Move ingredientSections inside component
     const ingredientSections = {
@@ -449,14 +452,20 @@ export function RecipeSheet({
                             mode
                         );
                         setNutrientState(state);
+                    } else {
+                        setNutrientState(null);
                     }
+                } else if (mode === "create") {
+                    // For create mode, initialize with empty state
+                    const state = await checkRecipeBalance([], "create");
+                    setNutrientState(state);
                 }
             } catch (error) {
                 console.error("Error checking nutrients:", error);
                 setNutrientState(null);
-            } finally {
-                setCheckingNutrients(false);
             }
+
+            setCheckingNutrients(false);
         };
 
         checkNutrientsForMode();
@@ -642,6 +651,8 @@ export function RecipeSheet({
     };
 
     const handleRemoveIngredient = async (ingredientId, section) => {
+        setIsUpdating(true);
+
         // First get the current ingredients
         const currentIngredients = Object.values(ingredientSections).flatMap(
             (section) => section.getItems()
@@ -721,8 +732,20 @@ export function RecipeSheet({
             const { [ingredientId]: removed, ...remainingAdded } =
                 prev.addedIngredients || {};
 
-            // Update nutrient suggestions to un-mark the removed ingredient
+            // Keep existing suggestions but mark the removed ingredient as not added
             const updatedSuggestions = { ...prev.nutrientSuggestions };
+
+            // Merge any new suggestions from the state check
+            if (state.nutrientSuggestions) {
+                Object.keys(state.nutrientSuggestions).forEach((nutrientId) => {
+                    if (!updatedSuggestions[nutrientId]) {
+                        updatedSuggestions[nutrientId] =
+                            state.nutrientSuggestions[nutrientId];
+                    }
+                });
+            }
+
+            // Mark the removed ingredient as not added in all suggestion lists
             Object.keys(updatedSuggestions).forEach((nutrientId) => {
                 updatedSuggestions[nutrientId] = updatedSuggestions[
                     nutrientId
@@ -743,6 +766,8 @@ export function RecipeSheet({
                 fromIngredientSelector: true,
             };
         });
+
+        setIsUpdating(false);
     };
 
     // Delete functionality
@@ -793,6 +818,22 @@ export function RecipeSheet({
             setSelectedDog(newDog.dog_id);
         });
     };
+
+    // First, add a ref for the ScrollArea
+    const scrollAreaRef = useRef(null);
+
+    // Add this effect to handle scroll reset
+    useEffect(() => {
+        // Reset scroll position when mode changes
+        if (scrollAreaRef.current) {
+            const viewport = scrollAreaRef.current.querySelector(
+                "[data-radix-scroll-area-viewport]"
+            );
+            if (viewport) {
+                viewport.scrollTop = 0;
+            }
+        }
+    }, [mode]); // Only run when mode changes
 
     // Render content based on mode
     const renderContent = () => {
@@ -862,10 +903,7 @@ export function RecipeSheet({
 
     return (
         <>
-            <Sheet
-                open={open}
-                onOpenChange={handleClose}
-            >
+            <Sheet open={open} onOpenChange={handleClose}>
                 <SheetContent
                     className="md:p-2 ring-0! outline-none"
                     side="right"
@@ -903,7 +941,7 @@ export function RecipeSheet({
                                 </SheetClose>
                             </SheetHeader>
                         </div>
-                        <ScrollArea className="flex-1">
+                        <ScrollArea ref={scrollAreaRef} className="flex-1">
                             {renderContent()}
                         </ScrollArea>
                         <div className="">
@@ -917,7 +955,7 @@ export function RecipeSheet({
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive">
                                                 <Trash className="" />
-                                                Delete recipe
+                                                Delete
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
@@ -949,7 +987,7 @@ export function RecipeSheet({
                                     </AlertDialog>
                                 )}
                                 <div className="flex flex-row gap-2">
-                                    <SheetClose>
+                                    <SheetClose className="hidden md:flex">
                                         <div className="hover:bg-accent h-10 px-4 py-2 hover:text-accent-foreground inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
                                             {mode === "view"
                                                 ? "Close"
@@ -979,7 +1017,7 @@ export function RecipeSheet({
 
                                             {mode === "create"
                                                 ? "Create recipe"
-                                                : "Save changes"}
+                                                : "Save"}
                                         </Button>
                                     )}
                                     {mode === "view" && (
@@ -995,7 +1033,7 @@ export function RecipeSheet({
                                             }}
                                         >
                                             <Pencil className="" />
-                                            Edit recipe
+                                            Edit
                                         </Button>
                                     )}
                                 </div>

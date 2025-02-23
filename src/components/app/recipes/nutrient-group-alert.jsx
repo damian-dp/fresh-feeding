@@ -10,6 +10,7 @@ import {
     Loader2,
     ChevronUp,
     ChevronDown,
+    CircleCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -241,13 +242,70 @@ export function NutrientGroupAlert({
     const INITIAL_INGREDIENTS_SHOWN = 5;
     const [mouseInAlert, setMouseInAlert] = useState({});
     const [collapseTimeouts, setCollapseTimeouts] = useState({});
+    const [satisfiedInSession, setSatisfiedInSession] = useState(new Set());
 
-    // Reset addedIngredients only when nutrientState changes from selector
+    // Reset addedIngredients when nutrientState changes or recipe ingredients change
     useEffect(() => {
-        if (nutrientState?.fromIngredientSelector) {
-            setAddedIngredients(new Set());
+        // Create a Set of all current recipe ingredient IDs
+        const currentIngredientIds = new Set(
+            recipeIngredients?.map((ri) =>
+                mode === "create" ? ri.id : ri.ingredient_id
+            ) || []
+        );
+
+        // Reset addedIngredients to only include ingredients that are still in the recipe
+        setAddedIngredients((prev) => {
+            const next = new Set();
+            prev.forEach((id) => {
+                if (currentIngredientIds.has(id)) {
+                    next.add(id);
+                }
+            });
+            return next;
+        });
+    }, [recipeIngredients, nutrientState, mode]);
+
+    // When an alert turns green (requirement met), add it to satisfiedInSession
+    useEffect(() => {
+        if (!nutrientState?.missingCategories) return;
+
+        // Get all possible categories
+        const allCategories = [
+            "Missing a source of muscle meat",
+            "Missing a source of bone",
+            "Missing a source of liver",
+            "Missing a source of secreting organs",
+            "Missing a source of plant matter",
+        ];
+
+        // Find which categories are now satisfied
+        const currentlySatisfied = allCategories.filter(
+            (cat) => !nutrientState.missingCategories.includes(cat)
+        );
+
+        // Add newly satisfied categories to our session tracking
+        setSatisfiedInSession((prev) => {
+            const next = new Set(prev);
+            currentlySatisfied.forEach((cat) => next.add(cat));
+            return next;
+        });
+    }, [nutrientState?.missingCategories]);
+
+    // Update the shouldShowAlert function to handle both categories and nutrients
+    const shouldShowAlert = (item, type = "category") => {
+        if (mode !== "edit") return true;
+
+        if (type === "category") {
+            // If it's currently missing, always show it
+            if (nutrientState?.missingCategories?.includes(item)) return true;
+
+            // If it was satisfied during this session, show it
+            return satisfiedInSession.has(item);
+        } else {
+            // For nutrients, always show them if they're missing
+            return true;
         }
-    }, [nutrientState?.fromIngredientSelector]);
+    };
 
     const handleDelayedCollapse = (nutrientId) => {
         // Clear any existing timeout for this nutrient
@@ -317,31 +375,47 @@ export function NutrientGroupAlert({
     };
 
     // Update the ingredient rendering in the alert
-    const renderIngredient = (ingredient) => {
+    const renderIngredient = (ingredient, nutrient) => {
         const ingredientId = ingredient.ingredient_id || ingredient.id;
-        const isAdded =
-            addedIngredients.has(ingredientId) ||
-            nutrientState?.addedIngredients?.[ingredientId];
+
+        // Check if ingredient exists in current recipe
+        const isInRecipe = recipeIngredients?.some((ri) => {
+            const riId = mode === "create" ? ri.id : ri.ingredient_id;
+            return riId === ingredientId;
+        });
+
+        // Only use addedIngredients for temporary state during add operation
+        const isAdded = isInRecipe || addedIngredients.has(ingredientId);
 
         return (
             <div
                 key={`${ingredientId}-${ingredient.ingredient_name}`}
                 className="flex items-center justify-between gap-2"
             >
-                <span>{ingredient.ingredient_name}</span>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddIngredient(ingredient)}
-                    disabled={isAdded}
-                >
-                    {loadingIngredients.has(ingredientId) ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                        <Plus className="h-4 w-4 mr-2" />
-                    )}
-                    {isAdded ? "Added" : "Add"}
-                </Button>
+                <span className="text-base">{ingredient.ingredient_name}</span>
+                {!isAdded ? (
+                    <Button
+                        variant={
+                            isNutrientAddressed(nutrient)
+                                ? "success"
+                                : "warning"
+                        }
+                        size="icon"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleAddIngredient(ingredient)}
+                        disabled={isAdded}
+                    >
+                        {loadingIngredients.has(ingredientId) ? (
+                            <Loader2 className="animate-spin" />
+                        ) : (
+                            <Plus className="" />
+                        )}
+                    </Button>
+                ) : (
+                    <div className="flex items-center justify-center h-8 w-8 p-0">
+                        <CheckCheck className="size-6" />
+                    </div>
+                )}
             </div>
         );
     };
@@ -356,7 +430,9 @@ export function NutrientGroupAlert({
                 {/* First 5 ingredients */}
                 {suggestions
                     .slice(0, INITIAL_INGREDIENTS_SHOWN)
-                    .map(renderIngredient)}
+                    .map((ingredient) =>
+                        renderIngredient(ingredient, nutrient)
+                    )}
 
                 {/* Additional ingredients with animation */}
                 <AnimatePresence>
@@ -368,11 +444,13 @@ export function NutrientGroupAlert({
                                 animate="visible"
                                 exit="hidden"
                                 variants={expandVariants}
-                                className="overflow-hidden"
+                                className="overflow-hidden flex flex-col gap-2"
                             >
                                 {suggestions
                                     .slice(INITIAL_INGREDIENTS_SHOWN)
-                                    .map(renderIngredient)}
+                                    .map((ingredient) =>
+                                        renderIngredient(ingredient, nutrient)
+                                    )}
                             </motion.div>
                         )}
                 </AnimatePresence>
@@ -380,9 +458,13 @@ export function NutrientGroupAlert({
                 {/* Show more/less button */}
                 {suggestions.length > INITIAL_INGREDIENTS_SHOWN && (
                     <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full mt-2"
+                        variant={
+                            isNutrientAddressed(nutrient)
+                                ? "success"
+                                : "warning"
+                        }
+                        size=""
+                        className="w-full mt-4"
                         onClick={() => {
                             setExpandedNutrientId(
                                 expandedNutrientId === nutrient.id
@@ -393,12 +475,12 @@ export function NutrientGroupAlert({
                     >
                         {expandedNutrientId === nutrient.id ? (
                             <>
-                                <ChevronUp className="h-4 w-4 mr-2" />
+                                <ChevronUp className="size-5" />
                                 Show Less
                             </>
                         ) : (
                             <>
-                                <ChevronDown className="h-4 w-4 mr-2" />
+                                <ChevronDown className="size-5" />
                                 Show More
                             </>
                         )}
@@ -419,16 +501,14 @@ export function NutrientGroupAlert({
         });
     };
 
-    if (!nutrientState) return null;
-
-    // Add loading state check at the start
-    if (isChecking) {
+    // Show loading state until we have nutrient state
+    if (isChecking || !nutrientState) {
         return (
-            <Alert className="mb-4">
-                <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <AlertTitle>Checking nutritional balance...</AlertTitle>
-                </div>
+            <Alert className="flex items-center">
+                <AlertTitle className="flex items-center gap-3 mb-0">
+                    <Loader2 className="size-5 animate-spin" />
+                    Checking nutritional balance...
+                </AlertTitle>
             </Alert>
         );
     }
@@ -441,14 +521,21 @@ export function NutrientGroupAlert({
                 variants={containerVariants}
                 className="w-full"
             >
-                <motion.div variants={alertVariants}>
+                <motion.div
+                    variants={alertVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="min-h-16"
+                >
                     <Alert variant="success">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <AlertTitle>Your recipe is balanced</AlertTitle>
-                        <AlertDescription>
-                            All required nutrients and ingredient categories are
-                            present.
-                        </AlertDescription>
+                        <CheckCircle2 className="" />
+                        <div className="flex flex-col gap-2">
+                            <AlertTitle>Your recipe is balanced</AlertTitle>
+                            <AlertDescription>
+                                All required nutrients and ingredient categories
+                                are present.
+                            </AlertDescription>
+                        </div>
                     </Alert>
                 </motion.div>
             </motion.div>
@@ -464,43 +551,59 @@ export function NutrientGroupAlert({
                 variants={containerVariants}
                 className="w-full"
             >
-                <motion.div variants={alertVariants}>
-                    <Alert variant="warning" className="w-full">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>
-                            Your recipe is missing some components
-                        </AlertTitle>
-                        <AlertDescription>
-                            <div className="flex flex-col gap-2 mt-3">
-                                {nutrientState.missingCategories.map(
-                                    (category) => (
-                                        <div
-                                            key={category}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                                            <span>{category}</span>
-                                        </div>
-                                    )
-                                )}
-                                {nutrientState.missingNutrients.map(
-                                    (nutrient) => (
-                                        <div
-                                            key={nutrient.id}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                                            <span>
-                                                {nutrient.basic_name}
-                                                {nutrient.scientific_name &&
-                                                    ` (${nutrient.scientific_name})`}
-                                            </span>
-                                        </div>
-                                    )
-                                )}
+                <motion.div
+                    variants={alertVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="min-h-16" // Add minimum height to prevent collapse
+                >
+                    {isChecking || !nutrientState ? (
+                        <Alert className="flex items-center">
+                            <AlertTitle className="flex items-center gap-3 mb-0">
+                                <Loader2 className="size-5 animate-spin" />
+                                Checking nutritional balance...
+                            </AlertTitle>
+                        </Alert>
+                    ) : (
+                        <Alert variant="warning" className="w-full">
+                            <AlertCircle className="" />
+                            <div className="flex flex-col gap-3">
+                                <AlertTitle>
+                                    Your recipe is missing some components
+                                </AlertTitle>
+                                <AlertDescription>
+                                    <div className="flex flex-col gap-3">
+                                        {nutrientState.missingCategories.map(
+                                            (category) => (
+                                                <div
+                                                    key={category}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <span className="h-1 w-1 rounded-full bg-current" />
+                                                    <span>{category}</span>
+                                                </div>
+                                            )
+                                        )}
+                                        {nutrientState.missingNutrients.map(
+                                            (nutrient) => (
+                                                <div
+                                                    key={nutrient.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <span className="h-1 w-1 rounded-full bg-current" />
+                                                    <span>
+                                                        {nutrient.basic_name}
+                                                        {nutrient.scientific_name &&
+                                                            ` (${nutrient.scientific_name})`}
+                                                    </span>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </AlertDescription>
                             </div>
-                        </AlertDescription>
-                    </Alert>
+                        </Alert>
+                    )}
                 </motion.div>
             </motion.div>
         );
@@ -523,189 +626,183 @@ export function NutrientGroupAlert({
                     className="w-full mb-4"
                 >
                     <Alert variant="warning">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Missing ingredient categories</AlertTitle>
-                        <AlertDescription>
-                            <div className="flex flex-col gap-2 mt-3">
+                        <AlertTriangle className="" />
+                        <div className="flex flex-col gap-3">
+                            <AlertTitle>
+                                Missing ingredient categories
+                            </AlertTitle>
+                            <AlertDescription className="flex flex-col gap-2">
                                 {nutrientState.missingCategories.map(
                                     (category) => (
                                         <div
                                             key={category}
                                             className="flex items-center gap-2"
                                         >
-                                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                            <span className="h-1 w-1 rounded-full bg-current" />
                                             <span>{category}</span>
                                         </div>
                                     )
                                 )}
-                            </div>
-                        </AlertDescription>
+                            </AlertDescription>
+                        </div>
                     </Alert>
                 </motion.div>
             )}
 
             {/* Two column flex container for nutrient alerts */}
-            <div className="flex gap-4 w-full">
+            <div className="flex flex-col md:flex-row gap-4 w-full">
                 {/* Left column */}
-                <div className="flex flex-col flex-1 gap-4 w-full">
+                <div className="flex flex-col gap-4 w-full">
                     {nutrientState.missingNutrients
                         .filter((_, index) => index % 2 === 0)
-                        .map((nutrient) => {
-                            return (
-                                <motion.div
-                                    key={nutrient.id}
-                                    variants={alertVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className={`${
-                                        nutrientState.missingNutrients
-                                            .length === 1
-                                            ? "col-span-full"
-                                            : ""
-                                    }`}
-                                >
-                                    <Alert
-                                        variant={
-                                            isNutrientAddressed(nutrient)
-                                                ? "success"
-                                                : "warning"
+                        .map((nutrient) => (
+                            <motion.div
+                                key={nutrient.id}
+                                variants={alertVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className={`${
+                                    nutrientState.missingNutrients.length === 1
+                                        ? "col-span-full"
+                                        : ""
+                                }`}
+                            >
+                                <Alert
+                                    variant={
+                                        isNutrientAddressed(nutrient)
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                    onMouseEnter={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: true,
+                                        }));
+                                        // Clear any pending collapse timeout
+                                        if (collapseTimeouts[nutrient.id]) {
+                                            clearTimeout(
+                                                collapseTimeouts[nutrient.id]
+                                            );
                                         }
-                                        onMouseEnter={() => {
-                                            setMouseInAlert((prev) => ({
-                                                ...prev,
-                                                [nutrient.id]: true,
-                                            }));
-                                            // Clear any pending collapse timeout
-                                            if (collapseTimeouts[nutrient.id]) {
-                                                clearTimeout(
-                                                    collapseTimeouts[
-                                                        nutrient.id
-                                                    ]
-                                                );
-                                            }
-                                        }}
-                                        onMouseLeave={() => {
-                                            setMouseInAlert((prev) => ({
-                                                ...prev,
-                                                [nutrient.id]: false,
-                                            }));
-                                            // Start collapse timeout if ingredients were added and this alert is expanded
-                                            if (
-                                                addedIngredients.has(
-                                                    nutrient.id
-                                                ) &&
-                                                expandedNutrientId ===
-                                                    nutrient.id
-                                            ) {
-                                                handleDelayedCollapse(
-                                                    nutrient.id
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        <AlertCircle className="h-4 w-4" />
+                                    }}
+                                    onMouseLeave={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: false,
+                                        }));
+                                        // Start collapse timeout if ingredients were added and this alert is expanded
+                                        if (
+                                            addedIngredients.has(nutrient.id) &&
+                                            expandedNutrientId === nutrient.id
+                                        ) {
+                                            handleDelayedCollapse(nutrient.id);
+                                        }
+                                    }}
+                                >
+                                    {isNutrientAddressed(nutrient) ? (
+                                        <CircleCheck className="" />
+                                    ) : (
+                                        <AlertTriangle className="" />
+                                    )}
+                                    <div className="flex flex-col gap-1 w-full">
                                         <AlertTitle>
                                             {isNutrientAddressed(nutrient)
                                                 ? `Added source of ${nutrient.basic_name}`
                                                 : `Missing source of ${nutrient.basic_name}`}
                                         </AlertTitle>
                                         <AlertDescription>
-                                            <p className="mb-2">
+                                            <p className="">
                                                 {nutrient.basic_name}
                                                 {nutrient.scientific_name &&
                                                     ` (${nutrient.scientific_name})`}
                                             </p>
-                                            <div className="flex flex-col gap-2 mt-3">
+                                            <div className="flex flex-col gap-2 mt-4">
                                                 {renderNutrientSuggestions(
                                                     nutrient
                                                 )}
                                             </div>
                                         </AlertDescription>
-                                    </Alert>
-                                </motion.div>
-                            );
-                        })}
+                                    </div>
+                                </Alert>
+                            </motion.div>
+                        ))}
                 </div>
 
                 {/* Right column */}
-                <div className="flex flex-col flex-1 gap-4 w-full">
+                <div className="flex flex-col gap-4 w-full">
                     {nutrientState.missingNutrients
                         .filter((_, index) => index % 2 === 1)
-                        .map((nutrient) => {
-                            return (
-                                <motion.div
-                                    key={nutrient.id}
-                                    variants={alertVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className={`${
-                                        nutrientState.missingNutrients
-                                            .length === 1
-                                            ? "col-span-full"
-                                            : ""
-                                    }`}
-                                >
-                                    <Alert
-                                        variant={
-                                            isNutrientAddressed(nutrient)
-                                                ? "success"
-                                                : "warning"
+                        .map((nutrient) => (
+                            <motion.div
+                                key={nutrient.id}
+                                variants={alertVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className={`${
+                                    nutrientState.missingNutrients.length === 1
+                                        ? "col-span-full"
+                                        : ""
+                                }`}
+                            >
+                                <Alert
+                                    variant={
+                                        isNutrientAddressed(nutrient)
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                    onMouseEnter={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: true,
+                                        }));
+                                        // Clear any pending collapse timeout
+                                        if (collapseTimeouts[nutrient.id]) {
+                                            clearTimeout(
+                                                collapseTimeouts[nutrient.id]
+                                            );
                                         }
-                                        onMouseEnter={() => {
-                                            setMouseInAlert((prev) => ({
-                                                ...prev,
-                                                [nutrient.id]: true,
-                                            }));
-                                            // Clear any pending collapse timeout
-                                            if (collapseTimeouts[nutrient.id]) {
-                                                clearTimeout(
-                                                    collapseTimeouts[
-                                                        nutrient.id
-                                                    ]
-                                                );
-                                            }
-                                        }}
-                                        onMouseLeave={() => {
-                                            setMouseInAlert((prev) => ({
-                                                ...prev,
-                                                [nutrient.id]: false,
-                                            }));
-                                            // Start collapse timeout if ingredients were added and this alert is expanded
-                                            if (
-                                                addedIngredients.has(
-                                                    nutrient.id
-                                                ) &&
-                                                expandedNutrientId ===
-                                                    nutrient.id
-                                            ) {
-                                                handleDelayedCollapse(
-                                                    nutrient.id
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        <AlertCircle className="h-4 w-4" />
+                                    }}
+                                    onMouseLeave={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: false,
+                                        }));
+                                        // Start collapse timeout if ingredients were added and this alert is expanded
+                                        if (
+                                            addedIngredients.has(nutrient.id) &&
+                                            expandedNutrientId === nutrient.id
+                                        ) {
+                                            handleDelayedCollapse(nutrient.id);
+                                        }
+                                    }}
+                                >
+                                    {isNutrientAddressed(nutrient) ? (
+                                        <CircleCheck className="" />
+                                    ) : (
+                                        <AlertTriangle className="" />
+                                    )}
+                                    <div className="flex flex-col gap-1 w-full">
                                         <AlertTitle>
                                             {isNutrientAddressed(nutrient)
                                                 ? `Added source of ${nutrient.basic_name}`
                                                 : `Missing source of ${nutrient.basic_name}`}
                                         </AlertTitle>
                                         <AlertDescription>
-                                            <p className="mb-2">
+                                            <p className="">
                                                 {nutrient.basic_name}
                                                 {nutrient.scientific_name &&
                                                     ` (${nutrient.scientific_name})`}
                                             </p>
-                                            <div className="flex flex-col gap-2 mt-3">
+                                            <div className="flex flex-col gap-2 mt-4">
                                                 {renderNutrientSuggestions(
                                                     nutrient
                                                 )}
                                             </div>
                                         </AlertDescription>
-                                    </Alert>
-                                </motion.div>
-                            );
-                        })}
+                                    </div>
+                                </Alert>
+                            </motion.div>
+                        ))}
                 </div>
             </div>
         </motion.div>

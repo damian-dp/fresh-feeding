@@ -5,6 +5,8 @@ import { IngredientSection } from "./ingredient-section";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { NutrientGroupAlert } from "./nutrient-group-alert";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export function RecipeSheetCreate({
     recipeName,
@@ -23,6 +25,8 @@ export function RecipeSheetCreate({
     nutrientState,
     checkingNutrients,
 }) {
+    const [isUpdating, setIsUpdating] = useState(false);
+
     const hasCreateChanges = () => {
         return (
             recipeName !== "" ||
@@ -63,7 +67,7 @@ export function RecipeSheetCreate({
             </div>
 
             {/* Ingredients section */}
-            <div className="flex flex-col gap-8 p-8 border-b border-border">
+            <div className="flex flex-col gap-8 p-8">
                 <p className="font-medium">Ingredients</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
@@ -81,7 +85,9 @@ export function RecipeSheetCreate({
                             mode="create"
                             isActive={activeSection === "meat_and_bone"}
                             onToggleActive={setActiveSection}
-                            ingredients={getIngredientsByCategory("meat_and_bone")}
+                            ingredients={getIngredientsByCategory(
+                                "meat_and_bone"
+                            )}
                             isLoading={ingredientsLoading}
                         />
                     </div>
@@ -100,7 +106,9 @@ export function RecipeSheetCreate({
                             mode="create"
                             isActive={activeSection === "plant_matter"}
                             onToggleActive={setActiveSection}
-                            ingredients={getIngredientsByCategory("plant_matter")}
+                            ingredients={getIngredientsByCategory(
+                                "plant_matter"
+                            )}
                             isLoading={ingredientsLoading}
                         />
                     </div>
@@ -119,7 +127,9 @@ export function RecipeSheetCreate({
                             mode="create"
                             isActive={activeSection === "secreting_organs"}
                             onToggleActive={setActiveSection}
-                            ingredients={getIngredientsByCategory("secreting_organs")}
+                            ingredients={getIngredientsByCategory(
+                                "secreting_organs"
+                            )}
                             isLoading={ingredientsLoading}
                         />
                     </div>
@@ -164,33 +174,42 @@ export function RecipeSheetCreate({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-8">
-                {Object.values(ingredientSections).some(section => section.getItems().length > 0) && (
-                    <>
-                        <p className="font-medium">Nutrition status</p>
-                        <div className="flex gap-8">
-                            <NutrientGroupAlert
-                                recipeIngredients={Object.values(
-                                    ingredientSections
-                                ).flatMap((section) => section.getItems())}
-                                mode="create"
-                                onAddIngredient={(ingredient, options) => {
-                                    const categoryMap = {
-                                        1: "meat_and_bone",
-                                        2: "plant_matter",
-                                        3: "liver",
-                                        4: "secreting_organs",
-                                        5: "misc",
-                                    };
-                                    const category = categoryMap[ingredient.category_id];
-                                    handleAddIngredient(ingredient, category, options);
-                                }}
-                                nutrientState={nutrientState}
-                                isChecking={checkingNutrients}
-                            />
-                        </div>
-                    </>
-                )}
+            <div className="flex flex-col gap-6 p-8 border-t border-border">
+                <div className="flex items-center gap-2">
+                    <p className="font-medium">Nutrition status</p>
+                    {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
+                <div className="flex gap-8">
+                    <NutrientGroupAlert
+                        recipeIngredients={Object.values(
+                            ingredientSections
+                        ).flatMap((section) => section.getItems())}
+                        mode="create"
+                        onAddIngredient={(ingredient, options) => {
+                            setIsUpdating(true);
+                            try {
+                                const categoryMap = {
+                                    1: "meat_and_bone",
+                                    2: "plant_matter",
+                                    3: "liver",
+                                    4: "secreting_organs",
+                                    5: "misc",
+                                };
+                                const category =
+                                    categoryMap[ingredient.category_id];
+                                handleAddIngredient(
+                                    ingredient,
+                                    category,
+                                    options
+                                );
+                            } finally {
+                                setIsUpdating(false);
+                            }
+                        }}
+                        nutrientState={nutrientState}
+                        isChecking={isUpdating}
+                    />
+                </div>
             </div>
         </>
     );

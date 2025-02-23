@@ -9,6 +9,7 @@ import {
     Leaf,
     Pill,
     AlertCircle,
+    Loader2,
 } from "lucide-react";
 import { BatchCalculator } from "./batch-calculator";
 import { useState, useEffect, useCallback, useRef } from "react";

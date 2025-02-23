@@ -13,6 +13,8 @@ export function IngredientSelector({
     selectedIngredient,
     className,
     autoFocus = false,
+    items = [],
+    mode = "create",
 }) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
@@ -23,6 +25,14 @@ export function IngredientSelector({
             ingredient.name.toLowerCase().includes(search.toLowerCase())
         );
     }, [ingredients, search]);
+
+    const isIngredientAdded = (ingredient) => {
+        return items.some((existingIngredient) =>
+            mode === "create"
+                ? existingIngredient.id === ingredient.id
+                : existingIngredient.ingredient_id === ingredient.ingredient_id
+        );
+    };
 
     const handleSelect = (ingredient) => {
         onSelect(ingredient);
@@ -65,10 +75,13 @@ export function IngredientSelector({
                                     key={ingredient.id}
                                     onMouseDown={(e) => e.preventDefault()}
                                     onClick={() => handleSelect(ingredient)}
+                                    disabled={isIngredientAdded(ingredient)}
                                     className={cn(
                                         "flex items-center gap-2 px-2 py-1.5 text-sm",
                                         "hover:bg-accent hover:text-accent-foreground",
-                                        "cursor-pointer text-left w-full"
+                                        "cursor-pointer text-left w-full",
+                                        isIngredientAdded(ingredient) &&
+                                            "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     <span>
@@ -78,6 +91,11 @@ export function IngredientSelector({
                                     {ingredient.bone_percent && (
                                         <span className="text-muted-foreground">
                                             {ingredient.bone_percent}% bone
+                                        </span>
+                                    )}
+                                    {isIngredientAdded(ingredient) && (
+                                        <span className="text-sm text-muted-foreground ml-auto">
+                                            Added
                                         </span>
                                     )}
                                 </button>

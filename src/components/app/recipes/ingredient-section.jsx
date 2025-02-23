@@ -15,6 +15,7 @@ import {
 import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
 import { BadgeStack } from "@/components/ui/badge-stack";
+import { cn } from "@/lib/utils";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -80,7 +81,18 @@ export function IngredientSection({
     ingredients,
     isLoading,
     autoFocus = false,
+    allIngredients = [],
 }) {
+    // We can check if an ingredient exists in any section
+    const isIngredientInAnySection = (ingredient) => {
+        if (!allIngredients || !ingredient) return false;
+        return allIngredients.some((existingIngredient) =>
+            mode === "create"
+                ? existingIngredient.id === ingredient.id
+                : existingIngredient.ingredient_id === ingredient.ingredient_id
+        );
+    };
+
     return (
         <div
             className={`flex flex-col gap-6 ${
@@ -167,6 +179,8 @@ export function IngredientSection({
                                 onSelect={(ingredient) =>
                                     onAddItem(ingredient, category)
                                 }
+                                items={items}
+                                mode={mode}
                             />
                         )}
                     </div>
@@ -188,7 +202,6 @@ function IngredientList({ items, onRemoveItem, category, mode }) {
     return (
         <div className={items.length > 0 ? "border-t" : ""}>
             {items.map((item) => {
-                // Handle both create and edit mode item structures
                 const itemId = mode === "create" ? item.id : item.ingredient_id;
                 const itemName =
                     mode === "create"
@@ -206,6 +219,7 @@ function IngredientList({ items, onRemoveItem, category, mode }) {
                                 variant="destructive"
                                 size="icon"
                                 onClick={() => onRemoveItem(itemId, category)}
+                                className=""
                             >
                                 <Trash className="" />
                             </Button>
