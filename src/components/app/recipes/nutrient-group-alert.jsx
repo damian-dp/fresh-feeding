@@ -6,8 +6,15 @@ import {
     CheckCheck,
     CheckCircle2,
     Circle,
+    Plus,
+    Loader2,
+    ChevronUp,
+    ChevronDown,
+    CircleCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const NUTRIENT_GROUPS = [
     "Fat Soluble Vitamins (Micro-nutrients)",
@@ -19,115 +26,153 @@ const NUTRIENT_GROUPS = [
     "Non-Essential Amino Acids",
 ];
 
-export async function checkRecipeBalance(recipeIngredients, mode = "view") {
-    if (!recipeIngredients?.length) {
-        return {
-            isBalanced: false,
-            missingGroups: NUTRIENT_GROUPS,
-            missingCategories: [
-                "Missing a source of muscle meat",
-                "Missing a source of bone",
-                "Missing a source of plant matter",
-                "Missing a source of liver",
-                "Missing a source of secreting organs",
-            ],
-        };
-    }
-
+// Combined function that returns both detailed info and simple boolean
+async function checkRecipeBalance(recipeIngredients) {
     try {
-        // Check for missing categories
+        // Get all nutrients first, we'll need this regardless
+        const { data: nutrients } = await supabase
+            .from("nutrients")
+            .select("*")
+            .order("nutrient_basic_name");
+
+        // Check categories first
+        const missingCategories = [];
         const categories = new Set(
-            recipeIngredients.map((ri) => {
-                if (mode === "view" || mode === "edit") {
-                    return ri.ingredients?.category_id;
-                }
-                return ri.category;
-            })
+            recipeIngredients?.map(
+                (ri) => ri.ingredients?.category_id || ri.category_id
+            ) || []
         );
 
-        const missingCats = [];
+        // Check for meat (category 1)
+        if (!categories.has(1)) {
+            missingCategories.push("Missing a source of muscle meat");
+        }
 
-        // Special handling for meat and bone category
-        const meatAndBoneIngredients = recipeIngredients.filter((ri) => {
-            const categoryId =
-                mode === "create" ? ri.category : ri.ingredients?.category_id;
-            return categoryId === 1;
+        // Check for bone content
+        const hasBone = recipeIngredients?.some((ri) => {
+            const ingredient = ri.ingredients || ri;
+            return ingredient?.bone_percent > 0;
         });
-
-        if (meatAndBoneIngredients.length === 0) {
-            missingCats.push("Missing a source of muscle meat");
-            missingCats.push("Missing a source of bone");
-        } else {
-            const hasBone = meatAndBoneIngredients.some((ri) => {
-                const ingredient = mode === "create" ? ri : ri.ingredients;
-                return ingredient?.bone_percent > 0;
-            });
-
-            if (!hasBone) {
-                missingCats.push("Missing a source of bone");
-            }
+        if (!hasBone) {
+            missingCategories.push("Missing a source of bone");
         }
 
         // Check other categories
         if (!categories.has(2))
-            missingCats.push("Missing a source of plant matter");
-        if (!categories.has(3)) missingCats.push("Missing a source of liver");
+            missingCategories.push("Missing a source of plant matter");
+        if (!categories.has(3))
+            missingCategories.push("Missing a source of liver");
         if (!categories.has(4))
-            missingCats.push("Missing a source of secreting organs");
+            missingCategories.push("Missing a source of secreting organs");
 
-        // Get all ingredient IDs
-        const ingredientIds = recipeIngredients
-            .map((ri) => {
-                if (mode === "view") return ri.ingredient_id;
-                if (mode === "edit")
-                    return ri.ingredient_id || ri.ingredients?.ingredient_id;
-                return ri.id;
-            })
-            .filter(Boolean);
+        // If we have no ingredients, all nutrients are missing
+        if (!recipeIngredients?.length) {
+            // Get all suggestions in a single query
+            const { data: allSuggestions } = await supabase
+                .from("ingredients_nutrients")
+                .select(
+                    `
+                    nutrient_id,
+                    ingredients!inner (
+                        ingredient_id,
+                        ingredient_name,
+                        category_id,
+                        bone_percent
+                    )
+                `
+                )
+                .eq("has_nutrient", true);
 
-        if (ingredientIds.length === 0) {
+            // Organize suggestions by nutrient
+            const nutrientSuggestions = {};
+            allSuggestions.forEach((suggestion) => {
+                if (!nutrientSuggestions[suggestion.nutrient_id]) {
+                    nutrientSuggestions[suggestion.nutrient_id] = [];
+                }
+                nutrientSuggestions[suggestion.nutrient_id].push(
+                    suggestion.ingredients
+                );
+            });
+
             return {
                 isBalanced: false,
-                missingGroups: NUTRIENT_GROUPS,
-                missingCategories: missingCats,
+                missingCategories,
+                missingNutrients: nutrients
+                    .filter((nutrient) => nutrient.nutrient_scientific_name) // Only include if scientific name exists
+                    .map((nutrient) => ({
+                        id: nutrient.nutrient_id,
+                        basic_name: nutrient.nutrient_basic_name,
+                        scientific_name:
+                            nutrient.nutrient_scientific_name || "",
+                    })),
+                nutrientSuggestions,
             };
         }
 
-        // Get nutrients for ingredients
-        const { data: ingredientNutrients, error } = await supabase
+        // Get all ingredient IDs
+        const ingredientIds = recipeIngredients
+            .map((ri) => ri.ingredient_id || ri.id)
+            .filter(Boolean);
+
+        // Get present nutrients in a single query
+        const { data: ingredientNutrients } = await supabase
             .from("ingredients_nutrients")
-            .select(
-                `
-                ingredient_id,
-                nutrient_id,
-                has_nutrient,
-                nutrients!inner (
-                    nutrient_id,
-                    nutrient_group
-                )
-            `
-            )
+            .select("nutrient_id")
             .in("ingredient_id", ingredientIds)
             .eq("has_nutrient", true);
 
-        if (error) throw error;
-
-        // Get present nutrient groups
-        const presentGroups = new Set(
-            ingredientNutrients
-                .filter((item) => item.has_nutrient)
-                .map((item) => item.nutrients.nutrient_group)
+        const presentNutrients = new Set(
+            ingredientNutrients.map((item) => item.nutrient_id)
         );
 
-        // Find missing groups
-        const missingGroups = NUTRIENT_GROUPS.filter(
-            (group) => !presentGroups.has(group)
+        // Find missing nutrients
+        const missingNutrients = nutrients.filter(
+            (nutrient) =>
+                !presentNutrients.has(nutrient.nutrient_id) &&
+                nutrient.nutrient_scientific_name // Only include if scientific name exists
         );
+
+        // Get all suggestions in a single query
+        const { data: allSuggestions } = await supabase
+            .from("ingredients_nutrients")
+            .select(
+                `
+                nutrient_id,
+                ingredients!inner (
+                    ingredient_id,
+                    ingredient_name,
+                    category_id,
+                    bone_percent
+                )
+            `
+            )
+            .in(
+                "nutrient_id",
+                missingNutrients.map((n) => n.nutrient_id)
+            )
+            .eq("has_nutrient", true);
+
+        // Organize suggestions by nutrient
+        const nutrientSuggestions = {};
+        allSuggestions.forEach((suggestion) => {
+            if (!nutrientSuggestions[suggestion.nutrient_id]) {
+                nutrientSuggestions[suggestion.nutrient_id] = [];
+            }
+            nutrientSuggestions[suggestion.nutrient_id].push(
+                suggestion.ingredients
+            );
+        });
 
         return {
-            isBalanced: missingGroups.length === 0 && missingCats.length === 0,
-            missingGroups,
-            missingCategories: missingCats,
+            isBalanced:
+                missingCategories.length === 0 && missingNutrients.length === 0,
+            missingCategories,
+            missingNutrients: missingNutrients.map((nutrient) => ({
+                id: nutrient.nutrient_id,
+                basic_name: nutrient.nutrient_basic_name,
+                scientific_name: nutrient.nutrient_scientific_name || "",
+            })),
+            nutrientSuggestions,
         };
     } catch (error) {
         console.error("Error checking recipe balance:", error);
@@ -135,312 +180,664 @@ export async function checkRecipeBalance(recipeIngredients, mode = "view") {
     }
 }
 
-export function NutrientGroupAlert({ recipeIngredients, mode = "view" }) {
-    const [missingGroups, setMissingGroups] = useState([]);
-    const [missingCategories, setMissingCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
+// Add this base wrapper class to all alert containers
+const alertWrapperClass =
+    "transition-all duration-300 ease-in-out overflow-hidden";
 
+// Add these animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            duration: 0.3,
+            when: "beforeChildren",
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const alertVariants = {
+    hidden: {
+        opacity: 0,
+        y: 20,
+        height: 0,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        height: "auto",
+        transition: {
+            duration: 0.3,
+            ease: "easeOut",
+        },
+    },
+    exit: {
+        opacity: 0,
+        height: 0,
+        transition: {
+            duration: 0.2,
+        },
+    },
+};
+
+// Add a separate variant for loading state
+const loadingVariants = {
+    visible: {
+        opacity: 1,
+        height: "auto",
+    },
+    exit: {
+        opacity: 0,
+        height: 0,
+        transition: {
+            duration: 0.2,
+        },
+    },
+};
+
+// Add this animation variant
+const expandVariants = {
+    hidden: {
+        height: 0,
+        opacity: 0,
+        transition: { duration: 0.2 },
+    },
+    visible: {
+        height: "auto",
+        opacity: 1,
+        transition: { duration: 0.2 },
+    },
+};
+
+export function NutrientGroupAlert({
+    recipeIngredients,
+    mode = "view",
+    onAddIngredient,
+    nutrientState,
+    isChecking,
+}) {
+    const [loadingIngredients, setLoadingIngredients] = useState(new Set());
+    const [addedIngredients, setAddedIngredients] = useState(new Set());
+    const [expandedNutrientId, setExpandedNutrientId] = useState(null);
+    const INITIAL_INGREDIENTS_SHOWN = 5;
+    const [mouseInAlert, setMouseInAlert] = useState({});
+    const [collapseTimeouts, setCollapseTimeouts] = useState({});
+    const [satisfiedInSession, setSatisfiedInSession] = useState(new Set());
+
+    // Reset addedIngredients when nutrientState changes or recipe ingredients change
     useEffect(() => {
-        const checkNutrientGroups = async () => {
-            // console.log("Starting nutrient check with:", {
-            //     mode,
-            //     recipeIngredients,
-            // });
+        // Create a Set of all current recipe ingredient IDs
+        const currentIngredientIds = new Set(
+            recipeIngredients?.map((ri) => ri.ingredient_id) || []
+        );
 
-            if (!recipeIngredients?.length) {
-                // console.log("No recipe ingredients found");
-                setMissingGroups(NUTRIENT_GROUPS);
-                setMissingCategories([
-                    "Missing a source of muscle meat",
-                    "Missing a source of bone",
-                    "Missing a source of plant matter",
-                    "Missing a source of liver",
-                    "Missing a source of secreting organs",
-                ]);
-                setLoading(false);
-                return;
+        // Reset addedIngredients to only include ingredients that are still in the recipe
+        setAddedIngredients((prev) => {
+            const next = new Set();
+            prev.forEach((id) => {
+                if (currentIngredientIds.has(id)) {
+                    next.add(id);
+                }
+            });
+            return next;
+        });
+    }, [recipeIngredients, nutrientState]);
+
+    // When an alert turns green (requirement met), add it to satisfiedInSession
+    useEffect(() => {
+        if (!nutrientState?.missingCategories) return;
+
+        // Get all possible categories
+        const allCategories = [
+            "Missing a source of muscle meat",
+            "Missing a source of bone",
+            "Missing a source of liver",
+            "Missing a source of secreting organs",
+            "Missing a source of plant matter",
+        ];
+
+        // Find which categories are now satisfied
+        const currentlySatisfied = allCategories.filter(
+            (cat) => !nutrientState.missingCategories.includes(cat)
+        );
+
+        // Add newly satisfied categories to our session tracking
+        setSatisfiedInSession((prev) => {
+            const next = new Set(prev);
+            currentlySatisfied.forEach((cat) => next.add(cat));
+            return next;
+        });
+    }, [nutrientState?.missingCategories]);
+
+    // Update the shouldShowAlert function to handle both categories and nutrients
+    const shouldShowAlert = (item, type = "category") => {
+        if (mode !== "edit") return true;
+
+        if (type === "category") {
+            // If it's currently missing, always show it
+            if (nutrientState?.missingCategories?.includes(item)) return true;
+
+            // If it was satisfied during this session, show it
+            return satisfiedInSession.has(item);
+        } else {
+            // For nutrients, always show them if they're missing
+            return true;
+        }
+    };
+
+    const handleDelayedCollapse = (nutrientId) => {
+        // Clear any existing timeout for this nutrient
+        if (collapseTimeouts[nutrientId]) {
+            clearTimeout(collapseTimeouts[nutrientId]);
+        }
+
+        // Set new timeout
+        const timeoutId = setTimeout(() => {
+            if (!mouseInAlert[nutrientId]) {
+                setExpandedNutrientId(null);
+                // Clear the timeout reference
+                setCollapseTimeouts((prev) => ({
+                    ...prev,
+                    [nutrientId]: null,
+                }));
             }
+        }, 2000); // 2 seconds delay
 
-            try {
-                // Check for missing categories
-                const categories = new Set(
-                    recipeIngredients.map((ri) => {
-                        if (mode === "view" || mode === "edit") {
-                            return ri.ingredients?.category_id;
-                        }
-                        return ri.category;
-                    })
-                );
+        // Store the timeout ID
+        setCollapseTimeouts((prev) => ({
+            ...prev,
+            [nutrientId]: timeoutId,
+        }));
+    };
 
-                const missingCats = [];
+    // Add this function to handle adding ingredients
+    const handleAddIngredient = async (ingredient) => {
+        // Track loading state
+        setLoadingIngredients(
+            (prev) => new Set([...prev, ingredient.ingredient_id])
+        );
 
-                // Special handling for meat and bone category
-                const meatAndBoneIngredients = recipeIngredients.filter(
-                    (ri) => {
-                        const categoryId =
-                            mode === "create"
-                                ? ri.category
-                                : ri.ingredients?.category_id;
-                       
-                        return categoryId === 1;
-                    }
-                );
+        try {
+            // Call the parent's onAddIngredient
+            await onAddIngredient(ingredient);
 
-                // console.log(
-                //     "Meat and bone ingredients:",
-                //     meatAndBoneIngredients
-                // );
+            // Update local state to mark this ingredient as added
+            setAddedIngredients(
+                (prev) => new Set([...prev, ingredient.ingredient_id])
+            );
+        } catch (error) {
+            console.error("Error adding ingredient:", error);
+        } finally {
+            // Clear loading state
+            setLoadingIngredients((prev) => {
+                const next = new Set(prev);
+                next.delete(ingredient.ingredient_id);
+                return next;
+            });
+        }
+    };
 
-                if (meatAndBoneIngredients.length === 0) {
-                    // console.log("No meat ingredients found");
-                    missingCats.push("Missing a source of muscle meat");
-                    missingCats.push("Missing a source of bone");
-                } else {
-                    const hasBone = meatAndBoneIngredients.some((ri) => {
-                        const ingredient =
-                            mode === "create" ? ri : ri.ingredients;
-                        const bonePercent = ingredient?.bone_percent;
-                        // console.log("Checking bone content:", {
-                        //     mode,
-                        //     ingredient,
-                        //     bonePercent,
-                        //     hasBone: bonePercent > 0,
-                        // });
-                        return bonePercent > 0;
-                    });
-
-                    if (!hasBone) {
-                        console.log(
-                            "No bone content found in meat ingredients"
-                        );
-                        missingCats.push("Missing a source of bone");
-                    }
-                }
-
-                // Check other categories
-                if (!categories.has(2))
-                    missingCats.push("Missing a source of plant matter");
-                if (!categories.has(3))
-                    missingCats.push("Missing a source of liver");
-                if (!categories.has(4))
-                    missingCats.push("Missing a source of secreting organs");
-
-                setMissingCategories(missingCats);
-
-                // Get all ingredient IDs from the recipe
-                const ingredientIds = recipeIngredients
-                    .map((ri) => {
-                        // console.log("Processing recipe ingredient:", ri);
-                        if (mode === "view") {
-                            return ri.ingredient_id;
-                        }
-                        if (mode === "edit") {
-                            return (
-                                ri.ingredient_id ||
-                                ri.ingredients?.ingredient_id
-                            );
-                        }
-                        // Create mode
-                        return ri.id;
-                    })
-                    .filter(Boolean); // Remove any undefined values
-
-                // console.log("Ingredient IDs to check:", ingredientIds);
-
-                if (ingredientIds.length === 0) {
-                    setMissingGroups(NUTRIENT_GROUPS);
-                    setLoading(false);
-                    return;
-                }
-
-                // First, get all nutrients for these ingredients with their groups
-                const { data: ingredientNutrients, error } = await supabase
-                    .from("ingredients_nutrients")
-                    .select(
-                        `
-                        ingredient_id,
-                        nutrient_id,
-                        has_nutrient,
-                        nutrients!inner (
-                            nutrient_id,
-                            nutrient_group
-                        )
-                    `
-                    )
-                    .in("ingredient_id", ingredientIds)
-                    .eq("has_nutrient", true);
-
-                if (error) {
-                    console.error("Supabase query error:", error);
-                    throw error;
-                }
-
-                // console.log(
-                //     "Raw ingredient nutrients data:",
-                //     ingredientNutrients
-                // );
-
-                // Get all unique nutrient groups present in the recipe
-                const presentGroups = new Set(
-                    ingredientNutrients
-                        .filter((item) => item.has_nutrient)
-                        .map((item) => item.nutrients.nutrient_group)
-                );
-
-                // console.log("Present nutrient groups:", [...presentGroups]);
-
-                // Find missing groups
-                const missing = NUTRIENT_GROUPS.filter(
-                    (group) => !presentGroups.has(group)
-                );
-
-                // console.log("Missing nutrient groups:", missing);
-                // console.log(
-                //     "All nutrient groups for reference:",
-                //     NUTRIENT_GROUPS
-                // );
-
-                setMissingGroups(missing);
-            } catch (error) {
-                console.error("Error checking nutrient groups:", error);
-                setMissingGroups([]);
-                setMissingCategories([]);
-            } finally {
-                setLoading(false);
-            }
+    // Clean up timeouts on unmount
+    useEffect(() => {
+        return () => {
+            Object.values(collapseTimeouts).forEach((timeoutId) => {
+                if (timeoutId) clearTimeout(timeoutId);
+            });
         };
+    }, [collapseTimeouts]);
 
-        checkNutrientGroups();
-    }, [recipeIngredients, mode]);
+    // Add this function to check if an ingredient is added
+    const isIngredientAdded = (ingredient) => {
+        const ingredientId = ingredient.ingredient_id || ingredient.id;
+        return nutrientState?.addedIngredients?.[ingredientId] || false;
+    };
 
-    if (loading) return null;
+    // Update the ingredient rendering in the alert
+    const renderIngredient = (ingredient, nutrient) => {
+        const ingredientId = ingredient.ingredient_id || ingredient.id;
 
-    if (missingGroups.length === 0 && missingCategories.length === 0) {
+        // Check if ingredient exists in current recipe
+        const isInRecipe = recipeIngredients?.some((ri) => {
+            const riId = ri.ingredient_id;
+            return riId === ingredientId;
+        });
+
+        // Only use addedIngredients for temporary state during add operation
+        const isAdded = isInRecipe || addedIngredients.has(ingredientId);
+
         return (
-            <Alert variant="success">
-                <CheckCheck />
-                <AlertTitle>Your recipe seems balanced.</AlertTitle>
-                <AlertDescription>
-                    Based on the ingredients selected, your recipe is likely
-                    balanced.
-                </AlertDescription>
+            <div
+                key={`${ingredientId}-${ingredient.ingredient_name}`}
+                className="flex items-center justify-between gap-2"
+            >
+                <span className="text-base">{ingredient.ingredient_name}</span>
+                {!isAdded ? (
+                    <Button
+                        variant={
+                            isNutrientAddressed(nutrient)
+                                ? "success"
+                                : "warning"
+                        }
+                        size="icon"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleAddIngredient(ingredient)}
+                        disabled={isAdded}
+                    >
+                        {loadingIngredients.has(ingredientId) ? (
+                            <Loader2 className="animate-spin" />
+                        ) : (
+                            <Plus className="" />
+                        )}
+                    </Button>
+                ) : (
+                    <div className="flex items-center justify-center h-8 w-8 p-0">
+                        <CheckCheck className="size-6" />
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Update how we render the suggestions
+    const renderNutrientSuggestions = (nutrient) => {
+        const suggestions =
+            nutrientState?.nutrientSuggestions?.[nutrient.id] || [];
+
+        return (
+            <>
+                {/* First 5 ingredients */}
+                {suggestions
+                    .slice(0, INITIAL_INGREDIENTS_SHOWN)
+                    .map((ingredient) =>
+                        renderIngredient(ingredient, nutrient)
+                    )}
+
+                {/* Additional ingredients with animation */}
+                <AnimatePresence>
+                    {expandedNutrientId === nutrient.id &&
+                        suggestions.length > INITIAL_INGREDIENTS_SHOWN && (
+                            <motion.div
+                                key={`expanded-${nutrient.id}`}
+                                initial="hidden"
+                                animate="visible"
+                                exit="hidden"
+                                variants={expandVariants}
+                                className="overflow-hidden flex flex-col gap-2"
+                            >
+                                {suggestions
+                                    .slice(INITIAL_INGREDIENTS_SHOWN)
+                                    .map((ingredient) =>
+                                        renderIngredient(ingredient, nutrient)
+                                    )}
+                            </motion.div>
+                        )}
+                </AnimatePresence>
+
+                {/* Show more/less button */}
+                {suggestions.length > INITIAL_INGREDIENTS_SHOWN && (
+                    <Button
+                        variant={
+                            isNutrientAddressed(nutrient)
+                                ? "success"
+                                : "warning"
+                        }
+                        size=""
+                        className="w-full mt-4"
+                        onClick={() => {
+                            setExpandedNutrientId(
+                                expandedNutrientId === nutrient.id
+                                    ? null
+                                    : nutrient.id
+                            );
+                        }}
+                    >
+                        {expandedNutrientId === nutrient.id ? (
+                            <>
+                                <ChevronUp className="size-5" />
+                                Show Less
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown className="size-5" />
+                                Show More
+                            </>
+                        )}
+                    </Button>
+                )}
+            </>
+        );
+    };
+
+    // In the NutrientGroupAlert component, update how we determine if a nutrient alert is addressed
+    const isNutrientAddressed = (nutrient) => {
+        const suggestions =
+            nutrientState?.nutrientSuggestions?.[nutrient.id] || [];
+        // Check if any of the suggested ingredients have been added
+        return suggestions.some((suggestion) => {
+            const suggestionId = suggestion.ingredient_id || suggestion.id;
+            return nutrientState?.addedIngredients?.[suggestionId];
+        });
+    };
+
+    // Show loading state until we have nutrient state
+    if (isChecking || !nutrientState) {
+        return (
+            <Alert className="flex items-center">
+                <AlertTitle className="flex items-center gap-3 mb-0">
+                    <Loader2 className="size-5 animate-spin" />
+                    Checking nutritional balance...
+                </AlertTitle>
             </Alert>
         );
     }
 
+    if (nutrientState.isBalanced) {
+        return (
+            <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="w-full"
+            >
+                <motion.div
+                    variants={alertVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="min-h-16"
+                >
+                    <Alert variant="success">
+                        <CheckCircle2 className="" />
+                        <div className="flex flex-col gap-2">
+                            <AlertTitle>Your recipe is balanced</AlertTitle>
+                            <AlertDescription>
+                                All required nutrients and ingredient categories
+                                are present.
+                            </AlertDescription>
+                        </div>
+                    </Alert>
+                </motion.div>
+            </motion.div>
+        );
+    }
+
+    // In view mode, show single alert with all missing items
+    if (mode === "view") {
+        return (
+            <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="w-full"
+            >
+                <motion.div
+                    variants={alertVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="min-h-16" // Add minimum height to prevent collapse
+                >
+                    {isChecking || !nutrientState ? (
+                        <Alert className="flex items-center">
+                            <AlertTitle className="flex items-center gap-3 mb-0">
+                                <Loader2 className="size-5 animate-spin" />
+                                Checking nutritional balance...
+                            </AlertTitle>
+                        </Alert>
+                    ) : (
+                        <Alert variant="warning" className="w-full">
+                            <AlertCircle className="" />
+                            <div className="flex flex-col gap-3">
+                                <AlertTitle>
+                                    Your recipe is missing some components
+                                </AlertTitle>
+                                <AlertDescription>
+                                    <div className="flex flex-col gap-3">
+                                        {nutrientState.missingCategories.map(
+                                            (category) => (
+                                                <div
+                                                    key={category}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <span className="h-1 w-1 rounded-full bg-current" />
+                                                    <span>{category}</span>
+                                                </div>
+                                            )
+                                        )}
+                                        {nutrientState.missingNutrients.map(
+                                            (nutrient) => (
+                                                <div
+                                                    key={nutrient.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <span className="h-1 w-1 rounded-full bg-current" />
+                                                    <span>
+                                                        {nutrient.basic_name}
+                                                        {nutrient.scientific_name &&
+                                                            ` (${nutrient.scientific_name})`}
+                                                    </span>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </AlertDescription>
+                            </div>
+                        </Alert>
+                    )}
+                </motion.div>
+            </motion.div>
+        );
+    }
+
+    // In edit mode, show separate alerts
     return (
-        <Alert variant="warning">
-            <AlertTriangle />
-            <AlertTitle>Your recipe may have gaps in its nutrition</AlertTitle>
-            <AlertDescription>
-                Click Edit recipe and add the recommended ingredients to resolve
-                each of the following nutritional deficits:
-                <div className="flex flex-col gap-2 mt-3">
-                    {missingCategories.map((category) => (
-                        <div key={category} className="flex items-center gap-3">
-                            <Circle className="h-1 w-1 flex-shrink-0 fill-current" />
-                            <span className="text-sm leading-relaxed">
-                                {category}
-                            </span>
+        <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="w-full"
+        >
+            {/* Categories alert stays full width at the top */}
+            {nutrientState.missingCategories.length > 0 && (
+                <motion.div
+                    variants={alertVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="w-full mb-4"
+                >
+                    <Alert variant="warning">
+                        <AlertTriangle className="" />
+                        <div className="flex flex-col gap-3">
+                            <AlertTitle>
+                                Missing ingredient categories
+                            </AlertTitle>
+                            <AlertDescription className="flex flex-col gap-2">
+                                {nutrientState.missingCategories.map(
+                                    (category) => (
+                                        <div
+                                            key={category}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <span className="h-1 w-1 rounded-full bg-current" />
+                                            <span>{category}</span>
+                                        </div>
+                                    )
+                                )}
+                            </AlertDescription>
                         </div>
-                    ))}
-                    {missingGroups.map((group) => (
-                        <div key={group} className="flex items-center gap-3">
-                            <Circle className="h-1 w-1 flex-shrink-0 fill-current" />
-                            <span className="text-sm leading-relaxed">
-                                {group}
-                            </span>
-                        </div>
-                    ))}
+                    </Alert>
+                </motion.div>
+            )}
+
+            {/* Two column flex container for nutrient alerts */}
+            <div className="flex flex-col md:flex-row gap-4 w-full">
+                {/* Left column */}
+                <div className="flex flex-col gap-4 w-full">
+                    {nutrientState.missingNutrients
+                        .filter((_, index) => index % 2 === 0)
+                        .map((nutrient) => (
+                            <motion.div
+                                key={nutrient.id}
+                                variants={alertVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className={`${
+                                    nutrientState.missingNutrients.length === 1
+                                        ? "col-span-full"
+                                        : ""
+                                }`}
+                            >
+                                <Alert
+                                    variant={
+                                        isNutrientAddressed(nutrient)
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                    onMouseEnter={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: true,
+                                        }));
+                                        // Clear any pending collapse timeout
+                                        if (collapseTimeouts[nutrient.id]) {
+                                            clearTimeout(
+                                                collapseTimeouts[nutrient.id]
+                                            );
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: false,
+                                        }));
+                                        // Start collapse timeout if ingredients were added and this alert is expanded
+                                        if (
+                                            addedIngredients.has(nutrient.id) &&
+                                            expandedNutrientId === nutrient.id
+                                        ) {
+                                            handleDelayedCollapse(nutrient.id);
+                                        }
+                                    }}
+                                >
+                                    {isNutrientAddressed(nutrient) ? (
+                                        <CircleCheck className="" />
+                                    ) : (
+                                        <AlertTriangle className="" />
+                                    )}
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <AlertTitle>
+                                            {isNutrientAddressed(nutrient)
+                                                ? `Added source of ${nutrient.basic_name}`
+                                                : `Missing source of ${nutrient.basic_name}`}
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            <p className="">
+                                                {nutrient.basic_name}
+                                                {nutrient.scientific_name &&
+                                                    ` (${nutrient.scientific_name})`}
+                                            </p>
+                                            <div className="flex flex-col gap-2 mt-4">
+                                                {renderNutrientSuggestions(
+                                                    nutrient
+                                                )}
+                                            </div>
+                                        </AlertDescription>
+                                    </div>
+                                </Alert>
+                            </motion.div>
+                        ))}
                 </div>
-            </AlertDescription>
-        </Alert>
+
+                {/* Right column */}
+                <div className="flex flex-col gap-4 w-full">
+                    {nutrientState.missingNutrients
+                        .filter((_, index) => index % 2 === 1)
+                        .map((nutrient) => (
+                            <motion.div
+                                key={nutrient.id}
+                                variants={alertVariants}
+                                initial="hidden"
+                                animate="visible"
+                                className={`${
+                                    nutrientState.missingNutrients.length === 1
+                                        ? "col-span-full"
+                                        : ""
+                                }`}
+                            >
+                                <Alert
+                                    variant={
+                                        isNutrientAddressed(nutrient)
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                    onMouseEnter={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: true,
+                                        }));
+                                        // Clear any pending collapse timeout
+                                        if (collapseTimeouts[nutrient.id]) {
+                                            clearTimeout(
+                                                collapseTimeouts[nutrient.id]
+                                            );
+                                        }
+                                    }}
+                                    onMouseLeave={() => {
+                                        setMouseInAlert((prev) => ({
+                                            ...prev,
+                                            [nutrient.id]: false,
+                                        }));
+                                        // Start collapse timeout if ingredients were added and this alert is expanded
+                                        if (
+                                            addedIngredients.has(nutrient.id) &&
+                                            expandedNutrientId === nutrient.id
+                                        ) {
+                                            handleDelayedCollapse(nutrient.id);
+                                        }
+                                    }}
+                                >
+                                    {isNutrientAddressed(nutrient) ? (
+                                        <CircleCheck className="" />
+                                    ) : (
+                                        <AlertTriangle className="" />
+                                    )}
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <AlertTitle>
+                                            {isNutrientAddressed(nutrient)
+                                                ? `Added source of ${nutrient.basic_name}`
+                                                : `Missing source of ${nutrient.basic_name}`}
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            <p className="">
+                                                {nutrient.basic_name}
+                                                {nutrient.scientific_name &&
+                                                    ` (${nutrient.scientific_name})`}
+                                            </p>
+                                            <div className="flex flex-col gap-2 mt-4">
+                                                {renderNutrientSuggestions(
+                                                    nutrient
+                                                )}
+                                            </div>
+                                        </AlertDescription>
+                                    </div>
+                                </Alert>
+                            </motion.div>
+                        ))}
+                </div>
+            </div>
+        </motion.div>
     );
 }
 
-export async function isRecipeBalanced(recipeIngredients, mode = "view") {
-    if (!recipeIngredients?.length) {
-        return false;
-    }
-
+// Update the isRecipeBalanced function to remove mode parameter
+export async function isRecipeBalanced(recipeIngredients) {
     try {
-        // Check for missing categories
-        const categories = new Set(
-            recipeIngredients.map((ri) => {
-                if (mode === "view" || mode === "edit") {
-                    return ri.ingredients?.category_id;
-                }
-                return ri.category;
-            })
-        );
-
-        // Check meat and bone
-        const meatAndBoneIngredients = recipeIngredients.filter((ri) => {
-            const categoryId =
-                mode === "create" ? ri.category : ri.ingredients?.category_id;
-            return categoryId === 1;
-        });
-
-        if (meatAndBoneIngredients.length === 0) {
-            return false;
-        }
-
-        const hasBone = meatAndBoneIngredients.some((ri) => {
-            const ingredient = mode === "create" ? ri : ri.ingredients;
-            return ingredient?.bone_percent > 0;
-        });
-
-        if (!hasBone) {
-            return false;
-        }
-
-        // Check other required categories
-        if (!categories.has(2) || !categories.has(3) || !categories.has(4)) {
-            return false;
-        }
-
-        // Check nutrient groups
-        const ingredientIds = recipeIngredients
-            .map((ri) => {
-                if (mode === "view") return ri.ingredient_id;
-                if (mode === "edit")
-                    return ri.ingredient_id || ri.ingredients?.ingredient_id;
-                return ri.id;
-            })
-            .filter(Boolean);
-
-        if (ingredientIds.length === 0) {
-            return false;
-        }
-
-        const { data: ingredientNutrients, error } = await supabase
-            .from("ingredients_nutrients")
-            .select(
-                `
-                ingredient_id,
-                nutrient_id,
-                has_nutrient,
-                nutrients!inner (
-                    nutrient_id,
-                    nutrient_group
-                )
-            `
-            )
-            .in("ingredient_id", ingredientIds)
-            .eq("has_nutrient", true);
-
-        if (error) throw error;
-
-        const presentGroups = new Set(
-            ingredientNutrients
-                .filter((item) => item.has_nutrient)
-                .map((item) => item.nutrients.nutrient_group)
-        );
-
-        // Recipe is balanced if all nutrient groups are present
-        return NUTRIENT_GROUPS.every((group) => presentGroups.has(group));
+        const result = await checkRecipeBalance(recipeIngredients);
+        return result.isBalanced;
     } catch (error) {
-        console.error("Error checking recipe balance:", error);
+        console.error("Error checking if recipe is balanced:", error);
         return false;
     }
 }
+
+// Keep the existing exports
+export { checkRecipeBalance };

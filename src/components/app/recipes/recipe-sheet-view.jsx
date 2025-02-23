@@ -9,6 +9,8 @@ import {
     Leaf,
     Pill,
     AlertCircle,
+    Loader2,
+    Calculator,
 } from "lucide-react";
 import { BatchCalculator } from "./batch-calculator";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -20,6 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDebounce } from "@/hooks/use-debounce";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import Liver5 from "@/assets/icons/liver-5";
+import { Button } from "@/components/ui/button";
+import { BoneCalculator } from "../sidebar/bone-calculator";
 
 const getIngredientsByCategory = (recipeIngredients, categoryId) => {
     return (recipeIngredients || []).filter(
@@ -27,7 +32,13 @@ const getIngredientsByCategory = (recipeIngredients, categoryId) => {
     );
 };
 
-export function RecipeSheetView({ recipe, dogs, getDogName }) {
+export function RecipeSheetView({
+    recipe,
+    dogs,
+    getDogName,
+    nutrientState,
+    checkingNutrients,
+}) {
     const { updateRecipe } = useRecipes();
     const [batchSize, setBatchSize] = useState(recipe?.batch_size ?? null);
     const [numberOfDays, setNumberOfDays] = useState(null);
@@ -179,9 +190,12 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
         debouncedSave(value);
     };
 
+    const [showBoneCalculator, setShowBoneCalculator] = useState(false);
+
+
     return (
         <>
-            <div className="p-8 grid grid-cols-2 [530px]:flex [530px]:flex-row gap-14 [530px]:gap-6 justify-between w-full border-b border-border">
+            <div className="p-8 grid grid-cols-2 [530px]:flex [530px]:flex-row gap-14 [530px]:gap-6 justify-between w-full">
                 <BadgeStack
                     variant="default"
                     icon={<DogIcon />}
@@ -246,38 +260,50 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
 
             {/* Ingredients sections */}
 
-            <div className="flex flex-col gap-8 p-8 border-b border-border">
+            <div className="flex flex-col gap-8 p-8 border-t border-border">
                 <p className="font-medium">Ingredients</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
-                        <BadgeStack
-                            variant="meat"
-                            icon={<Bone />}
-                            label="Meat and bone"
-                            sublabel={(() => {
-                                const dog = dogs.find(
-                                    (d) => d.dog_id === localRecipe.dog_id
-                                );
-                                if (!dog) return "Unknown";
-                                const grams = getCategoryGrams(
-                                    dog,
-                                    dog.ratios_muscle_meat
-                                );
-                                return (
-                                    <>
-                                        {grams}g{" "}
-                                        <span className="text-muted-foreground">
-                                            /{" "}
-                                            {Math.round(
-                                                dog.ratios_muscle_meat * 100
-                                            )}
-                                            %
-                                        </span>
-                                    </>
-                                );
-                            })()}
-                        />
+                        <div className="flex items-center justify-between">
+                            <BadgeStack
+                                variant="meat"
+                                icon={<Bone />}
+                                label="Meat and bone"
+                                sublabel={(() => {
+                                    const dog = dogs.find(
+                                        (d) => d.dog_id === localRecipe.dog_id
+                                    );
+                                    if (!dog) return "Unknown";
+                                    const grams = getCategoryGrams(
+                                        dog,
+                                        dog.ratios_muscle_meat
+                                    );
+                                    return (
+                                        <>
+                                            {grams}g{" "}
+                                            <span className="text-muted-foreground">
+                                                /{" "}
+                                                {Math.round(
+                                                    dog.ratios_muscle_meat * 100
+                                                )}
+                                                %
+                                            </span>
+                                        </>
+                                    );
+                                })()}
+                            />
+                            <Button
+                                variant="outline"
+                                size=""
+                                onClick={() => {
+                                    setShowBoneCalculator(true);
+                                }}
+                            >
+                                <Calculator className="" />
+                                Bone tool
+                            </Button>
+                        </div>
                         <div
                             className={
                                 getIngredientsByCategory(
@@ -397,7 +423,7 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                     <div className="flex flex-col gap-6">
                         <BadgeStack
                             variant="liver"
-                            icon={<Heart />}
+                            icon={<Liver5 />}
                             label="Liver"
                             sublabel={(() => {
                                 const dog = dogs.find(
@@ -587,17 +613,19 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-8 border-b border-border">
+            <div className="flex flex-col gap-6 p-8 border-t border-border">
                 <p className="font-medium">Nutrition status</p>
                 <div className="flex gap-8">
                     <NutrientGroupAlert
                         recipeIngredients={recipe.recipe_ingredients}
                         mode="view"
+                        nutrientState={nutrientState}
+                        isChecking={checkingNutrients}
                     />
                 </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-8">
+            <div className="flex flex-col gap-6 p-8 border-t border-border">
                 <div className="flex items-center justify-between">
                     <p className="font-medium">Recipe notes</p>
                     <span className="text-sm text-muted-foreground">
@@ -618,6 +646,10 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                     />
                 </div>
             </div>
+            <BoneCalculator
+                open={showBoneCalculator}
+                onOpenChange={setShowBoneCalculator}
+            />
         </>
     );
 }

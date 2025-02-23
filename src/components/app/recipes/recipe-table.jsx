@@ -81,6 +81,7 @@ export function RecipeTable({
     const isSheetOpen = open !== undefined ? open : internalSheetOpen;
     const [sheetMode, setSheetMode] = useState("view");
     const [selectedRecipe, setSelectedRecipe] = useState(null);
+    const [openDropdownId, setOpenDropdownId] = useState(null);
 
     useEffect(() => {
         if (!tableRef.current) return;
@@ -378,7 +379,6 @@ export function RecipeTable({
                         className="border-r border-border pl-5 w-[1px] cursor-pointer"
                         key={`${recipe.recipe_id}-nutrition-status`}
                         onClick={() => handleViewRecipe(recipe)}
-
                     >
                         {nutritionStatus ? (
                             <BadgeStack
@@ -409,21 +409,47 @@ export function RecipeTable({
                     key={`${recipe.recipe_id}-actions`}
                     className=" w-[1px] whitespace-nowrap"
                 >
-                    <DropdownMenu>
+                    <DropdownMenu
+                        open={openDropdownId === recipe.recipe_id}
+                        onOpenChange={(open) => {
+                            setOpenDropdownId(open ? recipe.recipe_id : null);
+                        }}
+                    >
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                            >
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                                onClick={() => handleViewRecipe(recipe)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setOpenDropdownId(null); // Close dropdown
+                                    requestAnimationFrame(() => {
+                                        handleViewRecipe(recipe);
+                                    });
+                                }}
                             >
                                 <Eye className="h-4 w-4" />
                                 View
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => handleEditRecipe(recipe)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setOpenDropdownId(null); // Close dropdown
+                                    requestAnimationFrame(() => {
+                                        handleEditRecipe(recipe);
+                                    });
+                                }}
                             >
                                 <Pencil className="h-4 w-4" />
                                 Edit
