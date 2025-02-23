@@ -40,6 +40,7 @@ import { supabase } from "@/lib/supabase";
 import { isRecipeBalanced } from "@/components/app/recipes/nutrient-group-alert";
 import { useParams } from "react-router-dom";
 import { useAddDog } from "@/components/providers/add-dog-provider";
+import { checkRecipeBalance } from "@/components/app/recipes/nutrient-group-alert";
 
 export function RecipeSheet({
     mode = "create",
@@ -77,33 +78,76 @@ export function RecipeSheet({
     const [liver, setLiver] = useState(recipe?.liver || []);
     const [misc, setMisc] = useState(recipe?.misc || []);
 
-    // Update state when recipe changes
+    // Add nutrient states
+    const [nutrientState, setNutrientState] = useState(null);
+    const [checkingNutrients, setCheckingNutrients] = useState(true);
+
+    // Add this state to track initial load
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    // Move ingredientSections inside component
+    const ingredientSections = {
+        meat_and_bone: {
+            getItems: () => meatAndBone,
+        },
+        plant_matter: {
+            getItems: () => plantMatter,
+        },
+        liver: {
+            getItems: () => liver,
+        },
+        secreting_organs: {
+            getItems: () => secretingOrgans,
+        },
+        misc: {
+            getItems: () => misc,
+        },
+    };
+
+    // First, let's update the recipe initialization effect
     useEffect(() => {
-        if (recipe && (mode === "view" || mode === "edit")) {
-            console.log("Mode changed to:", mode);
-            console.log("Recipe ingredients:", recipe.recipe_ingredients);
-            setRecipeName(recipe.recipe_name || "");
-            setSelectedDog(recipe.dog_id || "");
-            if (mode === "edit" && recipe.recipe_ingredients) {
-                setRecipeIngredients(recipe.recipe_ingredients);
-                // Categorize ingredients immediately when entering edit mode
-                const categorized = categorizeIngredients(
-                    recipe.recipe_ingredients
-                );
-                setMeatAndBone(categorized.meat_and_bone || []);
-                setPlantMatter(categorized.plant_matter || []);
-                setSecretingOrgans(categorized.secreting_organs || []);
-                setLiver(categorized.liver || []);
-                setMisc(categorized.misc || []);
+        const initializeRecipe = async () => {
+            // Always show loading when initializing
+            setCheckingNutrients(true);
+
+            try {
+                if (recipe && (mode === "view" || mode === "edit")) {
+                    setRecipeName(recipe.recipe_name || "");
+                    setSelectedDog(recipe.dog_id || "");
+
+                    if (recipe.recipe_ingredients) {
+                        setRecipeIngredients(recipe.recipe_ingredients);
+                        const categorized = categorizeIngredients(
+                            recipe.recipe_ingredients
+                        );
+                        setMeatAndBone(categorized.meat_and_bone || []);
+                        setPlantMatter(categorized.plant_matter || []);
+                        setSecretingOrgans(categorized.secreting_organs || []);
+                        setLiver(categorized.liver || []);
+                        setMisc(categorized.misc || []);
+                    }
+                    setActiveSection(null);
+                } else if (!recipe && mode === "create") {
+                    resetForm();
+                    if (dogId) {
+                        setSelectedDog(Number(dogId));
+                    }
+                }
+            } catch (error) {
+                console.error("Error initializing recipe:", error);
             }
-            setActiveSection(null);
-        } else if (!recipe && mode === "create") {
-            resetForm();
-            if (dogId) {
-                setSelectedDog(Number(dogId));
-            }
-        }
+            // Don't set checkingNutrients to false here - let the nutrient check effect handle it
+        };
+
+        initializeRecipe();
     }, [recipe, mode, dogId]);
+
+    // Reset initial load flag when sheet closes
+    useEffect(() => {
+        if (!open) {
+            setIsInitialLoad(true);
+        }
+    }, [open]);
 
     // Helper functions
     const getDogName = useCallback(
@@ -191,7 +235,6 @@ export function RecipeSheet({
     const handleClose = (newOpen, options = {}) => {
         // If we're changing modes, update the mode and keep the sheet open
         if (options?.mode) {
-            // When switching to edit mode, categorize the ingredients
             if (options.mode === "edit" && recipe?.recipe_ingredients) {
                 const categorized = categorizeIngredients(
                     recipe.recipe_ingredients
@@ -217,13 +260,14 @@ export function RecipeSheet({
         // If closing without changes
         if (!newOpen) {
             if (mode === "edit") {
-                // In edit mode, switch back to view mode
                 onModeChange?.("view");
                 onOpenChange?.(true, { mode: "view", recipe });
             } else {
-                // In create or view mode, just close the sheet
                 resetForm();
-                onOpenChange?.(false);
+                // Let the animation complete before closing
+                requestAnimationFrame(() => {
+                    onOpenChange?.(false);
+                });
             }
         } else {
             onOpenChange?.(newOpen);
@@ -388,45 +432,229 @@ export function RecipeSheet({
         }
     };
 
-    // Add this function to handle ingredient additions
-    const handleAddIngredient = (ingredient, category) => {
-        if (mode === "edit") {
-            // Ensure the ingredient has the correct structure for edit mode
-            const editIngredient = {
-                ingredient_id: ingredient.ingredient_id,
-                ingredients: ingredient.ingredients,
-                quantity: ingredient.quantity || 0,
-            };
-            setRecipeIngredients((prev) => [...prev, editIngredient]);
+    // Keep one effect for initial load and mode changes
+    useEffect(() => {
+        const checkNutrientsForMode = async () => {
+            setCheckingNutrients(true);
+
+            try {
+                if (mode === "view" || mode === "edit") {
+                    const ingredients =
+                        mode === "edit"
+                            ? recipeIngredients
+                            : recipe?.recipe_ingredients;
+                    if (ingredients?.length) {
+                        const state = await checkRecipeBalance(
+                            ingredients,
+                            mode
+                        );
+                        setNutrientState(state);
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking nutrients:", error);
+                setNutrientState(null);
+            } finally {
+                setCheckingNutrients(false);
+            }
+        };
+
+        checkNutrientsForMode();
+    }, [mode, recipe]); // Only run on mode or recipe changes
+
+    // Simplify handleIngredientAdd to update alerts directly
+    const handleIngredientAdd = async (ingredient, section) => {
+        // Map ingredient category_id to the correct section name
+        const categoryMap = {
+            1: "meat_and_bone",
+            2: "plant_matter",
+            3: "liver",
+            4: "secreting_organs",
+            5: "misc",
+        };
+
+        // Create the recipe_ingredients structure with proper category_id
+        const newIngredient =
+            mode === "create"
+                ? {
+                      id: ingredient.ingredient_id || ingredient.id,
+                      ingredient_name:
+                          ingredient.ingredient_name || ingredient.name,
+                      name: ingredient.ingredient_name || ingredient.name,
+                      category_id: ingredient.category_id,
+                      category: ingredient.category_id,
+                      bone_percent: ingredient.bone_percent,
+                      ...ingredient,
+                  }
+                : {
+                      ingredient_id: ingredient.ingredient_id || ingredient.id,
+                      ingredients: {
+                          ingredient_id:
+                              ingredient.ingredient_id || ingredient.id,
+                          ingredient_name:
+                              ingredient.ingredient_name || ingredient.name,
+                          category_id: ingredient.category_id,
+                          bone_percent: ingredient.bone_percent,
+                          ...(ingredient.ingredients || ingredient),
+                      },
+                      quantity: 0,
+                  };
+
+        // Get the category from the ingredient's category_id
+        const sectionCategory =
+            section ||
+            categoryMap[
+                ingredient.category_id || ingredient.ingredients?.category_id
+            ];
+
+        if (!sectionCategory) {
+            console.error("Invalid category_id:", ingredient.category_id);
+            return;
         }
 
-        // Map category to the correct state setter
-        switch (category) {
-            case "meat_and_bone":
-                setMeatAndBone((prev) => [...prev, ingredient]);
-                break;
-            case "plant_matter":
-                setPlantMatter((prev) => [...prev, ingredient]);
-                break;
-            case "secreting_organs":
-                setSecretingOrgans((prev) => [...prev, ingredient]);
-                break;
-            case "liver":
-                setLiver((prev) => [...prev, ingredient]);
-                break;
-            case "misc":
-                setMisc((prev) => [...prev, ingredient]);
-                break;
-        }
+        // First update the local state and wait for all state updates
+        await Promise.all([
+            new Promise((resolve) => {
+                if (mode === "edit") {
+                    setRecipeIngredients((prev) => {
+                        const next = [...prev, newIngredient];
+                        resolve(next);
+                        return next;
+                    });
+                } else {
+                    resolve([]);
+                }
+            }),
+            new Promise((resolve) => {
+                switch (sectionCategory) {
+                    case "meat_and_bone":
+                        setMeatAndBone((prev) => {
+                            const next = [...prev, newIngredient];
+                            resolve(next);
+                            return next;
+                        });
+                        break;
+                    case "plant_matter":
+                        setPlantMatter((prev) => {
+                            const next = [...prev, newIngredient];
+                            resolve(next);
+                            return next;
+                        });
+                        break;
+                    case "secreting_organs":
+                        setSecretingOrgans((prev) => {
+                            const next = [...prev, newIngredient];
+                            resolve(next);
+                            return next;
+                        });
+                        break;
+                    case "liver":
+                        setLiver((prev) => {
+                            const next = [...prev, newIngredient];
+                            resolve(next);
+                            return next;
+                        });
+                        break;
+                    case "misc":
+                        setMisc((prev) => {
+                            const next = [...prev, newIngredient];
+                            resolve(next);
+                            return next;
+                        });
+                        break;
+                }
+            }),
+        ]);
+
+        // Get the updated ingredients
+        const updatedIngredients = [
+            ...meatAndBone,
+            ...plantMatter,
+            ...secretingOrgans,
+            ...liver,
+            ...misc,
+            newIngredient,
+        ];
+
+        // Update recipe ingredients
+        setRecipeIngredients(updatedIngredients);
+
+        // Just update the nutrient state directly based on the ingredient added
+        setNutrientState((prev) => {
+            if (!prev) return prev;
+
+            // Get all categories and nutrients this ingredient belongs to
+            const ingredientCategories = [];
+            const ingredientId = ingredient.ingredient_id || ingredient.id;
+
+            // Check categories
+            if (sectionCategory === "meat_and_bone") {
+                ingredientCategories.push("muscle meat");
+                if (
+                    ingredient.bone_percent > 0 ||
+                    ingredient.ingredients?.bone_percent > 0
+                ) {
+                    ingredientCategories.push("bone");
+                }
+            }
+            if (sectionCategory === "plant_matter")
+                ingredientCategories.push("plant matter");
+            if (sectionCategory === "liver") ingredientCategories.push("liver");
+            if (sectionCategory === "secreting_organs")
+                ingredientCategories.push("secreting organs");
+
+            // Remove all categories this ingredient satisfies
+            const missingCategories = prev.missingCategories.filter((cat) => {
+                return !ingredientCategories.some((ic) =>
+                    cat.toLowerCase().includes(ic.toLowerCase())
+                );
+            });
+
+            // Track this ingredient as added globally
+            const addedIngredients = {
+                ...(prev.addedIngredients || {}),
+                [ingredientId]: true,
+            };
+
+            // Update all nutrient suggestions
+            const updatedSuggestions = { ...prev.nutrientSuggestions };
+            Object.keys(updatedSuggestions).forEach((nutrientId) => {
+                updatedSuggestions[nutrientId] = updatedSuggestions[
+                    nutrientId
+                ].map((suggestion) => {
+                    const suggestionId =
+                        suggestion.ingredient_id || suggestion.id;
+                    return suggestionId === ingredientId
+                        ? { ...suggestion, isAdded: true }
+                        : suggestion;
+                });
+            });
+
+            return {
+                ...prev,
+                missingCategories,
+                nutrientSuggestions: updatedSuggestions,
+                addedIngredients,
+                fromIngredientSelector: true,
+                isBalanced: missingCategories.length === 0,
+            };
+        });
     };
 
-    const handleRemoveIngredient = (ingredientId, section) => {
+    const handleRemoveIngredient = async (ingredientId, section) => {
+        // First get the current ingredients
+        const currentIngredients = Object.values(ingredientSections).flatMap(
+            (section) => section.getItems()
+        );
+
+        // Remove the ingredient from state
         if (mode === "edit") {
             setRecipeIngredients((prev) =>
                 prev.filter((i) => i.ingredient_id !== ingredientId)
             );
         }
 
+        // Remove from appropriate section
         switch (section) {
             case "meat_and_bone":
                 setMeatAndBone((prev) =>
@@ -474,6 +702,47 @@ export function RecipeSheet({
                 );
                 break;
         }
+
+        // Get updated ingredients excluding the removed one
+        const updatedIngredients = currentIngredients.filter((i) =>
+            mode === "create"
+                ? i.id !== ingredientId
+                : i.ingredient_id !== ingredientId
+        );
+
+        // Get the new state from checkRecipeBalance first
+        const state = await checkRecipeBalance(updatedIngredients, mode);
+
+        // Then update nutrient state
+        setNutrientState((prev) => {
+            if (!prev) return prev;
+
+            // Remove the ingredient from addedIngredients
+            const { [ingredientId]: removed, ...remainingAdded } =
+                prev.addedIngredients || {};
+
+            // Update nutrient suggestions to un-mark the removed ingredient
+            const updatedSuggestions = { ...prev.nutrientSuggestions };
+            Object.keys(updatedSuggestions).forEach((nutrientId) => {
+                updatedSuggestions[nutrientId] = updatedSuggestions[
+                    nutrientId
+                ].map((suggestion) => {
+                    const suggestionId =
+                        suggestion.ingredient_id || suggestion.id;
+                    return suggestionId === ingredientId
+                        ? { ...suggestion, isAdded: false }
+                        : suggestion;
+                });
+            });
+
+            return {
+                ...prev,
+                ...state,
+                addedIngredients: remainingAdded,
+                nutrientSuggestions: updatedSuggestions,
+                fromIngredientSelector: true,
+            };
+        });
     };
 
     // Delete functionality
@@ -518,75 +787,6 @@ export function RecipeSheet({
         return data;
     };
 
-    // Create an object that maps each section to its items
-    const ingredientSections = {
-        meat_and_bone: {
-            title: "Muscle Meat & Bone",
-            emptyStateText: "Add muscle meat and bone ingredients",
-            category: 1,
-            getItems: () => {
-                if (mode === "edit") {
-                    return recipeIngredients.filter(
-                        (ing) => ing.ingredients?.category_id === 1
-                    );
-                }
-                return meatAndBone;
-            },
-        },
-        plant_matter: {
-            title: "Plant Matter",
-            emptyStateText: "Add plant matter ingredients",
-            category: 2,
-            getItems: () => {
-                if (mode === "edit") {
-                    return recipeIngredients.filter(
-                        (ing) => ing.ingredients?.category_id === 2
-                    );
-                }
-                return plantMatter;
-            },
-        },
-        liver: {
-            title: "Liver",
-            emptyStateText: "Add liver ingredients",
-            category: 3,
-            getItems: () => {
-                if (mode === "edit") {
-                    return recipeIngredients.filter(
-                        (ing) => ing.ingredients?.category_id === 3
-                    );
-                }
-                return liver;
-            },
-        },
-        secreting_organs: {
-            title: "Secreting Organs",
-            emptyStateText: "Add secreting organ ingredients",
-            category: 4,
-            getItems: () => {
-                if (mode === "edit") {
-                    return recipeIngredients.filter(
-                        (ing) => ing.ingredients?.category_id === 4
-                    );
-                }
-                return secretingOrgans;
-            },
-        },
-        misc: {
-            title: "Misc",
-            emptyStateText: "Add miscellaneous ingredients",
-            category: 5,
-            getItems: () => {
-                if (mode === "edit") {
-                    return recipeIngredients.filter(
-                        (ing) => ing.ingredients?.category_id === 5
-                    );
-                }
-                return misc;
-            },
-        },
-    };
-
     // Use it in your component where you need to handle the success case
     const handleAddDog = () => {
         openAddDog((newDog) => {
@@ -608,12 +808,14 @@ export function RecipeSheet({
                         ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
-                        handleAddIngredient={handleAddIngredient}
+                        handleAddIngredient={handleIngredientAdd}
                         handleRemoveIngredient={handleRemoveIngredient}
                         getIngredientsByCategory={(category) =>
                             getIngredientsByCategory(ingredients, category)
                         }
                         ingredientsLoading={ingredientsLoading}
+                        nutrientState={nutrientState}
+                        checkingNutrients={checkingNutrients}
                     />
                 );
             case "edit":
@@ -631,12 +833,14 @@ export function RecipeSheet({
                         ingredientSections={ingredientSections}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
-                        handleAddIngredient={handleAddIngredient}
+                        handleAddIngredient={handleIngredientAdd}
                         handleRemoveIngredient={handleRemoveIngredient}
                         getIngredientsByCategory={(category) =>
                             getIngredientsByCategory(ingredients, category)
                         }
                         ingredientsLoading={ingredientsLoading}
+                        nutrientState={nutrientState}
+                        checkingNutrients={checkingNutrients}
                     />
                 );
             case "view":
@@ -646,6 +850,8 @@ export function RecipeSheet({
                             recipe={recipe}
                             dogs={dogs}
                             getDogName={getDogName}
+                            nutrientState={nutrientState}
+                            checkingNutrients={checkingNutrients}
                         />
                     )
                 );
@@ -656,8 +862,19 @@ export function RecipeSheet({
 
     return (
         <>
-            <Sheet open={open} onOpenChange={handleClose}>
-                <SheetContent className="md:p-2">
+            <Sheet
+                open={open}
+                onOpenChange={handleClose}
+            >
+                <SheetContent
+                    className="md:p-2 ring-0! outline-none"
+                    side="right"
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                    onEscapeKeyDown={(e) => {
+                        e.preventDefault();
+                        handleClose(false);
+                    }}
+                >
                     <div className="md:rounded-lg bg-card flex flex-col h-full p-0">
                         <div className="">
                             <SheetHeader>
@@ -788,20 +1005,26 @@ export function RecipeSheet({
                 </SheetContent>
             </Sheet>
 
-            <UnsavedChangesDialog
-                open={showUnsavedChanges}
-                onOpenChange={setShowUnsavedChanges}
-                onClose={() => {
-                    if (mode === "edit") {
-                        onModeChange?.("view");
-                        onOpenChange?.(true, { mode: "view", recipe });
-                    } else {
-                        resetForm();
-                        onOpenChange?.(false);
-                    }
-                    setShowUnsavedChanges(false);
-                }}
-            />
+            {showUnsavedChanges && (
+                <UnsavedChangesDialog
+                    open={showUnsavedChanges}
+                    onOpenChange={setShowUnsavedChanges}
+                    onConfirm={() => {
+                        setShowUnsavedChanges(false);
+                        handleClose(false);
+                    }}
+                    onClose={() => {
+                        if (mode === "edit") {
+                            onModeChange?.("view");
+                            onOpenChange?.(true, { mode: "view", recipe });
+                        } else {
+                            resetForm();
+                            onOpenChange?.(false);
+                        }
+                        setShowUnsavedChanges(false);
+                    }}
+                />
+            )}
         </>
     );
 }

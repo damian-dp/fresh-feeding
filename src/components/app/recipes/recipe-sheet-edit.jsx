@@ -21,6 +21,8 @@ export function RecipeSheetEdit({
     handleRemoveIngredient,
     getIngredientsByCategory,
     ingredientsLoading,
+    nutrientState,
+    checkingNutrients,
 }) {
     const hasEditChanges = () => {
         return (
@@ -41,7 +43,7 @@ export function RecipeSheetEdit({
     };
 
     // Update the handleIngredientAdd function
-    const handleIngredientAdd = (ingredient, category) => {
+    const handleIngredientAdd = (ingredient, category, options = {}) => {
         // Create the recipe_ingredients structure with proper category_id
         const newIngredient = {
             ingredient_id: ingredient.ingredient_id || ingredient.id,
@@ -54,8 +56,8 @@ export function RecipeSheetEdit({
             quantity: 0,
         };
 
-        // Call the parent handler with the properly structured ingredient
-        handleAddIngredient(newIngredient, category);
+        // Call the parent handler with the properly structured ingredient and options
+        handleAddIngredient(newIngredient, category, options);
         setActiveSection(null);
     };
 
@@ -86,16 +88,8 @@ export function RecipeSheetEdit({
             </div>
 
             {/* Ingredients section */}
-            <div className="flex flex-col gap-8 p-8">
+            <div className="flex flex-col gap-8 p-8 border-b border-border">
                 <p className="font-medium">Ingredients</p>
-                <div className="-mt-1">
-                    <NutrientGroupAlert
-                        recipeIngredients={Object.values(
-                            ingredientSections
-                        ).flatMap((section) => section.getItems())}
-                        mode="edit"
-                    />
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
                     <div className="flex flex-col gap-6">
@@ -201,6 +195,33 @@ export function RecipeSheetEdit({
                             isLoading={ingredientsLoading}
                         />
                     </div>
+                </div>
+            </div>
+
+            {/* Move nutrition status section here */}
+            <div className="flex flex-col gap-6 p-8 border-b border-border">
+                <p className="font-medium">Nutrition status</p>
+                <div className="flex gap-8">
+                    <NutrientGroupAlert
+                        recipeIngredients={Object.values(
+                            ingredientSections
+                        ).flatMap((section) => section.getItems())}
+                        mode="edit"
+                        onAddIngredient={(ingredient, options) => {
+                            const categoryMap = {
+                                1: "meat_and_bone",
+                                2: "plant_matter",
+                                3: "liver",
+                                4: "secreting_organs",
+                                5: "misc",
+                            };
+                            const category =
+                                categoryMap[ingredient.category_id];
+                            handleAddIngredient(ingredient, category, options);
+                        }}
+                        nutrientState={nutrientState}
+                        isChecking={checkingNutrients}
+                    />
                 </div>
             </div>
         </>

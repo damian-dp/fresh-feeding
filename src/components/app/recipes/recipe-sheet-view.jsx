@@ -27,7 +27,13 @@ const getIngredientsByCategory = (recipeIngredients, categoryId) => {
     );
 };
 
-export function RecipeSheetView({ recipe, dogs, getDogName }) {
+export function RecipeSheetView({
+    recipe,
+    dogs,
+    getDogName,
+    nutrientState,
+    checkingNutrients,
+}) {
     const { updateRecipe } = useRecipes();
     const [batchSize, setBatchSize] = useState(recipe?.batch_size ?? null);
     const [numberOfDays, setNumberOfDays] = useState(null);
@@ -593,6 +599,8 @@ export function RecipeSheetView({ recipe, dogs, getDogName }) {
                     <NutrientGroupAlert
                         recipeIngredients={recipe.recipe_ingredients}
                         mode="view"
+                        nutrientState={nutrientState}
+                        isChecking={checkingNutrients}
                     />
                 </div>
             </div>
