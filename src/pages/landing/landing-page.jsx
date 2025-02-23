@@ -108,7 +108,7 @@ export function LandingPage() {
                                         to={
                                             isAuthenticated
                                                 ? "/dashboard"
-                                                : "/auth"
+                                                : "/sign-up"
                                         }
                                     >
                                         Get started

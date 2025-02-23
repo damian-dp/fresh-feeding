@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authService } from "@/lib/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import {
     Card,
     CardContent,
@@ -14,10 +13,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { motion, AnimatePresence } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Loader2,
+    X,
+    ChevronUp,
+    ChevronDown,
+} from "lucide-react";
 import Facebook from "@/assets/icons/facebook";
 import Apple from "@/assets/icons/apple-1";
 import Google from "@/assets/icons/google";
@@ -30,6 +35,127 @@ const fadeAnimation = {
     transition: { duration: 0.2 },
 };
 
+// Update AlertController component
+function AlertController({
+    onTrigger,
+    handleResendVerification,
+    isResendingVerification,
+}) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const alerts = {
+        "Sign Up": {
+            type: "success",
+            title: "Account created",
+            message: "Check your email for the verification link!",
+        },
+        "Invalid Login": {
+            type: "error",
+            title: "Invalid credentials",
+            message: "Invalid email or password",
+        },
+        "Password reset sent": {
+            type: "success",
+            title: "Password reset link sent",
+            message:
+                "If an account exists with this email, a reset link will be sent.",
+        },
+        "Link Expired": {
+            type: "error",
+            title: "Verification link expired",
+            message:
+                "This verification link has expired. Please sign in to request a new one.",
+        },
+        "Not Verified": {
+            type: "warning",
+            title: "Email not verified",
+            message:
+                "Please check your email for the verification link or request a new one.",
+            button: {
+                text: "Resend verification email",
+                onClick: handleResendVerification,
+                disabled: isResendingVerification,
+                loading: isResendingVerification,
+            },
+        },
+        "General Error": {
+            type: "error",
+            title: "Something went wrong",
+            message:
+                "An unexpected error occurred. Please try again later. If the problem persists, please contact support.",
+        },
+    };
+
+    return (
+        <div className="fixed bottom-4 left-4 z-50">
+            <Card className="w-[280px] shadow-lg border-dashed">
+                <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-0">
+                        <CardTitle className="text-sm">Alert Tester</CardTitle>
+                        <CardDescription className="text-xs">
+                            Dev tools
+                        </CardDescription>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                    >
+                        {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronUp className="h-4 w-4" />
+                        )}
+                    </Button>
+                </CardHeader>
+                <AnimatePresence>
+                    {isExpanded && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <CardContent className="grid grid-cols-1 gap-2 p-3">
+                                {Object.entries(alerts).map(([name, alert]) => (
+                                    <Button
+                                        key={name}
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => onTrigger(alert)}
+                                        className="justify-start h-8"
+                                    >
+                                        {alert.type === "error" && (
+                                            <AlertTriangle className="h-3 w-3 text-destructive mr-2" />
+                                        )}
+                                        {alert.type === "success" && (
+                                            <CheckCircle2 className="h-3 w-3 text-success mr-2" />
+                                        )}
+                                        {alert.type === "warning" && (
+                                            <AlertTriangle className="h-3 w-3 text-warning mr-2" />
+                                        )}
+                                        <span className="text-xs">{name}</span>
+                                    </Button>
+                                ))}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onTrigger(null)}
+                                    className="h-8"
+                                >
+                                    <X className="h-3 w-3 mr-2" />
+                                    <span className="text-xs">Clear</span>
+                                </Button>
+                            </CardContent>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </Card>
+        </div>
+    );
+}
+
 export function AuthForm() {
     const [isSignUp, setIsSignUp] = useState(false);
     const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -41,12 +167,29 @@ export function AuthForm() {
     const [isResendingVerification, setIsResendingVerification] =
         useState(false);
     const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+    const [formAlert, setFormAlert] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Sync URL with form mode
+    useEffect(() => {
+        const path = location.pathname;
+        if (path === "/sign-up") {
+            setIsSignUp(true);
+            setIsForgotPassword(false);
+        } else if (path === "/forgot-password") {
+            setIsForgotPassword(true);
+            setIsSignUp(false);
+        } else {
+            setIsSignUp(false);
+            setIsForgotPassword(false);
+        }
+    }, [location.pathname]);
 
     // Reset verification alert when changing modes or when user starts typing
     useEffect(() => {
         setShowVerificationAlert(false);
+        setFormAlert(null);
     }, [isSignUp, isForgotPassword]);
 
     useEffect(() => {
@@ -60,20 +203,30 @@ export function AuthForm() {
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
         setShowVerificationAlert(false);
+        setFormAlert(null);
     };
 
     const handlePasswordChange = (e) => {
         setPassword(e.target.value);
         setShowVerificationAlert(false);
+        setFormAlert(null);
     };
 
     const handleResendVerification = async () => {
         setIsResendingVerification(true);
         try {
             await authService.resendVerification(email);
-            toast.success("Verification email sent!");
+            setFormAlert({
+                type: "success",
+                title: "Verification email sent",
+                message: "Please check your email for the verification link.",
+            });
         } catch (err) {
-            toast.error("Failed to resend verification email");
+            setFormAlert({
+                type: "error",
+                title: "Failed to send verification email",
+                message: err.message,
+            });
         } finally {
             setIsResendingVerification(false);
         }
@@ -82,6 +235,7 @@ export function AuthForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setFormAlert(null);
 
         try {
             console.log("Attempting auth...", { isSignUp, isForgotPassword });
@@ -96,14 +250,16 @@ export function AuthForm() {
 
                 if (error) throw error;
 
-                toast.success(
-                    "If this email exists, a reset link will be sent."
-                );
+                setFormAlert({
+                    type: "success",
+                    title: "Reset link sent",
+                    message: "If this email exists, a reset link will be sent.",
+                });
 
                 setTimeout(() => {
                     setIsForgotPassword(false);
                     setEmail("");
-                }, 2000);
+                }, 5000);
             } else {
                 const result = isSignUp
                     ? await authService.signUp(email, password, name)
@@ -111,10 +267,13 @@ export function AuthForm() {
 
                 if (result) {
                     if (isSignUp) {
-                        toast.success(
-                            "Check your email for the confirmation link!"
-                        );
-                        setTimeout(() => setIsSignUp(false), 2000);
+                        setFormAlert({
+                            type: "success",
+                            title: "Account created",
+                            message:
+                                "Check your email for the confirmation link!",
+                        });
+                        setTimeout(() => setIsSignUp(false), 5000);
                     } else {
                         // Check if email is verified before redirecting
                         if (result.user?.email_confirmed_at) {
@@ -130,11 +289,19 @@ export function AuthForm() {
         } catch (error) {
             console.error("Auth error:", error);
             if (error.message === "Invalid login credentials") {
-                toast.error("Invalid email or password");
+                setFormAlert({
+                    type: "error",
+                    title: "Invalid credentials",
+                    message: "Invalid email or password",
+                });
             } else if (error.message === "Email not confirmed") {
                 setShowVerificationAlert(true);
             } else {
-                toast.error(error.message);
+                setFormAlert({
+                    type: "error",
+                    title: "Authentication error",
+                    message: error.message,
+                });
             }
         } finally {
             setIsLoading(false);
@@ -159,7 +326,6 @@ export function AuthForm() {
                         display: "popup",
                     },
                 },
-                // Add other providers here if needed
             };
 
             const { data, error } = await supabase.auth.signInWithOAuth({
@@ -180,7 +346,11 @@ export function AuthForm() {
             window.location.href = data.url;
         } catch (error) {
             console.error("Social auth error:", error);
-            toast.error(error.message);
+            setFormAlert({
+                type: "error",
+                title: "Social login error",
+                message: error.message,
+            });
             setLoadingProvider(null);
         }
     };
@@ -194,7 +364,11 @@ export function AuthForm() {
             if (session) {
                 navigate("/dashboard");
             } else {
-                toast.error("Failed to sign in");
+                setFormAlert({
+                    type: "error",
+                    title: "Authentication failed",
+                    message: "Failed to sign in with social provider",
+                });
                 setLoadingProvider(null);
             }
         };
@@ -206,20 +380,33 @@ export function AuthForm() {
     }, [navigate]);
 
     const handleModeSwitch = () => {
-        setIsSignUp(!isSignUp);
-        setIsForgotPassword(false);
+        if (isSignUp) {
+            navigate("/sign-in", { replace: true });
+        } else {
+            navigate("/sign-up", { replace: true });
+        }
         setEmail("");
         setPassword("");
         setName("");
+        setFormAlert(null);
     };
 
     const handleForgotPassword = (e) => {
         e.preventDefault();
-        setIsForgotPassword(true);
-        setIsSignUp(false);
+        navigate("/forgot-password", { replace: true });
         setEmail("");
         setPassword("");
         setName("");
+        setFormAlert(null);
+    };
+
+    const handleBackToSignIn = (e) => {
+        e.preventDefault();
+        navigate("/sign-in", { replace: true });
+        setEmail("");
+        setPassword("");
+        setName("");
+        setFormAlert(null);
     };
 
     return (
@@ -293,6 +480,54 @@ export function AuthForm() {
                         </>
                     )}
 
+                    <AnimatePresence mode="wait">
+                        {formAlert && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="w-full mb-6"
+                            >
+                                <Alert variant={formAlert.type}>
+                                    {formAlert.type === "error" ? (
+                                        <AlertTriangle className="" />
+                                    ) : (
+                                        <CheckCircle2 className="" />
+                                    )}
+                                    <div className="flex flex-col gap-1.5">
+                                        <AlertTitle>
+                                            {formAlert.title}
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            {formAlert.message}
+                                            {formAlert.button ? (
+                                                <Button
+                                                    variant="warning"
+                                                    className="w-full mt-5"
+                                                    size=""
+                                                    onClick={
+                                                        formAlert.button.onClick
+                                                    }
+                                                    disabled={
+                                                        formAlert.button
+                                                            .disabled
+                                                    }
+                                                >
+                                                    {formAlert.button
+                                                        .loading ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : null}
+                                                    {formAlert.button.text}
+                                                </Button>
+                                            ) : null}
+                                        </AlertDescription>
+                                    </div>
+                                </Alert>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <form
                         onSubmit={handleSubmit}
                         className={`w-full flex flex-col items-center ${
@@ -352,77 +587,6 @@ export function AuthForm() {
                                             placeholder="Password"
                                             className="h-12 px-4 text-base w-full"
                                         />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            <AnimatePresence>
-                                {showVerificationAlert && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                    >
-                                        <Alert
-                                            variant={
-                                                location.state?.isExpired
-                                                    ? "error"
-                                                    : "warning"
-                                            }
-                                            className="mt-2"
-                                        >
-                                            <AlertTriangle className="h-4 w-4" />
-                                            <div className="flex flex-col gap-2">
-                                                <AlertTitle>
-                                                    {location.state?.isExpired
-                                                        ? "Verification link expired"
-                                                        : "Email not verified"}
-                                                </AlertTitle>
-                                                <AlertDescription className="flex flex-col gap-2">
-                                                    {location.state
-                                                        ?.isExpired ? (
-                                                        <p>
-                                                            This verification
-                                                            link has expired.
-                                                            Please sign in to
-                                                            request a new one.
-                                                        </p>
-                                                    ) : (
-                                                        <p>
-                                                            Please check your
-                                                            email (including
-                                                            your spam folder)
-                                                            for the verification
-                                                            link.
-                                                        </p>
-                                                    )}
-                                                    {!location.state
-                                                        ?.isExpired && (
-                                                        <Button
-                                                            variant="warning"
-                                                            className="w-full mt-2"
-                                                            size=""
-                                                            onClick={
-                                                                handleResendVerification
-                                                            }
-                                                            disabled={
-                                                                isResendingVerification
-                                                            }
-                                                        >
-                                                            {isResendingVerification ? (
-                                                                <>
-                                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                                    Sending...
-                                                                </>
-                                                            ) : (
-                                                                "Resend verification email"
-                                                            )}
-                                                        </Button>
-                                                    )}
-                                                </AlertDescription>
-                                            </div>
-                                        </Alert>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -507,6 +671,22 @@ export function AuthForm() {
                     </Link>
                 </p>
             </div>
+
+            {/* Add AlertController only in development */}
+            {import.meta.env.DEV && (
+                <AlertController
+                    onTrigger={(alert) => {
+                        setFormAlert(alert);
+                        if (alert?.type === "warning") {
+                            setShowVerificationAlert(true);
+                        } else {
+                            setShowVerificationAlert(false);
+                        }
+                    }}
+                    handleResendVerification={handleResendVerification}
+                    isResendingVerification={isResendingVerification}
+                />
+            )}
         </div>
     );
 }

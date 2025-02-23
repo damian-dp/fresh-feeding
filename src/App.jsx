@@ -44,6 +44,9 @@ function AppContent() {
                 <Route path="/privacy-policy" element={<PrivacyPage />} />
 
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/sign-in" element={<AuthPage />} />
+                <Route path="/sign-up" element={<AuthPage />} />
+                <Route path="/forgot-password" element={<AuthPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route
                     path="/auth/update-password"

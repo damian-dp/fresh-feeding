@@ -65,8 +65,16 @@ export function AuthProvider({ children }) {
 
             // Handle successful sign in or token refresh
             if (["SIGNED_IN", "TOKEN_REFRESHED"].includes(event)) {
-                // If we're on the auth page or home page, redirect to dashboard
-                if (["/", "/auth"].includes(window.location.pathname)) {
+                // If we're on an auth page, redirect to dashboard
+                if (
+                    [
+                        "/",
+                        "/auth",
+                        "/sign-in",
+                        "/sign-up",
+                        "/forgot-password",
+                    ].includes(window.location.pathname)
+                ) {
                     window.location.replace("/dashboard");
                 }
             }

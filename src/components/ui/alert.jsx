@@ -10,7 +10,7 @@ const alertVariants = cva(
             variant: {
                 default: "bg-background text-foreground",
                 error:
-                    "border-error-border bg-error text-error-foreground [&>svg]:text-error-foreground",
+                    "border-error-border bg-error/60 text-error-foreground [&>svg]:text-error-foreground",
                 warning:
                     "border-warning-border bg-warning text-warning-foreground [&>svg]:text-warning-foreground",
                 success:

@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }) {
     }
 
     if (!session) {
-        return <Navigate to="/auth" />;
+        return <Navigate to="/sign-in" />;
     }
 
     if (isLoading) {

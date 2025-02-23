@@ -40,7 +40,7 @@ export function LandingNavbar() {
                                 <Link to="/auth">Sign in</Link>
                             </Button>
                             <Button asChild variant="plant">
-                                <Link to="/auth">Get started</Link>
+                                <Link to="/sign-up">Get started</Link>
                             </Button>
                         </>
                     )}
