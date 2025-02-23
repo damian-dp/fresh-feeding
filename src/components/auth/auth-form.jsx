@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authService } from "@/lib/stores/auth-store";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { motion, AnimatePresence } from "framer-motion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import Facebook from "@/assets/icons/facebook";
 import Apple from "@/assets/icons/apple-1";
 import Google from "@/assets/icons/google";
@@ -36,7 +38,46 @@ export function AuthForm() {
     const [name, setName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [loadingProvider, setLoadingProvider] = useState(null);
+    const [isResendingVerification, setIsResendingVerification] =
+        useState(false);
+    const [showVerificationAlert, setShowVerificationAlert] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Reset verification alert when changing modes or when user starts typing
+    useEffect(() => {
+        setShowVerificationAlert(false);
+    }, [isSignUp, isForgotPassword]);
+
+    useEffect(() => {
+        // Check for verification state from navigation
+        if (location.state?.showVerification) {
+            setShowVerificationAlert(true);
+            setEmail(location.state.email || "");
+        }
+    }, [location.state]);
+
+    const handleEmailChange = (e) => {
+        setEmail(e.target.value);
+        setShowVerificationAlert(false);
+    };
+
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+        setShowVerificationAlert(false);
+    };
+
+    const handleResendVerification = async () => {
+        setIsResendingVerification(true);
+        try {
+            await authService.resendVerification(email);
+            toast.success("Verification email sent!");
+        } catch (err) {
+            toast.error("Failed to resend verification email");
+        } finally {
+            setIsResendingVerification(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -68,8 +109,6 @@ export function AuthForm() {
                     ? await authService.signUp(email, password, name)
                     : await authService.signIn(email, password);
 
-                // console.log("Auth result:", result);
-
                 if (result) {
                     if (isSignUp) {
                         toast.success(
@@ -77,10 +116,14 @@ export function AuthForm() {
                         );
                         setTimeout(() => setIsSignUp(false), 2000);
                     } else {
-                        // console.log("Navigating to dashboard...");
-                        setTimeout(() => {
-                            navigate("/dashboard", { replace: true });
-                        }, 100);
+                        // Check if email is verified before redirecting
+                        if (result.user?.email_confirmed_at) {
+                            setTimeout(() => {
+                                navigate("/dashboard", { replace: true });
+                            }, 100);
+                        } else {
+                            setShowVerificationAlert(true);
+                        }
                     }
                 }
             }
@@ -89,35 +132,7 @@ export function AuthForm() {
             if (error.message === "Invalid login credentials") {
                 toast.error("Invalid email or password");
             } else if (error.message === "Email not confirmed") {
-                toast.message("Email address not verified.", {
-                    action: {
-                        label: "Send new email",
-                        onClick: async (e) => {
-                            e.preventDefault();
-
-                            const button = e.currentTarget;
-                            const originalText = button.textContent;
-
-                            button.disabled = true;
-                            button.innerHTML = `
-                                <div class="flex items-center gap-1">
-                                    <div class="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                                    Sending...
-                                </div>
-                            `;
-
-                            try {
-                                await authService.resendVerification(email);
-
-                                toast.success("Verification email sent!");
-                            } catch (err) {
-                                toast.error(
-                                    "Failed to resend verification email"
-                                );
-                            }
-                        },
-                    },
-                });
+                setShowVerificationAlert(true);
             } else {
                 toast.error(error.message);
             }
@@ -314,7 +329,7 @@ export function AuthForm() {
                                 id="email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={handleEmailChange}
                                 required
                                 placeholder="Email"
                                 className="h-12 px-4 text-base"
@@ -332,13 +347,82 @@ export function AuthForm() {
                                             id="password"
                                             type="password"
                                             value={password}
-                                            onChange={(e) =>
-                                                setPassword(e.target.value)
-                                            }
+                                            onChange={handlePasswordChange}
                                             required={!isForgotPassword}
                                             placeholder="Password"
                                             className="h-12 px-4 text-base w-full"
                                         />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <AnimatePresence>
+                                {showVerificationAlert && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <Alert
+                                            variant={
+                                                location.state?.isExpired
+                                                    ? "error"
+                                                    : "warning"
+                                            }
+                                            className="mt-2"
+                                        >
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <div className="flex flex-col gap-2">
+                                                <AlertTitle>
+                                                    {location.state?.isExpired
+                                                        ? "Verification link expired"
+                                                        : "Email not verified"}
+                                                </AlertTitle>
+                                                <AlertDescription className="flex flex-col gap-2">
+                                                    {location.state
+                                                        ?.isExpired ? (
+                                                        <p>
+                                                            This verification
+                                                            link has expired.
+                                                            Please sign in to
+                                                            request a new one.
+                                                        </p>
+                                                    ) : (
+                                                        <p>
+                                                            Please check your
+                                                            email (including
+                                                            your spam folder)
+                                                            for the verification
+                                                            link.
+                                                        </p>
+                                                    )}
+                                                    {!location.state
+                                                        ?.isExpired && (
+                                                        <Button
+                                                            variant="warning"
+                                                            className="w-full mt-2"
+                                                            size=""
+                                                            onClick={
+                                                                handleResendVerification
+                                                            }
+                                                            disabled={
+                                                                isResendingVerification
+                                                            }
+                                                        >
+                                                            {isResendingVerification ? (
+                                                                <>
+                                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                    Sending...
+                                                                </>
+                                                            ) : (
+                                                                "Resend verification email"
+                                                            )}
+                                                        </Button>
+                                                    )}
+                                                </AlertDescription>
+                                            </div>
+                                        </Alert>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

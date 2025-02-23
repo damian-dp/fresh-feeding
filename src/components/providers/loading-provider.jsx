@@ -3,6 +3,7 @@ import { useUser } from "./user-provider";
 import { useDogs } from "./dogs-provider";
 import { useRecipes } from "./recipes-provider";
 import { useIngredients } from "./ingredients-provider";
+import { useAuth } from "./auth-provider";
 
 const LoadingContext = createContext({});
 
@@ -10,14 +11,59 @@ export function LoadingProvider({ children }) {
     const [isReady, setIsReady] = useState(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [imagesLoaded, setImagesLoaded] = useState(false);
+    const { loading: authLoading, isAuthenticated } = useAuth();
     const { loading: userLoading, profile } = useUser();
     const { loading: dogsLoading, dogs } = useDogs();
     const { loading: recipesLoading } = useRecipes();
     const { loading: ingredientsLoading } = useIngredients();
 
-    // Preload user and dog images
+    // Log loading states
     useEffect(() => {
-        if (dogsLoading || userLoading) return;
+        console.log("[LoadingProvider] Loading states:", {
+            authLoading,
+            userLoading,
+            dogsLoading,
+            recipesLoading,
+            ingredientsLoading,
+            imagesLoaded,
+            isAuthenticated,
+            isInitialLoad,
+            isReady,
+            path: window.location.pathname,
+        });
+    }, [
+        authLoading,
+        userLoading,
+        dogsLoading,
+        recipesLoading,
+        ingredientsLoading,
+        imagesLoaded,
+        isAuthenticated,
+        isInitialLoad,
+        isReady,
+    ]);
+
+    // Handle auth state first
+    useEffect(() => {
+        if (!authLoading) {
+            console.log("[LoadingProvider] Auth state resolved:", {
+                isAuthenticated,
+                path: window.location.pathname,
+            });
+
+            // If not authenticated, we can be ready immediately
+            if (!isAuthenticated) {
+                setIsReady(true);
+                setIsInitialLoad(false);
+            }
+        }
+    }, [authLoading, isAuthenticated]);
+
+    // Preload user and dog images only if authenticated
+    useEffect(() => {
+        if (!isAuthenticated || dogsLoading || userLoading) {
+            return;
+        }
 
         const imagesToLoad = [];
 
@@ -75,9 +121,16 @@ export function LoadingProvider({ children }) {
         return () => {
             setImagesLoaded(false);
         };
-    }, [dogs, dogsLoading, profile, userLoading]);
+    }, [dogs, dogsLoading, profile, userLoading, isAuthenticated]);
 
+    // Handle data loading for authenticated users
     useEffect(() => {
+        // Skip if auth is still loading or user is not authenticated
+        if (authLoading || !isAuthenticated) {
+            return;
+        }
+
+        // Check if all required data is loaded
         const allDataLoaded =
             !userLoading &&
             !dogsLoading &&
@@ -86,19 +139,13 @@ export function LoadingProvider({ children }) {
             imagesLoaded;
 
         if (allDataLoaded) {
-            const timer = setTimeout(() => {
-                setIsReady(true);
-                setIsInitialLoad(false);
-                console.log(
-                    "[LoadingProvider] All data loaded, setting isReady"
-                );
-            }, 1000);
-
-            return () => clearTimeout(timer);
+            console.log("[LoadingProvider] All data loaded, setting isReady");
+            setIsReady(true);
+            setIsInitialLoad(false);
         }
-
-        setIsReady(false);
     }, [
+        authLoading,
+        isAuthenticated,
         userLoading,
         dogsLoading,
         recipesLoading,
@@ -106,14 +153,26 @@ export function LoadingProvider({ children }) {
         imagesLoaded,
     ]);
 
-    return (
-        <LoadingContext.Provider
-            value={{
+    const value = {
+        isReady,
+        isLoading: !isReady && isInitialLoad,
+        isInitialLoad,
+    };
+
+    // Add debug log for final state
+    useEffect(() => {
+        if (isReady) {
+            console.log("[LoadingProvider] Ready state achieved:", {
                 isReady,
                 isLoading: !isReady && isInitialLoad,
                 isInitialLoad,
-            }}
-        >
+                path: window.location.pathname,
+            });
+        }
+    }, [isReady, isInitialLoad]);
+
+    return (
+        <LoadingContext.Provider value={value}>
             {children}
         </LoadingContext.Provider>
     );

@@ -10,6 +10,16 @@ export const authService = {
             });
             if (error) throw error;
             console.log("Sign in successful:", data);
+
+            // Wait for session to be set
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
+            if (!session) {
+                throw new Error("Failed to get session after sign in");
+            }
+
             return data;
         } catch (error) {
             console.error("Sign in error:", error);
@@ -40,12 +50,15 @@ export const authService = {
                 metadata.name = name;
             }
 
+            // Ensure we're using the auth/callback route for verification
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
+                    data: {
+                        name,
+                    },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
-                    data: metadata,
                 },
             });
 
@@ -87,6 +100,9 @@ export const authService = {
             const { error } = await supabase.auth.resend({
                 type: "signup",
                 email: email,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+                },
             });
             if (error) throw error;
             return true;
@@ -98,14 +114,12 @@ export const authService = {
 
     signOut: async () => {
         try {
-            // Just clear the local session
             await supabase.auth.signOut();
-            window.location.href = "/";
+            window.location.replace("/");
             return true;
         } catch (error) {
             console.error("Sign out error:", error);
-            // Even if there's an error, we'll clear local storage
-            window.location.href = "/";
+            window.location.replace("/");
             return true;
         }
     },
