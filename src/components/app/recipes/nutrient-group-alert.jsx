@@ -27,32 +27,20 @@ const NUTRIENT_GROUPS = [
 ];
 
 // Combined function that returns both detailed info and simple boolean
-async function checkRecipeBalance(recipeIngredients, mode = "view") {
-    if (!recipeIngredients?.length) {
-        return {
-            isBalanced: false,
-            missingCategories: [
-                "Missing a source of muscle meat",
-                "Missing a source of bone",
-                "Missing a source of plant matter",
-                "Missing a source of liver",
-                "Missing a source of secreting organs",
-            ],
-            missingNutrients: [],
-            nutrientSuggestions: {},
-        };
-    }
-
+async function checkRecipeBalance(recipeIngredients) {
     try {
+        // Get all nutrients first, we'll need this regardless
+        const { data: nutrients } = await supabase
+            .from("nutrients")
+            .select("*")
+            .order("nutrient_basic_name");
+
         // Check categories first
         const missingCategories = [];
         const categories = new Set(
-            recipeIngredients.map((ri) => {
-                if (mode === "view" || mode === "edit") {
-                    return ri.ingredients?.category_id;
-                }
-                return ri.category;
-            })
+            recipeIngredients?.map(
+                (ri) => ri.ingredients?.category_id || ri.category_id
+            ) || []
         );
 
         // Check for meat (category 1)
@@ -61,8 +49,8 @@ async function checkRecipeBalance(recipeIngredients, mode = "view") {
         }
 
         // Check for bone content
-        const hasBone = recipeIngredients.some((ri) => {
-            const ingredient = mode === "create" ? ri : ri.ingredients;
+        const hasBone = recipeIngredients?.some((ri) => {
+            const ingredient = ri.ingredients || ri;
             return ingredient?.bone_percent > 0;
         });
         if (!hasBone) {
@@ -77,21 +65,54 @@ async function checkRecipeBalance(recipeIngredients, mode = "view") {
         if (!categories.has(4))
             missingCategories.push("Missing a source of secreting organs");
 
+        // If we have no ingredients, all nutrients are missing
+        if (!recipeIngredients?.length) {
+            // Get all suggestions in a single query
+            const { data: allSuggestions } = await supabase
+                .from("ingredients_nutrients")
+                .select(
+                    `
+                    nutrient_id,
+                    ingredients!inner (
+                        ingredient_id,
+                        ingredient_name,
+                        category_id,
+                        bone_percent
+                    )
+                `
+                )
+                .eq("has_nutrient", true);
+
+            // Organize suggestions by nutrient
+            const nutrientSuggestions = {};
+            allSuggestions.forEach((suggestion) => {
+                if (!nutrientSuggestions[suggestion.nutrient_id]) {
+                    nutrientSuggestions[suggestion.nutrient_id] = [];
+                }
+                nutrientSuggestions[suggestion.nutrient_id].push(
+                    suggestion.ingredients
+                );
+            });
+
+            return {
+                isBalanced: false,
+                missingCategories,
+                missingNutrients: nutrients
+                    .filter((nutrient) => nutrient.nutrient_scientific_name) // Only include if scientific name exists
+                    .map((nutrient) => ({
+                        id: nutrient.nutrient_id,
+                        basic_name: nutrient.nutrient_basic_name,
+                        scientific_name:
+                            nutrient.nutrient_scientific_name || "",
+                    })),
+                nutrientSuggestions,
+            };
+        }
+
         // Get all ingredient IDs
         const ingredientIds = recipeIngredients
-            .map((ri) => {
-                if (mode === "view") return ri.ingredient_id;
-                if (mode === "edit")
-                    return ri.ingredient_id || ri.ingredients?.ingredient_id;
-                return ri.id;
-            })
+            .map((ri) => ri.ingredient_id || ri.id)
             .filter(Boolean);
-
-        // Get all nutrients in a single query
-        const { data: nutrients } = await supabase
-            .from("nutrients")
-            .select("*")
-            .order("nutrient_basic_name");
 
         // Get present nutrients in a single query
         const { data: ingredientNutrients } = await supabase
@@ -248,9 +269,7 @@ export function NutrientGroupAlert({
     useEffect(() => {
         // Create a Set of all current recipe ingredient IDs
         const currentIngredientIds = new Set(
-            recipeIngredients?.map((ri) =>
-                mode === "create" ? ri.id : ri.ingredient_id
-            ) || []
+            recipeIngredients?.map((ri) => ri.ingredient_id) || []
         );
 
         // Reset addedIngredients to only include ingredients that are still in the recipe
@@ -263,7 +282,7 @@ export function NutrientGroupAlert({
             });
             return next;
         });
-    }, [recipeIngredients, nutrientState, mode]);
+    }, [recipeIngredients, nutrientState]);
 
     // When an alert turns green (requirement met), add it to satisfiedInSession
     useEffect(() => {
@@ -380,7 +399,7 @@ export function NutrientGroupAlert({
 
         // Check if ingredient exists in current recipe
         const isInRecipe = recipeIngredients?.some((ri) => {
-            const riId = mode === "create" ? ri.id : ri.ingredient_id;
+            const riId = ri.ingredient_id;
             return riId === ingredientId;
         });
 
@@ -809,10 +828,10 @@ export function NutrientGroupAlert({
     );
 }
 
-// Add this function at the bottom of the file, just before the final export
-export async function isRecipeBalanced(recipeIngredients, mode = "view") {
+// Update the isRecipeBalanced function to remove mode parameter
+export async function isRecipeBalanced(recipeIngredients) {
     try {
-        const result = await checkRecipeBalance(recipeIngredients, mode);
+        const result = await checkRecipeBalance(recipeIngredients);
         return result.isBalanced;
     } catch (error) {
         console.error("Error checking if recipe is balanced:", error);

@@ -72,7 +72,7 @@ export function RecipeSheetEdit({
     return (
         <>
             {/* Form section */}
-            <div className="flex flex-col md:flex-row gap-6 p-8 border-b border-border">
+            <div className="flex flex-col md:flex-row gap-6 p-8">
                 <div className="space-y-2 w-full">
                     <Label htmlFor="recipe-name">Recipe Name</Label>
                     <Input
@@ -96,7 +96,7 @@ export function RecipeSheetEdit({
             </div>
 
             {/* Ingredients section */}
-            <div className="flex flex-col gap-8 p-8 border-b border-border">
+            <div className="flex flex-col gap-8 p-8 border-t border-border">
                 <p className="font-medium">Ingredients</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {Object.entries(INGREDIENT_SECTIONS).map(
@@ -105,7 +105,9 @@ export function RecipeSheetEdit({
                                 key={key}
                                 {...section}
                                 items={ingredientSections[key].getItems()}
-                                onRemoveItem={handleRemoveIngredient}
+                                onRemoveItem={(id) =>
+                                    handleRemoveIngredient(id, key)
+                                }
                                 onAddItem={handleAddIngredient}
                                 category={key}
                                 mode="edit"
@@ -121,34 +123,42 @@ export function RecipeSheetEdit({
             </div>
 
             {/* Move nutrition status section here */}
-            <div className="flex flex-col gap-6 p-8">
-                <div className="flex items-center gap-2">
-                    <p className="font-medium">Nutrition status</p>
-                    {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+            {allIngredients.length > 0 && (
+                <div className="flex flex-col gap-6 p-8 border-t border-border">
+                    <div className="flex items-center gap-2">
+                        <p className="font-medium">Nutrition status</p>
+                        {isUpdating && (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                    </div>
+                    <div className="flex gap-8">
+                        <NutrientGroupAlert
+                            recipeIngredients={Object.values(
+                                ingredientSections
+                            ).flatMap((section) => section.getItems())}
+                            mode="edit"
+                            onAddIngredient={(ingredient, options) => {
+                                const categoryMap = {
+                                    1: "meat_and_bone",
+                                    2: "plant_matter",
+                                    3: "liver",
+                                    4: "secreting_organs",
+                                    5: "misc",
+                                };
+                                const category =
+                                    categoryMap[ingredient.category_id];
+                                handleAddIngredient(
+                                    ingredient,
+                                    category,
+                                    options
+                                );
+                            }}
+                            nutrientState={nutrientState}
+                            isChecking={isUpdating}
+                        />
+                    </div>
                 </div>
-                <div className="flex gap-8">
-                    <NutrientGroupAlert
-                        recipeIngredients={Object.values(
-                            ingredientSections
-                        ).flatMap((section) => section.getItems())}
-                        mode="edit"
-                        onAddIngredient={(ingredient, options) => {
-                            const categoryMap = {
-                                1: "meat_and_bone",
-                                2: "plant_matter",
-                                3: "liver",
-                                4: "secreting_organs",
-                                5: "misc",
-                            };
-                            const category =
-                                categoryMap[ingredient.category_id];
-                            handleAddIngredient(ingredient, category, options);
-                        }}
-                        nutrientState={nutrientState}
-                        isChecking={isUpdating}
-                    />
-                </div>
-            </div>
+            )}
         </>
     );
 }

@@ -188,7 +188,7 @@ export function RecipeSheetView({
 
     return (
         <>
-            <div className="p-8 grid grid-cols-2 [530px]:flex [530px]:flex-row gap-14 [530px]:gap-6 justify-between w-full border-b border-border">
+            <div className="p-8 grid grid-cols-2 [530px]:flex [530px]:flex-row gap-14 [530px]:gap-6 justify-between w-full">
                 <BadgeStack
                     variant="default"
                     icon={<DogIcon />}
@@ -253,7 +253,7 @@ export function RecipeSheetView({
 
             {/* Ingredients sections */}
 
-            <div className="flex flex-col gap-8 p-8 border-b border-border">
+            <div className="flex flex-col gap-8 p-8 border-t border-border">
                 <p className="font-medium">Ingredients</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                     {/* Meat and Bone Section */}
@@ -594,7 +594,7 @@ export function RecipeSheetView({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-8 border-b border-border">
+            <div className="flex flex-col gap-6 p-8 border-t border-border">
                 <p className="font-medium">Nutrition status</p>
                 <div className="flex gap-8">
                     <NutrientGroupAlert
@@ -606,7 +606,7 @@ export function RecipeSheetView({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-6 p-8">
+            <div className="flex flex-col gap-6 p-8 border-t border-border">
                 <div className="flex items-center justify-between">
                     <p className="font-medium">Recipe notes</p>
                     <span className="text-sm text-muted-foreground">
