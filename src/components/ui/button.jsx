@@ -29,7 +29,7 @@ const buttonVariants = cva(
             },
             size: {
                 default: "h-10 px-4 py-2 [&_svg]:size-4 [&_svg]:shrink-0",
-                sm: "h-9 rounded-sm px-3",
+                sm: "h-9 text-xs gap-1.5 rounded-sm px-2.5 [&_svg]:size-4 [&_svg]:shrink-0",
                 lg: "text-base h-12 px-4 [&_svg]:size-5 [&_svg]:shrink-0",
                 lgPill: "text-base rounded-full h-12 px-4 [&_svg]:size-5 [&_svg]:shrink-0",
                 icon: "h-10 w-10 [&_svg]:size-4 [&_svg]:shrink-0",

@@ -16,6 +16,7 @@ import { IngredientSelector } from "./ingredient-selector";
 import { useState } from "react";
 import { BadgeStack } from "@/components/ui/badge-stack";
 import { cn } from "@/lib/utils";
+import Liver5 from "@/assets/icons/liver-5";
 
 // Move the sections configuration here
 export const INGREDIENT_SECTIONS = {
@@ -119,7 +120,7 @@ export function IngredientSection({
                         ) : category === "plant_matter" ? (
                             <Leaf />
                         ) : category === "liver" ? (
-                            <Brain />
+                            <Liver5 />
                         ) : category === "secreting_organs" ? (
                             <Brain />
                         ) : (
