@@ -689,7 +689,9 @@ export function EditDogRatiosDialog({ open, onOpenChange, dog }) {
                         className="focus:outline-none"
                     >
                         <DialogHeader className="flex flex-row items-center justify-between">
-                            <DialogTitle>Edit dog ratios</DialogTitle>
+                            <DialogTitle>
+                                Edit {dog.dog_name}'s ratios
+                            </DialogTitle>
                             <DialogDescription className="hidden">
                                 Update your dog's nutritional ratios
                             </DialogDescription>
