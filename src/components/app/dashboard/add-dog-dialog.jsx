@@ -75,7 +75,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { parse, isValid, format as formatDate } from "date-fns";
-import { parseDate } from "chrono-node";
+import * as chrono from "chrono-node";
 
 // Form validation schema
 const formSchema = z.object({
@@ -550,7 +550,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                             <FormItem className="w-full">
                                                                 <FormLabel>
                                                                     Date of
-                                                                    birth
+                                                                    Birth
                                                                 </FormLabel>
                                                                 <Input
                                                                     placeholder="DD/MM/YYYY"
@@ -559,7 +559,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                         Date
                                                                             ? formatDate(
                                                                                   field.value,
-                                                                                  "PP"
+                                                                                  "PPP"
                                                                               )
                                                                             : field.value ||
                                                                               ""
@@ -572,9 +572,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                                 .target
                                                                                 .value;
                                                                         field.onChange(
-                                                                            e
-                                                                                .target
-                                                                                .value
+                                                                            input
                                                                         );
                                                                     }}
                                                                     onBlur={(
@@ -591,7 +589,7 @@ export function AddDogDialog({ open, onOpenChange }) {
 
                                                                         // Try parsing as natural language first
                                                                         const naturalDate =
-                                                                            parseDate(
+                                                                            chrono.en.GB.parseDate(
                                                                                 value
                                                                             );
                                                                         if (
@@ -609,14 +607,14 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                             return;
                                                                         }
 
-                                                                        // Try common date formats
+                                                                        // Try common date formats - prioritize Australian format
                                                                         const formats =
                                                                             [
-                                                                                "dd/MM/yyyy",
-                                                                                "MM/dd/yyyy",
-                                                                                "yyyy-MM-dd",
-                                                                                "d/M/yyyy",
-                                                                                "M/d/yyyy",
+                                                                                "dd/MM/yyyy", // Australian format (primary)
+                                                                                "d/M/yyyy", // Australian format with single digits
+                                                                                "yyyy-MM-dd", // ISO format
+                                                                                "MM/dd/yyyy", // US format (last priority)
+                                                                                "M/d/yyyy", // US format with single digits
                                                                             ];
 
                                                                         for (const dateFormat of formats) {
@@ -647,7 +645,7 @@ export function AddDogDialog({ open, onOpenChange }) {
                                                                             {
                                                                                 type: "manual",
                                                                                 message:
-                                                                                    "Please enter a valid date",
+                                                                                    "Please enter a valid date (DD/MM/YYYY)",
                                                                             }
                                                                         );
                                                                     }}

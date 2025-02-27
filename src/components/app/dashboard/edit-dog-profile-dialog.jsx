@@ -80,7 +80,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { parseDate } from "chrono-node";
+import * as chrono from "chrono-node";
 import { cn } from "@/lib/utils";
 
 // Convert countries object to array format we need
@@ -134,6 +134,13 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             keepErrors: false,
         },
     });
+
+    // Add clearFieldError function
+    const clearFieldError = (fieldName) => {
+        if (form.getFieldState(fieldName).error) {
+            form.clearErrors(fieldName);
+        }
+    };
 
     // Track form changes
     const hasChanges = () => {
@@ -413,7 +420,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                     placeholder="DD/MM/YYYY"
                                     value={
                                         field.value instanceof Date
-                                            ? formatDate(field.value, "PP")
+                                            ? formatDate(field.value, "PPP")
                                             : field.value || ""
                                     }
                                     onChange={(e) => {
@@ -425,7 +432,8 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                         if (!value) return;
 
                                         // Try parsing as natural language first
-                                        const naturalDate = parseDate(value);
+                                        const naturalDate =
+                                            chrono.en.GB.parseDate(value);
                                         if (
                                             naturalDate &&
                                             isValid(naturalDate)
@@ -435,13 +443,13 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                             return;
                                         }
 
-                                        // Try common date formats
+                                        // Try common date formats - prioritize Australian format
                                         const formats = [
-                                            "dd/MM/yyyy",
-                                            "MM/dd/yyyy",
-                                            "yyyy-MM-dd",
-                                            "d/M/yyyy",
-                                            "M/d/yyyy",
+                                            "dd/MM/yyyy", // Australian format (primary)
+                                            "d/M/yyyy", // Australian format with single digits
+                                            "yyyy-MM-dd", // ISO format
+                                            "MM/dd/yyyy", // US format (last priority)
+                                            "M/d/yyyy", // US format with single digits
                                         ];
 
                                         for (const dateFormat of formats) {
@@ -461,7 +469,7 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
                                         form.setError("dob", {
                                             type: "manual",
                                             message:
-                                                "Please enter a valid date",
+                                                "Please enter a valid date (DD/MM/YYYY)",
                                         });
                                     }}
                                     className={cn(
