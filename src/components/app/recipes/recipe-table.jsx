@@ -361,7 +361,6 @@ export function RecipeTable({
                     onClick={() => handleViewRecipe(recipe)}
                 >
                     <span className="line-clamp-2 leading-[1.15rem]">
-                        <span className="text-foreground">Ingredients: </span>
                         {formatIngredients(recipe.recipe_ingredients)}
                     </span>
                 </TableCell>

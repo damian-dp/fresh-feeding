@@ -177,8 +177,9 @@ export function RecipesProvider({ children }) {
                 if (ingredientsError) throw ingredientsError;
             }
 
-            // Instead of immediately updating the state, let the subscription handle it
-            // The subscription will trigger fetchRecipeById which will update the state
+            // Let the subscription handle the state update
+            // The subscription will trigger fetchRecipeById which will update the state,
+            // which is more reliable than directly updating state here
             return recipe;
         } catch (error) {
             console.error("Error adding recipe:", error);
@@ -240,17 +241,8 @@ export function RecipesProvider({ children }) {
 
             if (fetchError) throw fetchError;
 
-            // Update the recipes state with the new data
-            setRecipes((prev) => {
-                const index = prev.findIndex((r) => r.recipe_id === recipeId);
-                if (index >= 0) {
-                    const newRecipes = [...prev];
-                    newRecipes[index] = updatedRecipe;
-                    return newRecipes;
-                }
-                return [...prev, updatedRecipe];
-            });
-
+            // Let the subscription handle the state update instead of doing it here
+            // to avoid potential race conditions with subscription updates
             return updatedRecipe;
         } catch (error) {
             console.error("Error in updateRecipe:", error);

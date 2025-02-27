@@ -532,7 +532,11 @@ export function NutrientGroupAlert({
         );
     }
 
-    if (nutrientState.isBalanced) {
+    if (
+        nutrientState.isBalanced &&
+        nutrientState.missingCategories.length === 0 &&
+        nutrientState.missingNutrients.length === 0
+    ) {
         return (
             <motion.div
                 initial="hidden"
@@ -832,11 +836,16 @@ export function NutrientGroupAlert({
     );
 }
 
-// Update the isRecipeBalanced function to remove mode parameter
+// Update the isRecipeBalanced function to be more explicit
 export async function isRecipeBalanced(recipeIngredients) {
     try {
         const result = await checkRecipeBalance(recipeIngredients);
-        return result.isBalanced;
+        // Only return true when BOTH categories AND nutrients are satisfied
+        return (
+            result.isBalanced &&
+            result.missingCategories.length === 0 &&
+            result.missingNutrients.length === 0
+        );
     } catch (error) {
         console.error("Error checking if recipe is balanced:", error);
         return false;

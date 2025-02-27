@@ -598,7 +598,9 @@ export function RecipeSheet({
                 nutrientSuggestions: updatedSuggestions,
                 addedIngredients,
                 fromIngredientSelector: true,
-                isBalanced: missingCategories.length === 0,
+                isBalanced:
+                    missingCategories.length === 0 &&
+                    prev.missingNutrients.length === 0,
             };
         });
     };
@@ -693,6 +695,9 @@ export function RecipeSheet({
                 addedIngredients: remainingAdded,
                 nutrientSuggestions: updatedSuggestions,
                 fromIngredientSelector: true,
+                isBalanced:
+                    state.missingCategories.length === 0 &&
+                    state.missingNutrients.length === 0,
             };
         });
 
