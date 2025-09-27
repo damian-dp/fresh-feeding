@@ -1,7 +1,40 @@
+import { format, parseISO } from "date-fns";
+
+function normalizeDob(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "string") {
+    const isoParsed = parseISO(value);
+    if (!Number.isNaN(isoParsed.getTime())) {
+      return isoParsed;
+    }
+
+    const fallback = new Date(value);
+    if (!Number.isNaN(fallback.getTime())) {
+      return fallback;
+    }
+  }
+
+  return null;
+}
+
+export function formatDobForStorage(dob) {
+  const date = normalizeDob(dob);
+  return date ? format(date, "yyyy-MM-dd") : null;
+}
+
+export function formatDobForDisplay(dob, displayFormat = "MMM d, yyyy") {
+  const date = normalizeDob(dob);
+  return date ? format(date, displayFormat) : null;
+}
+
 export function getDogAgeInMonths(dob) {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  if (isNaN(birth.getTime())) return null;
+  const birth = normalizeDob(dob);
+  if (!birth) return null;
   const today = new Date();
   let months = (today.getFullYear() - birth.getFullYear()) * 12;
   months += today.getMonth() - birth.getMonth();

@@ -34,6 +34,7 @@ import {
   getCurrentIntakePercent,
   getDailyIntakeGrams,
   getDogAgeInMonths,
+  formatDobForDisplay,
   isEffectivePuppyMode,
 } from "@/utils/feeding";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -294,11 +295,7 @@ export function DogProfilePage() {
                         secondaryfill="hsl(var(--muted-foreground))"
                       />
                       <p className="text-muted-foreground">
-                        {new Date(dog.dob).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatDobForDisplay(dog.dob, "MMM d, yyyy") ?? "—"}
                         <span className="hidden sm:inline">
                           <span className="mx-1.5">•</span>
                           {calculateAge(dog.dob)}

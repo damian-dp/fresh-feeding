@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useAddDog } from "@/components/providers/add-dog-provider";
 import FileAlert from "@/assets/icons/file-alert";
 import Dog from "@/assets/icons/dog";
-import { getCurrentIntakePercent } from "@/utils/feeding";
+import { getCurrentIntakePercent, getDogAgeInMonths } from "@/utils/feeding";
 
 export function DogProfileCard() {
   const { dogs, loading } = useDogs();
@@ -192,23 +192,17 @@ export function DogProfileCard() {
 }
 
 export function calculateAge(dob) {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
+  const totalMonths = getDogAgeInMonths(dob);
+  if (totalMonths == null) {
+    return "Unknown";
   }
 
-  // If less than 1 year, show months
-  if (age === 0) {
-    const months = monthDiff + 12;
-    return `${months} ${months === 1 ? "month" : "months"}`;
+  if (totalMonths < 12) {
+    const label = totalMonths === 1 ? "month" : "months";
+    return `${totalMonths} ${label}`;
   }
 
-  return `${age} ${age === 1 ? "year" : "years"}`;
+  const years = Math.floor(totalMonths / 12);
+  const label = years === 1 ? "year" : "years";
+  return `${years} ${label}`;
 }

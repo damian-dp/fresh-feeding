@@ -78,7 +78,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { parse, isValid, format as formatDate } from "date-fns";
 import * as chrono from "chrono-node";
 import { Switch } from "@/components/ui/switch";
-import { getDogAgeInMonths } from "@/utils/feeding";
+import { getDogAgeInMonths, formatDobForStorage } from "@/utils/feeding";
 import { Label } from "@/components/ui/label";
 import {
   Tooltip,
@@ -271,6 +271,10 @@ export function AddDogDialog({ open, onOpenChange }) {
     try {
       let avatarUrl = null;
       const ageMonths = getDogAgeInMonths(data.dob);
+      const dobForStorage = formatDobForStorage(data.dob);
+      if (!dobForStorage) {
+        throw new Error("Invalid date of birth provided");
+      }
       const shouldUsePuppy =
         ageMonths != null && ageMonths < 12
           ? form.getValues("use_puppy_guidelines") ?? true
@@ -286,7 +290,7 @@ export function AddDogDialog({ open, onOpenChange }) {
             profile_id: profile.profile_id,
             dog_name: data.dog_name,
             breed: data.breed,
-            dob: data.dob.toISOString(),
+            dob: dobForStorage,
             weight_metric: data.weight_metric,
             goal: data.goal,
             ratios_intake:
@@ -311,7 +315,7 @@ export function AddDogDialog({ open, onOpenChange }) {
               profile_id: profile.profile_id,
               dog_name: data.dog_name,
               breed: data.breed,
-              dob: data.dob.toISOString(),
+              dob: dobForStorage,
               weight_metric: data.weight_metric,
               goal: data.goal,
               ratios_intake:
