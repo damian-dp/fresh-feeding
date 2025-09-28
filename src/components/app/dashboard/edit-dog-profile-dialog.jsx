@@ -82,6 +82,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as chrono from "chrono-node";
 import { cn } from "@/lib/utils";
+import { formatDobForStorage } from "@/utils/feeding";
 
 // Convert countries object to array format we need
 const countryOptions = Object.entries(countries)
@@ -295,7 +296,11 @@ export function EditDogProfileDialog({ open, onOpenChange, dog }) {
             // Add other fields if they've changed
             if (data.dog_name !== dog.dog_name)
                 updates.dog_name = data.dog_name;
-            if (data.dob !== dog.dob) updates.dob = data.dob;
+            const nextDob = formatDobForStorage(data.dob);
+            const currentDob = formatDobForStorage(dog.dob);
+            if (nextDob && nextDob !== currentDob) {
+                updates.dob = nextDob;
+            }
             if (data.breed !== dog.breed) updates.breed = data.breed;
             if (data.weight_metric !== dog.weight_metric)
                 updates.weight_metric = data.weight_metric;
