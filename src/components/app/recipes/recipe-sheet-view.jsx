@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import Liver5 from "@/assets/icons/liver-5";
 import { Button } from "@/components/ui/button";
 import { BoneCalculator } from "../sidebar/bone-calculator";
-import { getCurrentIntakePercent } from "@/utils/feeding";
+import { getCurrentIntakePercent, isEffectivePuppyMode } from "@/utils/feeding";
 
 const getIngredientsByCategory = (recipeIngredients, categoryId) => {
   return (recipeIngredients || []).filter(
@@ -228,17 +228,23 @@ export function RecipeSheetView({
           icon={<Target />}
           label={(() => {
             const dog = dogs.find((d) => d.dog_id === localRecipe.dog_id);
-            return dog
-              ? dog.goal === "maintain"
-                ? "Maintain weight"
-                : dog.goal === "gain"
-                ? "Gain weight"
-                : dog.goal === "lose"
-                ? "Lose weight"
-                : "Custom goal"
-              : "Unknown";
+            if (!dog) return "Unknown";
+            if (isEffectivePuppyMode(dog)) {
+              return "Puppy guidelines";
+            }
+            return dog.ratios_intake === 2.5
+              ? "Maintain weight"
+              : dog.ratios_intake === 3
+              ? "Gain weight"
+              : dog.ratios_intake === 2
+              ? "Lose weight"
+              : "Custom goal";
           })()}
-          sublabel="Goal"
+          sublabel={(() => {
+            const dog = dogs.find((d) => d.dog_id === localRecipe.dog_id);
+            if (!dog) return "Goal";
+            return isEffectivePuppyMode(dog) ? "Mode" : "Goal";
+          })()}
           flipped={true}
           className="hidden [530px]:flex"
         />
